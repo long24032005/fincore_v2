@@ -85,7 +85,26 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
             console.log('🤖 Intent:', intent, 'Entities:', entities);
 
             // Handle different intents
-            if (intent === 'check_balance') {
+            if (intent === 'multiple_intents') {
+                // BUG FIX #7: Handle multiple intents in one message
+                const detectedIntents = entities.detectedIntents || [];
+                const intentLabels: Record<string, string> = {
+                    'check_balance': '💰 Check Balance',
+                    'transfer_money': '💸 Transfer Money',
+                    'list_recipients': '📋 List Recipients',
+                    'transaction_history': '📜 Transaction History',
+                };
+
+                const intentsList = detectedIntents
+                    .map((i: string) => `• ${intentLabels[i] || i}`)
+                    .join('\n');
+
+                addAssistantMessage(
+                    `I noticed you're asking for multiple things:\n\n${intentsList}\n\n` +
+                    `I can only handle one request at a time. Which would you like me to help with first?\n\n` +
+                    `Please send them as separate messages.`
+                );
+            } else if (intent === 'check_balance') {
                 await handleBalanceQuery();
             } else if (intent === 'list_recipients') {
                 await handleListRecipients();

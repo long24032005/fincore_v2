@@ -26,6 +26,7 @@ declare type ChatIntent =
     | 'list_recipients'
     | 'transaction_history'
     | 'general_query'
+    | 'multiple_intents'
     | 'unknown';
 
 declare type ChatbotContext = {

@@ -16,6 +16,8 @@ export const parseUserIntent = async (
         amount?: number;
         source?: string;
         destination?: string;
+        detectedIntents?: string[]; // BUG FIX #7: Store list of intents when multiple detected
+        multipleTransfers?: boolean;
     };
 }> => {
     try {
@@ -37,34 +39,41 @@ ${recipientList || 'None'}
 USER'S MESSAGE: "${userMessage}"
 
 EXAMPLES OF CORRECT PARSING:
-Example 1:
+Example 1 (Single intent):
   User: "i want to transfer 1 dollar to Linda Ngo"
   Recipients: 1. "Linda Ngo" (Name: Linda Ngo, Email: lindango@gmail.com, Type: wallet)
-  Response: {"intent": "transfer_money", "entities": {"recipientNickname": "Linda Ngo", "amount": 1}}
+  Response: {"intents": ["transfer_money"], "entities": {"recipientNickname": "Linda Ngo", "amount": 1}}
 
-Example 2:
-  User: "send $50 to John"
+Example 2 (Multiple intents):
+  User: "check my balance and transfer 5 to John"
   Recipients: 1. "John" (Name: John Doe, Email: john@example.com, Type: bank)
-  Response: {"intent": "transfer_money", "entities": {"recipientNickname": "John", "amount": 50}}
+  Response: {"intents": ["check_balance", "transfer_money"], "entities": {"recipientNickname": "John", "amount": 5}}
 
-Example 3:
-  User: "transfer 100 dollars to Sarah from my wallet"
-  Recipients: 1. "Sarah" (Name: Sarah Smith, Email: sarah@test.com, Type: wallet)
-  Response: {"intent": "transfer_money", "entities": {"recipientNickname": "Sarah", "amount": 100, "source": "wallet"}}
+Example 3 (Multiple intents - list + history):
+  User: "show my recipients and transaction history"
+  Response: {"intents": ["list_recipients", "transaction_history"], "entities": {}}
+
+Example 4 (Multiple transfers):
+  User: "send 5 to lana and 10 to john"
+  Recipients: 1. "lana ngo" (Name: Lana Ngo, ...),  2. "john" (Name: John Doe, ...)
+  Response: {"intents": ["transfer_money", "transfer_money"], "entities": {"multipleTransfers": true}, "note": "User wants TWO separate transfers"}
 
 NOW PARSE THIS MESSAGE:
 Analyze the message and return JSON with:
 {
-  "intent": "transfer_money" | "check_balance" | "list_recipients" | "transaction_history" | "general_query",
+  "intents": ["intent1", "intent2", ...],  // Array of ALL detected intents (even if just 1)
   "entities": {
     "recipientNickname": "exact nickname from saved recipients list above, or null if not found",
     "amount": numeric amount or null,
     "source": "wallet" | "bank" | null,
-    "destination": "wallet" | "bank" | null
+    "destination": "wallet" | "bank" | null,
+    "multipleTransfers": true (if user wants multiple transfers in one message)
   }
 }
 
 CRITICAL RULES:
+- DETECT ALL INTENTS in the message, not just the first one
+- Return ALL intents as an array in "intents" field
 - CAREFULLY match recipient names from the saved list above (case-insensitive)
 - If you see "to [NAME]" in the message, extract [NAME] and find it in the saved recipients list
 - recipientNickname MUST be the exact nickname string from the list above
@@ -75,6 +84,7 @@ CRITICAL RULES:
   * "recipients", "who can I send to" → "list_recipients"
   * "history", "recent", "transactions" → "transaction_history"
   * Otherwise → "general_query"
+- If message contains "and" between two actions (e.g., "check balance AND transfer"), include BOTH intents
 
 Return ONLY the JSON object, no markdown, no explanation.`;
 
@@ -104,8 +114,42 @@ Return ONLY the JSON object, no markdown, no explanation.`;
         const parsed = JSON.parse(cleanedResponse);
         console.log('✅ [AI Parse] Parsed result:', JSON.stringify(parsed, null, 2));
 
+        // HANDLE MULTIPLE INTENTS
+        // Check if AI returned array of intents (new format) vs single intent (old format)
+        let finalIntent: ChatIntent;
+        let detectedIntents: string[] = [];
+
+        if (parsed.intents && Array.isArray(parsed.intents)) {
+            // New format: {intents: [...]}
+            detectedIntents = parsed.intents;
+            console.log(`🔍 [Multiple Intents] Detected ${detectedIntents.length} intent(s):`, detectedIntents);
+
+            if (detectedIntents.length > 1) {
+                // Multiple intents detected!
+                console.log('⚠️  [Multiple Intents] User requested multiple actions in one message');
+                finalIntent = 'multiple_intents' as ChatIntent;
+                // Store the list of intents in entities so ChatbotWindow can access it
+                parsed.entities.detectedIntents = detectedIntents;
+            } else if (detectedIntents.length === 1) {
+                // Only 1 intent
+                finalIntent = detectedIntents[0] as ChatIntent;
+            } else {
+                // No intents? Fallback to general_query
+                finalIntent = 'general_query';
+            }
+        } else if (parsed.intent) {
+            // Old format: {intent: "..."}  (backward compatible)
+            finalIntent = parsed.intent;
+            detectedIntents = [parsed.intent];
+        } else {
+            // No intent field at all
+            finalIntent = 'general_query';
+        }
+
+        console.log('🎯 [Final Intent]:', finalIntent);
+
         // REGEX FALLBACK: If AI didn't extract recipientNickname but intent is transfer_money
-        if (parsed.intent === 'transfer_money' && !parsed.entities?.recipientNickname) {
+        if (detectedIntents.includes('transfer_money') && !parsed.entities?.recipientNickname) {
             console.log('⚠️  [AI Parse] AI missed recipient, trying regex fallback...');
 
             // Try to extract recipient name using regex patterns
@@ -156,10 +200,10 @@ Return ONLY the JSON object, no markdown, no explanation.`;
             }
         }
 
-        console.log('🎉 [AI Parse] Final result:', JSON.stringify(parsed, null, 2));
+        console.log('🎉 [AI Parse] Final result:', JSON.stringify({ intent: finalIntent, entities: parsed.entities }, null, 2));
 
         return parseStringify({
-            intent: parsed.intent || 'general_query',
+            intent: finalIntent,
             entities: parsed.entities || {},
         });
     } catch (error) {
