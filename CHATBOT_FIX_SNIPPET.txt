@@ -1,0 +1,38 @@
+    const handleTransferIntent = async (entities: any) => {
+        if (!context) return;
+
+        const { recipientNickname, amount } = entities;
+
+        // If no recipient provided, ask user
+        if (!recipientNickname || recipientNickname.trim() === '') {
+            addAssistantMessage(`Who would you like to send money to?\n\nWould you like to see your saved recipients?`,
+                [{
+                    id: 'list-recipients',
+                    label: '📋 Show Recipients',
+                    value: 'list_recipients',
+                    type: 'confirm',
+                    variant: 'secondary',
+                }]
+            );
+            return;
+        }
+
+        // Find recipient - match against nickname AND name  
+        const lowerNickname = recipientNickname.toLowerCase();
+        const matchingRecipients = context.savedRecipients.filter(r =>
+            r.nickname.toLowerCase().includes(lowerNickname) ||
+            r.name.toLowerCase().includes(lowerNickname)
+        );
+
+        if (matchingRecipients.length === 0) {
+            addAssistantMessage(`I couldn't find "${recipientNickname}" in your saved recipients.\n\nWould you like to see your saved recipients list?`,
+                [{
+                    id: 'list-recipients',
+                    label: '📋 Show Recipients',
+                    value: 'list_recipients',
+                    type: 'confirm',
+                    variant: 'secondary',
+                }]
+            );
+            return;
+        }
