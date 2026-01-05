@@ -124,7 +124,7 @@ export async function saveRecipient(params: {
                 nickname: params.nickname.trim(),
                 transferType: params.transferType,
                 recipientUserId: params.recipientUserId || null,
-                recipientWalletId: params.recipientWalletId || null, // NEW
+                recipientWalletId: params.recipientWalletId || null, // Revert: User confirmed column name is recipientWalletId
                 recipientBankId: params.recipientBankId || null,
                 recipientEmail: params.recipientEmail || null,
                 recipientName: params.recipientName || null,

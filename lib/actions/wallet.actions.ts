@@ -61,7 +61,7 @@ export const transferBalance = async ({
         // 4. CẬP NHẬT BALANCE TỨC THÌ (atomic update)
         // WARNING: Potential race condition if multiple concurrent transfers to same user
         // Consider using database transactions or optimistic locking in production
-        await Promise.all([
+        const [senderUpdate, receiverUpdate, newTransaction] = await Promise.all([
             // Trừ tiền sender
             database.updateDocument(
                 DATABASE_ID!,
@@ -99,6 +99,7 @@ export const transferBalance = async ({
             success: true,
             message: "Transfer successful!",
             newBalance: newSenderBalance,
+            transactionId: newTransaction.$id // Return the transaction ID
         });
     } catch (error: any) {
         console.error("Transfer balance error:", error);

@@ -24,6 +24,7 @@
     "date-fns": "^4.1.0",
     "dwolla-v2": "^3.4.0",
     "framer-motion": "^12.23.26",
+    "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.374.0",
