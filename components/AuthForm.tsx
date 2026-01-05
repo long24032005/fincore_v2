@@ -119,22 +119,27 @@ const AuthForm = ({ type }: { type: string }) => {
         <Link href="/" className="cursor-pointer flex items-center gap-1">
           <Image
             src="/icons/logo.png"
-            width={34}
-            height={34}
+            width={70}
+            height={70}
             alt="Fincore logo"
           />
-          <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">Fincore</h1>
+          <Image
+            src="/icons/finecore-text-logo.png"
+            width={220}
+            height={60}
+            alt="Finecore"
+          />
         </Link>
 
         <div className="flex flex-col gap-1 md:gap-3">
-          <h1 className="text-24 lg:text-36 font-semibold text-gray-900">
+          <h1 className="text-24 lg:text-36 font-semibold text-white">
             {user
               ? 'Link Account'
               : type === 'sign-in'
                 ? 'Sign In'
                 : 'Sign Up'
             }
-            <p className="text-16 font-normal text-gray-600">
+            <p className="text-16 font-normal text-gray-300">
               {user
                 ? 'Link your account to get started'
                 : 'Please enter your details'

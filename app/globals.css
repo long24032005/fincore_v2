@@ -318,6 +318,31 @@
     @apply flex size-full flex-1 flex-col items-end justify-between rounded-r-[20px] bg-bank-gradient bg-cover bg-center bg-no-repeat py-5 pr-5;
   }
 
+  /* Wallet Card - Premium Blue/Indigo Gradient */
+  .wallet-card {
+    @apply relative flex h-[190px] w-full max-w-[320px] justify-between rounded-[20px] border border-blue-500/30 shadow-xl backdrop-blur-[6px] overflow-hidden;
+    background: linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, #60A5FA 100%);
+    box-shadow: 0 8px 32px 0 rgba(59, 130, 246, 0.35),
+      0 0 60px -15px rgba(99, 102, 241, 0.25),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .wallet-card:hover {
+    box-shadow: 0 12px 40px 0 rgba(59, 130, 246, 0.45),
+      0 0 80px -15px rgba(99, 102, 241, 0.35),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+  }
+
+  .wallet-card_content {
+    @apply relative z-10 flex size-full max-w-[228px] flex-col justify-between rounded-l-[20px] px-5 pb-4 pt-5;
+  }
+
+  .wallet-card_icon {
+    @apply flex size-full flex-1 flex-col items-end justify-between rounded-r-[20px] bg-cover bg-center bg-no-repeat py-5 pr-5;
+  }
+
   /* Bank Info */
   .bank-info {
     @apply gap-[18px] flex p-4 transition-all border bg-fill-2 border-transparent;
@@ -351,12 +376,12 @@
   }
 
   .plaidlink-default {
-    @apply flex !justify-start cursor-pointer gap-3 rounded-lg !bg-transparent flex-row;
+    @apply flex !justify-start cursor-pointer gap-3 rounded-lg bg-transparent flex-row hover:bg-gray-25 py-1 md:p-3 2xl:p-4;
   }
 
   /* Auth */
   .auth-asset {
-    @apply flex h-screen w-full sticky top-0 items-center justify-end bg-fill-1 max-lg:hidden;
+    @apply flex h-screen w-full sticky top-0 items-center justify-end max-lg:hidden;
   }
 
   /* Auth Form */
@@ -369,7 +394,7 @@
   }
 
   .form-label {
-    @apply text-14 w-full max-w-[280px] font-medium text-gray-600;
+    @apply text-14 w-full max-w-[280px] font-medium text-white;
   }
 
   .form-message {

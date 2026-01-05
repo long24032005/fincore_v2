@@ -51,15 +51,14 @@ const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
         <header className="home-header">
           <HeaderBox
             type="greeting"
-            title="Welcome"
-            user={loggedIn?.firstName || 'Guest'}
+            title="Hello"
+            user={`${loggedIn?.firstName || 'Guest'} ${loggedIn?.lastName || ''}`}
           />
 
           <TotalBalanceBox
             accounts={accountsData}
             totalBanks={accounts?.totalBanks}
             totalCurrentBalance={accounts?.totalCurrentBalance}
-            user={loggedIn}
           />
         </header>
 

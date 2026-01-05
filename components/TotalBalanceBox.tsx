@@ -89,11 +89,11 @@ const TotalBalanceBox = ({
                     <div className="flex items-center gap-3 py-1">
                       <div className={`flex-center size-8 rounded-lg ${account.type === 'total' ? 'bg-blue-500/20' :
                         account.type === 'wallet' ? 'bg-emerald-500/20' :
-                          'bg-gray-500/20'
+                          'bg-blue-500/20'
                         }`}>
                         <OptionIcon className={`w-4 h-4 ${account.type === 'total' ? 'text-blue-400' :
                           account.type === 'wallet' ? 'text-emerald-400' :
-                            'text-gray-400'
+                            'text-blue-300'
                           }`} />
                       </div>
                       <span className="font-medium text-sm">{account.name}</span>

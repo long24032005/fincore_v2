@@ -55,10 +55,44 @@ const MyQRCode = ({ user, banks = [], onBack }: MyQRCodeProps) => {
         }
     };
 
-    const downloadQR = () => {
+    const downloadQR = async () => {
         if (!canvasRef.current) return;
 
-        const url = canvasRef.current.toDataURL('image/png');
+        // Create a new canvas to composite QR + logo
+        const compositeCanvas = document.createElement('canvas');
+        const ctx = compositeCanvas.getContext('2d');
+        if (!ctx) return;
+
+        // Set size to match QR canvas (300x300 from generateQR)
+        compositeCanvas.width = 300;
+        compositeCanvas.height = 300;
+
+        // Draw white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, 300, 300);
+
+        // Draw the QR code
+        ctx.drawImage(canvasRef.current, 0, 0);
+
+        // Draw logo in center
+        const logoSize = 50;
+        const logoX = (300 - logoSize) / 2;
+        const logoY = (300 - logoSize) / 2;
+
+        // White circle background for logo
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(150, 150, logoSize / 2 + 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Draw emoji logo
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(destinationType === 'wallet' ? '💰' : '🏦', 150, 150);
+
+        // Download the composite canvas
+        const url = compositeCanvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.download = `finecore-qr-${user.firstName}.png`;
         link.href = url;

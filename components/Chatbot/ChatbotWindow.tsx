@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
@@ -457,7 +457,7 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="size-10 bg-white/20 rounded-full flex-center">
-                            <span className="text-20">🤖</span>
+                            <Bot className="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h3 className="text-16 font-bold text-white">Finecore Assistant</h3>

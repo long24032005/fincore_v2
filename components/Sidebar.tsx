@@ -15,15 +15,21 @@ const Sidebar = ({ user }: SiderbarProps) => {
   return (
     <section className="sidebar border-r border-gray-200">
       <nav className="flex flex-col gap-4">
-        <Link href="/" className="mb-12 cursor-pointer flex items-center gap-2">
+        <Link href="/" className="mb-12 cursor-pointer flex items-center gap-1">
           <Image
             src="/icons/logo.png"
-            width={34}
-            height={34}
+            width={56}
+            height={56}
             alt="Finecore logo"
-            className="size-[28px] max-xl:size-14"
+            className="size-[56px] max-xl:size-14"
           />
-          <h1 className="sidebar-logo">Finecore</h1>
+          <Image
+            src="/icons/finecore-text-logo.png"
+            width={160}
+            height={40}
+            alt="Finecore"
+            className="max-xl:hidden"
+          />
         </Link>
 
         {sidebarLinks.map((item) => {
