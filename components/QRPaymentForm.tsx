@@ -11,6 +11,13 @@ import { getBank, getBankByAccountId, getBankByAppwriteItemId } from '@/lib/acti
 import { createTransfer } from '@/lib/actions/dwolla.actions';
 import { createTransaction } from '@/lib/actions/transaction.actions';
 import { saveRecipient } from '@/lib/actions/savedRecipient.actions';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface QRPaymentFormProps {
     sender: User;
@@ -34,6 +41,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
     const [method, setMethod] = useState<'wallet' | 'bank'>('wallet');
     const [selectedBankId, setSelectedBankId] = useState('');
     const [availableBalance, setAvailableBalance] = useState({ actual: 0, pending: 0, available: 0 });
+    const [isBalanceLoading, setIsBalanceLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     // Save recipient states
@@ -59,8 +67,13 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
 
     const loadAvailableBalance = async () => {
         if (!selectedBankId) return;
-        const balance = await getAvailableBalance(selectedBankId);
-        setAvailableBalance(balance);
+        setIsBalanceLoading(true);
+        try {
+            const balance = await getAvailableBalance(selectedBankId);
+            setAvailableBalance(balance);
+        } finally {
+            setIsBalanceLoading(false);
+        }
     };
 
     // Helper function to save recipient after successful transfer
@@ -504,34 +517,62 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                     <label className="text-14 font-medium text-gray-300 mb-3 block">Select Source Bank</label>
                     {senderBanks.length > 0 ? (
                         <>
-                            <select
-                                value={selectedBankId}
-                                onChange={(e) => {
-                                    console.log('🏦 Bank selected:', e.target.value);
-                                    setSelectedBankId(e.target.value);
+                            <Select
+                                defaultValue={selectedBankId}
+                                onValueChange={(value) => {
+                                    console.log('🏦 Bank selected:', value);
+                                    setSelectedBankId(value);
                                 }}
-                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                             >
-                                {senderBanks.map((bank: any) => (
-                                    <option key={bank.appwriteItemId} value={bank.appwriteItemId}>
-                                        {bank.name} ({bank.subtype})
-                                    </option>
-                                ))}
-                            </select>
+                                <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white h-[50px] rounded-lg">
+                                    <SelectValue placeholder="Select a bank" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-800 border-gray-700">
+                                    {senderBanks.map((bank: any) => (
+                                        <SelectItem
+                                            key={bank.appwriteItemId}
+                                            value={bank.appwriteItemId}
+                                            className="text-white hover:bg-gray-700 cursor-pointer focus:bg-gray-700"
+                                        >
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-14 font-medium">{bank.name}</span>
+                                                <span className="text-12 text-gray-400 capitalize">{bank.subtype}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                            {availableBalance.actual > 0 && (
+                            {/* Balance Section with Loading State */}
+                            {isBalanceLoading ? (
+                                <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 space-y-3 animate-pulse">
+                                    <div className="flex justify-between">
+                                        <div className="h-4 bg-gray-700 rounded w-24"></div>
+                                        <div className="h-4 bg-gray-700 rounded w-16"></div>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div className="h-4 bg-gray-700 rounded w-32"></div>
+                                        <div className="h-4 bg-gray-700 rounded w-12"></div>
+                                    </div>
+                                    <div className="h-px bg-gray-700"></div>
+                                    <div className="flex justify-between">
+                                        <div className="h-5 bg-gray-700 rounded w-28"></div>
+                                        <div className="h-5 bg-gray-700 rounded w-20"></div>
+                                    </div>
+                                </div>
+                            ) : availableBalance.actual > 0 && (
                                 <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 space-y-3">
                                     <div className="flex justify-between text-14">
                                         <span className="text-gray-400">Actual Balance</span>
                                         <span className="text-white font-semibold">${availableBalance.actual.toFixed(2)}</span>
                                     </div>
 
-                                    {availableBalance.pending > 0 && (
-                                        <div className="flex justify-between text-14">
-                                            <span className="text-yellow-400">Pending Transfers</span>
-                                            <span className="text-yellow-400 font-semibold">-${availableBalance.pending.toFixed(2)}</span>
-                                        </div>
-                                    )}
+                                    <div className="flex justify-between text-14">
+                                        <span className={availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"}>Pending Transfers</span>
+                                        <span className={`${availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"} font-semibold`}>
+                                            {availableBalance.pending > 0 ? `-$${availableBalance.pending.toFixed(2)}` : '$0.00'}
+                                        </span>
+                                    </div>
 
                                     <div className="h-px bg-gray-700"></div>
 
