@@ -90,14 +90,8 @@ const RecentTransactions = ({
 
   return (
     <section className="recent-transactions">
-      <header className="flex items-center justify-between mb-6">
+      <header className="mb-6">
         <h2 className="recent-transactions-label">Recent transactions</h2>
-        <Link
-          href={`/transaction-history/?id=${selectedView}`}
-          className="view-all-btn"
-        >
-          View all
-        </Link>
       </header>
 
       {/* Custom Dropdown Selector */}

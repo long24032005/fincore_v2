@@ -48,6 +48,7 @@ declare type User = {
   dateOfBirth: string;
   ssn: string;
   balance: number; // E-wallet balance
+  walletId: string;
 };
 
 declare type NewUserParams = {
@@ -149,6 +150,7 @@ declare interface CreditCardProps {
   account: Account;
   userName: string;
   showBalance?: boolean;
+  clickable?: boolean;
 }
 
 declare interface BankInfoProps {
@@ -183,7 +185,7 @@ declare interface PaginationProps {
 
 declare interface PlaidLinkProps {
   user: User;
-  variant?: "primary" | "ghost";
+  variant?: "primary" | "ghost" | "add-bank";
   dwollaCustomerId?: string;
 }
 

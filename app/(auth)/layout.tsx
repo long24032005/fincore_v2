@@ -1,4 +1,5 @@
 import Image from "next/image";
+import AuthBackground from "@/components/AuthBackground";
 
 export default function RootLayout({
   children,
@@ -6,8 +7,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="flex min-h-screen w-full justify-end font-inter bg-gradient-to-br from-gray-900 via-emerald-900/20 to-gray-900">
-      {children}
+    <main className="relative min-h-screen w-full font-inter overflow-hidden">
+      <AuthBackground />
+      <div className="relative z-10">
+        {children}
+      </div>
     </main>
   );
 }

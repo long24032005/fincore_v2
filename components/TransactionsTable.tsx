@@ -110,72 +110,74 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
 // ============================================
 const TransactionsTable = ({ transactions }: TransactionTableProps) => {
   return (
-    <Table>
-      <TableHeader className="bg-white/5">
-        <TableRow className="border-b border-white/10 hover:bg-transparent">
-          <TableHead className="px-2 text-gray-400 font-medium">Transaction</TableHead>
-          <TableHead className="px-2 text-gray-400 font-medium">Amount</TableHead>
-          <TableHead className="px-2 text-gray-400 font-medium">Status</TableHead>
-          <TableHead className="px-2 text-gray-400 font-medium">Date</TableHead>
-          <TableHead className="px-2 max-md:hidden text-gray-400 font-medium">Channel</TableHead>
-          <TableHead className="px-2 max-md:hidden text-gray-400 font-medium">Category</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {(transactions || []).map((t: Transaction) => {
-          const status = getTransactionStatus(new Date(t.date));
-          const amount = formatAmount(t.amount);
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader className="bg-white/5">
+          <TableRow className="border-b border-white/10 hover:bg-transparent">
+            <TableHead className="px-2 text-gray-400 font-medium">Transaction</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Amount</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Status</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Date</TableHead>
+            <TableHead className="px-2 max-lg:hidden text-gray-400 font-medium">Channel</TableHead>
+            <TableHead className="px-2 max-lg:hidden text-gray-400 font-medium">Category</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(transactions || []).map((t: Transaction) => {
+            const status = getTransactionStatus(new Date(t.date));
+            const amount = formatAmount(t.amount);
 
-          const isDebit = t.type === 'debit';
-          const isCredit = t.type === 'credit';
-          const isNegative = amount.startsWith('-') || amount.includes('-');
+            const isDebit = t.type === 'debit';
+            const isCredit = t.type === 'credit';
+            const isNegative = amount.startsWith('-') || amount.includes('-');
 
-          return (
-            <TableRow
-              key={t.id || t.$id}
-              className="border-b border-white/5 hover:bg-white/5 transition-colors"
-            >
-              {/* Transaction Name */}
-              <TableCell className="max-w-[250px] pl-2 pr-10">
-                <div className="flex items-center gap-3">
-                  <p className="text-14 truncate font-semibold text-white">
-                    {removeSpecialCharacters(t.name)}
-                  </p>
-                </div>
-              </TableCell>
+            return (
+              <TableRow
+                key={t.id || t.$id}
+                className="border-b border-white/5 hover:bg-white/5 transition-colors"
+              >
+                {/* Transaction Name */}
+                <TableCell className="max-w-[200px] pl-2 pr-4">
+                  <div className="flex items-center gap-3">
+                    <p className="text-14 truncate font-semibold text-white">
+                      {removeSpecialCharacters(t.name)}
+                    </p>
+                  </div>
+                </TableCell>
 
-              {/* Amount */}
-              <TableCell className={cn(
-                'pl-2 pr-10 font-semibold',
-                isDebit || isNegative ? 'text-red-400' : 'text-green-400'
-              )}>
-                {isDebit && !amount.startsWith('-') ? `-${amount}` : amount}
-              </TableCell>
+                {/* Amount */}
+                <TableCell className={cn(
+                  'pl-2 pr-4 font-semibold',
+                  isDebit || isNegative ? 'text-red-400' : 'text-green-400'
+                )}>
+                  {isDebit && !amount.startsWith('-') ? `-${amount}` : amount}
+                </TableCell>
 
-              {/* Status */}
-              <TableCell className="pl-2 pr-10">
-                <StatusBadge status={status} />
-              </TableCell>
+                {/* Status */}
+                <TableCell className="pl-2 pr-4">
+                  <StatusBadge status={status} />
+                </TableCell>
 
-              {/* Date */}
-              <TableCell className="min-w-32 pl-2 pr-10 text-gray-400">
-                {formatDateTime(new Date(t.date)).dateTime}
-              </TableCell>
+                {/* Date */}
+                <TableCell className="min-w-32 pl-2 pr-4 text-gray-400">
+                  {formatDateTime(new Date(t.date)).dateTime}
+                </TableCell>
 
-              {/* Channel */}
-              <TableCell className="pl-2 pr-10 capitalize max-md:hidden text-gray-400">
-                {t.paymentChannel || t.channel || 'Online'}
-              </TableCell>
+                {/* Channel */}
+                <TableCell className="pl-2 pr-4 capitalize max-lg:hidden text-gray-400">
+                  {t.paymentChannel || t.channel || 'Online'}
+                </TableCell>
 
-              {/* Category */}
-              <TableCell className="pl-2 pr-10 max-md:hidden">
-                <CategoryBadge category={t.category} />
-              </TableCell>
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table>
+                {/* Category */}
+                <TableCell className="pl-2 pr-4 max-lg:hidden">
+                  <CategoryBadge category={t.category} />
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
 

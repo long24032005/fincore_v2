@@ -16,7 +16,7 @@ const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
   if (!accounts) return;
 
   const accountsData = accounts?.data;
-  const appwriteItemId = (id as string) || accountsData[0]?.appwriteItemId || 'all';
+  const appwriteItemId = (id as string) || 'all';
 
   // Fetch transactions from ALL sources
   const allBankTransactions = await Promise.all(
@@ -73,9 +73,12 @@ const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
 
       <RightSidebar
         user={loggedIn}
-        transactions={currentAccount ?
-          allBankTransactions.find(b => b.bankId === currentAccount.appwriteItemId)?.transactions || []
-          : []
+        transactions={
+          appwriteItemId === 'all'
+            ? [...allBankTransactions.flatMap(b => b.transactions), ...walletTransactions]
+            : currentAccount
+              ? allBankTransactions.find(b => b.bankId === currentAccount.appwriteItemId)?.transactions || []
+              : []
         }
         banks={accountsData?.slice(0, 2)}
       />
