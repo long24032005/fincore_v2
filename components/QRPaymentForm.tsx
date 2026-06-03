@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { User } from '@/types';
+// User type is globally available from types/index.d.ts
 import { ArrowLeft, Check, CheckCircle2, Home, Share2, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useRouter } from 'next/navigation';
@@ -213,56 +213,46 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         return;
                     }
 
-                    // This is a Wallet → Bank hybrid transfer
-                    // Create transaction record FIRST (before deducting wallet)
-                    const transaction = await createTransaction({
-                        name: note || `QR Payment to ${recipientData.name}`,
-                        amount: transferAmount.toString(),
+                    // ═══════════════════════════════════════════════════════════════════
+                    // 🔴 UNIFIED TRANSFER: Use the same transferBalance function for consistency
+                    // ═══════════════════════════════════════════════════════════════════
+                    // Previously this was duplicated logic - now using the unified function
+                    // with explicit receiverBankId to force Wallet→Bank routing
+                    const result = await transferBalance({
                         senderId: sender.$id,
-                        senderBankId: '', // No sender bank for wallet source
-                        receiverId: recipientData.userId,
-                        receiverBankId: receiverBankDetails.$id,
-                        email: recipientData.email,
-                        category: 'Transfer',
-                        pending: true
-                    });
-
-                    if (!transaction) {
-                        toast.error('Failed to create transaction record.');
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    // NOW deduct from sender's wallet (after transaction confirmed)
-                    const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                    await updateUserBalance({
-                        userId: sender.$id,
+                        receiverId: recipientData.userId, // Receiver User ID
+                        receiverBankId: receiverBankDetails.$id, // 🎯 EXPLICIT: Forces Wallet→Bank routing
                         amount: transferAmount,
-                        operation: 'subtract'
+                        description: note || `QR Payment to ${recipientData.name}`,
                     });
 
-                    // TODO: Implement Dwolla transfer from Wallet Funding Source to receiverBank
-                    // Currently: Wallet is debited but no actual bank transfer occurs
-                    // Need to: createDwollaFundingSource for wallet → createTransfer to receiverBank
-                    // This requires setting up a Dwolla Balance for the wallet
+                    console.log('💰 QR Wallet→Bank Transfer Result:', result);
 
-                    toast.success(
-                        `✅ Payment Sent! $${transferAmount.toFixed(2)} deducted from wallet.`,
-                        { duration: 4000 }
-                    );
-                    setSuccessData({
-                        amount: transferAmount.toFixed(2),
-                        to: recipientData.name,
-                        toBank: receiverBankDetails.name,
-                        toId: receiverBankDetails.shareableId,
-                        from: 'Wallet Balance',
-                        fromDetail: 'Finecore Wallet',
-                        fromId: sender.walletId,
-                        senderName: `${sender.firstName} ${sender.lastName}`,
-                        id: transaction?.$id || 'N/A',
-                        time: new Date().toLocaleString()
-                    });
-                    // router.push('/'); REMOVED
+                    if (result && result.success) {
+                        // Save recipient if user opted to
+                        await saveRecipientIfNeeded();
+
+                        toast.success(
+                            `✅ Payment Sent! $${transferAmount.toFixed(2)} deducted from wallet.`,
+                            { duration: 4000 }
+                        );
+                        router.refresh(); // Force server data refresh
+                        setSuccessData({
+                            amount: transferAmount.toFixed(2),
+                            to: recipientData.name,
+                            toBank: receiverBankDetails.name,
+                            toId: receiverBankDetails.shareableId,
+                            from: 'Wallet Balance',
+                            fromDetail: 'Finecore Wallet',
+                            fromId: sender.walletId,
+                            senderName: `${sender.firstName} ${sender.lastName}`,
+                            id: result.transactionId || 'N/A',
+                            time: new Date().toLocaleString()
+                        });
+                    } else {
+                        console.error('❌ Wallet→Bank transfer failed:', result);
+                        throw new Error(result?.message || 'Transfer failed');
+                    }
 
                 } else {
                     // QR specifies WALLET destination → Wallet to Wallet transfer
@@ -273,7 +263,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         receiverId: recipientData.userId,
                         amount: transferAmount,
                         description: note || `QR Payment to ${recipientData.name}`,
-                        email: recipientData.email
+                        // email auto-resolved by backend
                     });
 
                     console.log('💰 Wallet Transfer Result:', result);
@@ -344,8 +334,9 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         receiverId: recipientData.userId,
                         receiverBankId: '', // No receiver bank for wallet destination
                         email: recipientData.email,
-                        category: 'Transfer',
-                        pending: true
+                        category: 'QR Transfer',
+                        status: 'Success', // Wallet credit is instant
+                        channel: 'qr'
                     });
 
                     if (transaction) {
@@ -469,8 +460,9 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         receiverId: recipientData.userId,
                         receiverBankId: receiverBankDetails.$id,
                         email: recipientData.email,
-                        category: 'Transfer',
-                        pending: true
+                        category: 'QR Transfer',
+                        status: 'Processing', // Bank-to-bank takes 1-3 days
+                        channel: 'qr'
                     });
 
                     if (transaction) {

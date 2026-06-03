@@ -29,6 +29,16 @@ export const sidebarLinks = [
     route: "/saved-recipients",
     label: "Saved Recipients",
   },
+  {
+    imgURL: "/icons/monitor.svg",
+    route: "/ai-insights",
+    label: "AI Insights",
+  },
+  {
+    imgURL: "/icons/connect-bank.svg",
+    route: "/api-docs",
+    label: "API Docs",
+  },
 ];
 
 // good_user / good_password - Bank of America
@@ -125,6 +135,18 @@ export const transactionCategoryStyles = {
     backgroundColor: "bg-purple-500",
     textColor: "text-purple-700",
     chipBackgroundColor: "bg-purple-50",
+  },
+  "Wallet Transfer": {
+    borderColor: "border-indigo-200",
+    backgroundColor: "bg-indigo-500",
+    textColor: "text-indigo-700",
+    chipBackgroundColor: "bg-indigo-50",
+  },
+  "Wallet Top-up": {
+    borderColor: "border-violet-200",
+    backgroundColor: "bg-violet-500",
+    textColor: "text-violet-700",
+    chipBackgroundColor: "bg-violet-50",
   },
   Processing: {
     borderColor: "border-amber-200",

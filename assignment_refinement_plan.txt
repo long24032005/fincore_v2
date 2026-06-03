@@ -1,0 +1,77 @@
+KẾ HOẠCH NÂNG CẤP DỰ ÁN FINTECH - THEO YÊU CẦU ĐỀ BÀI (ASSIGNMENT PLAN)
+========================================================================
+
+Chào bạn, tôi đã đọc kỹ yêu cầu bài tập lớn "Advanced Fintech Synthesis – AI Integration & API Refinement" của thầy giáo. Dưới đây là phân tích chi tiết từng yêu cầu, so sánh với mã nguồn hiện tại của bạn và đề xuất giải pháp cụ thể.
+
+------------------------------------------------------------------------
+
+PHẦN 1: BẢNG PHÂN TÍCH YÊU CẦU & ĐÁNH GIÁ CODE HIỆN TẠI
+
+1. Yêu cầu A: Phân tích Dữ liệu thay thế bằng AI (AI-Driven Alternative Data Analysis - Trọng số 30%)
+   * Chi tiết yêu cầu:
+     - Thay vì chỉ dựa vào dữ liệu tài chính truyền thống (số dư, lịch sử giao dịch), bạn phải tích hợp Dữ liệu thay thế (Alternative Data) như: hoạt động mạng xã hội (social media sentiment), hóa đơn tiện ích (utility bills), xu hướng bán lẻ web-scraped, hoặc thói quen sử dụng điện thoại.
+     - MVP phải chứng minh được dữ liệu này cải thiện dịch vụ tài chính như thế nào (Ví dụ: tính điểm tín dụng tốt hơn, đưa ra lời khuyên đầu tư cá nhân hóa, hoặc phát hiện gian lận).
+   * Đánh giá code hiện tại:
+     - Chưa đáp ứng (❌ NO). Mã nguồn hiện tại hoàn toàn chưa có bất kỳ logic nào thu thập hay phân tích dữ liệu thay thế, cũng chưa có tính năng hiển thị điểm tín dụng hay phân tích tài chính thông minh dựa trên hành vi.
+   * Giải pháp nâng cấp:
+     - Viết server action mới (`alternative-data.actions.ts`) sử dụng Google Gemini AI để giả lập việc phân tích dữ liệu thay thế của người dùng (tần suất hoạt động MXH tích cực, thanh toán hóa đơn điện nước đúng hạn, thói quen mua sắm thông minh).
+     - Từ dữ liệu đó, Gemini AI sẽ tính toán ra một điểm tín dụng độc quyền tên là "Finecore Credit Score" (Thang điểm 300 - 850) và đưa ra báo cáo phân tích rủi ro, mẹo cải thiện tài chính.
+     - Tạo giao diện hiển thị trực quan mới (Trang "AI Insights" trên thanh Menu) hiển thị Đồng hồ đo điểm tín dụng (Credit Score Gauge), các biểu đồ phân tích thành phần dữ liệu thay thế và danh sách lời khuyên từ AI.
+
+2. Yêu cầu B: Tự xây dựng máy chủ OpenAPI (Custom OpenAPI Server Implementation - Trọng số 30%)
+   * Chi tiết yêu cầu:
+     - Tạo một máy chủ OpenAPI riêng của bạn (hoặc giả lập kết nối cổng ngân hàng nội địa như UOB) để giải quyết các hạn chế về tiền tệ (các dịch vụ toàn cầu như Stripe, Plaid chỉ hỗ trợ tốt USD, không hỗ trợ VND cho Việt Nam).
+     - OpenAPI server này phải cung cấp các API endpoints để xuất dữ liệu phân tích Alternative Data từ Phần A ra định dạng cấu trúc, giúp frontend và chatbot truy cập được.
+     - Cung cấp tài liệu mô tả OpenAPI (Swagger UI hoặc file YAML/JSON).
+   * Đánh giá code hiện tại:
+     - Chưa đáp ứng (❌ NO). Dự án hiện tại chạy qua Next.js Server Actions trực tiếp từ frontend lên database Appwrite, không có các API Route Handlers độc lập cung cấp chuẩn OpenAPI và không có tài liệu Swagger/OpenAPI.
+   * Giải pháp nâng cấp:
+     - Viết các API Route Handlers chuẩn Next.js tại thư mục `app/api/v1/...` để đóng vai trò làm máy chủ API:
+       + `GET /api/v1/alternative-data/credit-score`: Lấy điểm tín dụng AI và phân tích dữ liệu thay thế.
+       + `GET /api/v1/alternative-data/investment-advice`: Lấy gợi ý danh mục đầu tư từ AI.
+       + `GET /api/v1/openapi.json`: Trả về toàn bộ đặc tả OpenAPI Specification (chuẩn OpenAPI 3.0) của hệ thống.
+     - Xây dựng một trang tài liệu tương tác trực quan tại `/api-docs` ngay trong ứng dụng của bạn (thiết kế giao diện tối tối giản, sang trọng giống Swagger UI nhưng đồng bộ với giao diện của web) để thầy giáo và ban giám khảo UII có thể bấm thử nghiệm trực tiếp các API này.
+
+3. Yêu cầu C: Tinh chỉnh chức năng MVP (MVP Functional Refinements - Trọng số 20%)
+   * Chi tiết yêu cầu 1: Nội địa hóa giao dịch (Localized Transactions)
+     - Hiển thị số dư và xử lý các giao dịch bằng đơn vị tiền tệ nội địa (ở Việt Nam là VND - ₫) thay vì USD để giải quyết vấn đề tiền tệ của Plaid/Dwolla.
+   * Đánh giá code hiện tại:
+     - Chưa đáp ứng (❌ NO). Toàn bộ tiền tệ đang hiển thị dạng USD (ký tự `$`, dấu phân tách thập phân kiểu Mỹ).
+   * Giải pháp nâng cấp:
+     - Chỉnh sửa hàm định dạng tiền tệ `formatAmount` trong `lib/utils.ts` sang định dạng VND (`vi-VN`, ví dụ: `50.000.000 ₫`).
+     - Khi người dùng đăng ký mới, thay vì ví có số dư `$0`, hệ thống sẽ tự động cấp một số dư demo ban đầu là `50.000.000 ₫` để thuận tiện cho việc trải nghiệm chuyển khoản nội địa.
+   * Chi tiết yêu cầu 2: Chatbot tự động hóa nâng cao (Advanced Agentic Chatbot)
+     - Chatbot AI (Gemini) phải tương tác trực tiếp với logic ứng dụng thông qua OpenAPI server. Người dùng có thể hỏi chatbot về các thông tin điểm tín dụng AI hoặc thực hiện giao dịch chuyển khoản bằng ngôn ngữ tự nhiên.
+   * Đánh giá code hiện tại:
+     - Đáp ứng một phần (⚠️ PARTIAL). Chatbot đã có thể chuyển tiền ví-ví, ví-ngân hàng cơ bản, nhưng chưa biết cách đọc dữ liệu thay thế/điểm tín dụng và chưa liên kết qua OpenAPI.
+   * Giải pháp nâng cấp:
+     - Bổ sung định nghĩa ý định (Intent) mới cho Chatbot trong `chatbot-ai.actions.ts`: Nhận diện các câu hỏi về điểm tín dụng, phân tích hành vi, lời khuyên tài chính (ví dụ: "điểm tín dụng của tôi là bao nhiêu?", "check my credit score", "hãy khuyên tôi cách đầu tư").
+     - Truyền thêm dữ liệu Alternative Data và Credit Score vào Ngữ cảnh (Context) của Chatbot để nó trả lời tự nhiên và chính xác theo thông số thời gian thực của người dùng.
+
+------------------------------------------------------------------------
+
+PHẦN 2: LỘ TRÌNH TRIỂN KHAI CHI TIẾT (IMPLEMENTATION PLAN)
+
+Bước 1: Nội địa hóa tiền tệ sang VND (Nền móng)
+- Sửa hàm hiển thị số tiền `formatAmount` trong `lib/utils.ts` sang định dạng VND.
+- Sửa hàm đăng ký tài khoản `signUp` trong `user.actions.ts` cấp số dư mặc định `50.000.000 ₫`.
+
+Bước 2: Xây dựng logic phân tích Điểm Tín dụng AI (Alternative Data)
+- Tạo file `lib/actions/alternative-data.actions.ts` kết nối Gemini API.
+- Viết prompt gửi dữ liệu giả lập (hoạt động MXH, hóa đơn tiện ích) để Gemini trả về điểm tín dụng và phân tích.
+- Thiết kế giao diện Dashboard hiển thị tại trang `app/(root)/ai-insights/page.tsx` với đồng hồ đo điểm số và lời khuyên.
+- Thêm đường dẫn "AI Insights" vào Sidebar để truy cập thuận tiện.
+
+Bước 3: Phát triển máy chủ API OpenAPI & Trang tài liệu Swagger UI
+- Tạo file đặc tả OpenAPI JSON tại `app/api/v1/openapi.json/route.ts`.
+- Tạo các file endpoints `/api/v1/alternative-data/credit-score/route.ts` và `/api/v1/alternative-data/investment-advice/route.ts`.
+- Tạo trang tài liệu API tương tác tại `app/(root)/api-docs/page.tsx` hiển thị thông tin Swagger UI.
+
+Bước 4: Nâng cấp Chatbot AI hỗ trợ Điểm tín dụng & Tương tác API
+- Cập nhật prompt của chatbot để truyền thêm ngữ cảnh điểm tín dụng.
+- Cập nhật logic nhận diện câu lệnh tiếng Việt/tiếng Anh để hỗ trợ tra cứu điểm tín dụng qua Chat.
+
+Bước 5: Kiểm thử toàn diện & Hoàn thiện
+- Chạy thử local, kiểm tra hiển thị VND ở mọi màn hình (Trang chủ, Lịch sử giao dịch, Danh sách tài khoản).
+- Kiểm tra tính năng chuyển khoản qua Chatbot.
+- Thử nghiệm gọi các API qua trang `/api-docs` để đảm bảo hoạt động trơn tru 100%.

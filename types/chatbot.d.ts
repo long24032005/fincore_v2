@@ -9,6 +9,10 @@ declare type ChatMessage = {
         intent?: ChatIntent;
         transferId?: string;
         actionButtons?: ChatActionButton[];
+        pendingConfirmation?: {
+            type: 'transfer' | 'bill_payment' | 'portfolio_investment';
+            payload: any;
+        };
     };
 };
 
@@ -16,7 +20,7 @@ declare type ChatActionButton = {
     id: string;
     label: string;
     value: string;
-    type: 'source' | 'destination' | 'confirm' | 'cancel' | 'recipient';
+    type: 'source' | 'destination' | 'confirm' | 'cancel' | 'recipient' | 'proactive_action';
     variant?: 'primary' | 'secondary' | 'danger';
 };
 

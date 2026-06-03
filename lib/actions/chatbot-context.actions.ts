@@ -11,6 +11,7 @@ import { createAdminClient } from "../appwrite";
 const {
     APPWRITE_DATABASE_ID: DATABASE_ID,
     APPWRITE_TRANSACTION_COLLECTION_ID: TRANSACTION_COLLECTION_ID,
+    APPWRITE_USER_COLLECTION_ID: USER_COLLECTION_ID,
 } = process.env;
 
 /**
@@ -20,6 +21,15 @@ const {
 export const getChatbotContext = async (userId: string): Promise<ChatbotContext | null> => {
     try {
         console.log('🔍 [Chatbot Context] Loading context for userId:', userId);
+
+        const { database } = await createAdminClient();
+        const userDoc = await database.getDocument(
+            DATABASE_ID!,
+            USER_COLLECTION_ID!,
+            userId
+        );
+        const authUserId = userDoc.userId || userId;
+        console.log('👤 [Chatbot Context] Resolved authUserId:', authUserId);
 
         // 1. Get wallet balance
         const walletBalanceData = await getUserBalance(userId);
@@ -81,34 +91,82 @@ export const getChatbotContext = async (userId: string): Promise<ChatbotContext 
         }
 
         // 4. Get recent transactions (last 10)
-        const { database } = await createAdminClient();
-
         // Query sent and received transactions separately (Appwrite may not support Query.or)
-        const sentTxns = await database.listDocuments(
+        const idList = Array.from(new Set([userId, authUserId])).filter(Boolean) as string[];
+
+        let sentTxns = await database.listDocuments(
             DATABASE_ID!,
             TRANSACTION_COLLECTION_ID!,
             [
-                Query.equal('senderId', userId),
+                Query.equal('senderId', idList),
                 Query.orderDesc('$createdAt'),
-                Query.limit(10)
+                Query.limit(50)
             ]
         );
 
-        const receivedTxns = await database.listDocuments(
+        let receivedTxns = await database.listDocuments(
             DATABASE_ID!,
             TRANSACTION_COLLECTION_ID!,
             [
-                Query.equal('receiverId', userId),
+                Query.equal('receiverId', idList),
                 Query.orderDesc('$createdAt'),
-                Query.limit(10)
+                Query.limit(50)
             ]
         );
+
+        // Auto-seed if user has zero transactions (e.g. newly created demo account)
+        if (sentTxns.total === 0 && receivedTxns.total === 0) {
+            console.log(`🌱 [Chatbot Context] No transactions found. Auto-seeding for user ${userId} / ${authUserId}...`);
+            const { getUserInfo, seedUserTransactions } = await import("./user.actions");
+            const userInfo = await getUserInfo({ userId });
+            if (userInfo) {
+                await seedUserTransactions(authUserId, userInfo.email, database);
+                
+                // Re-fetch transactions after seeding
+                sentTxns = await database.listDocuments(
+                    DATABASE_ID!,
+                    TRANSACTION_COLLECTION_ID!,
+                    [
+                        Query.equal('senderId', idList),
+                        Query.orderDesc('$createdAt'),
+                        Query.limit(50)
+                    ]
+                );
+
+                receivedTxns = await database.listDocuments(
+                    DATABASE_ID!,
+                    TRANSACTION_COLLECTION_ID!,
+                    [
+                        Query.equal('receiverId', idList),
+                        Query.orderDesc('$createdAt'),
+                        Query.limit(50)
+                    ]
+                );
+            }
+        }
 
         // Merge and sort transactions
-        const allTransactions = [...sentTxns.documents, ...receivedTxns.documents]
+        const mergedTxns = [...sentTxns.documents, ...receivedTxns.documents];
+        // Sort ascending to apply spreading sequence
+        mergedTxns.sort((a: any, b: any) => new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime());
+
+        // Apply virtualization (spreading dates 1.5 days apart)
+        const virtualizedTxns = mergedTxns.map((txn: any, idx: number) => {
+            const realDate = new Date(txn.$createdAt);
+            const offsetDays = (mergedTxns.length - idx) * 1.5;
+            const virtualDate = new Date(realDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+            
+            return {
+                ...txn,
+                $createdAt: virtualDate.toISOString()
+            };
+        });
+
+        // Now sort descending and take the top 10
+        const allTransactions = virtualizedTxns
             .sort((a: any, b: any) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
             .slice(0, 10);
-        console.log('📜 [Chatbot Context] Recent transactions loaded:', allTransactions.length);
+        console.log('📜 [Chatbot Context] Recent transactions loaded and virtualized:', allTransactions.length);
 
         const finalContext = {
             userId,

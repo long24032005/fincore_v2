@@ -1,0 +1,29 @@
+Fintech Competition Rubric: Advanced AI & Incubation-Ready Scaling
+Focusing on proprietary tech moats, market localization, and incubation entry criteria.
+Competition Deliverables
+Incubator Investment Proposal: Max 10 pages detailing proprietary AI methodologies, custom infrastructure architecture, and a commercial scaling roadmap optimized for incubators like UII Incubator or Dr. Ho’s Incubator.
+Advanced AI-Powered Prototype: Deployed application integrating custom server backends and functional agentic AI features.
+Evaluation Matrix
+Criteria
+Weight
+Venture Capital & Incubator Focus (Real-World & Practicality)
+Proprietary Financial Intelligence & Data Moat
+30%
+* Alternative Data Mastery: Uses AI to scrape, analyze, and unlock value from non-traditional datasets (e.g., social media sentiment, web retail trends, utility footprints).
+* Risk & Personalization Utility: Translates data insights into actionable business advantages, such as proprietary credit scoring models, personalized investment engines, or advanced fraud detection.
+Localized Technical Infrastructure
+30%
+* Solving Real Market Friction: Replaces rigid global sandboxes with a custom backend OpenAPI server or local enterprise API (e.g., UOB) to process native transactions natively.
+* API Architecture: Systematically exposes custom endpoints that deliver AI-processed alternative data straight to the frontend and conversational agents.
+Agentic AI & Next-Gen UX
+20%
+* Frictionless AI Automation: Elevates the application experience using an advanced LLM agent (e.g., Gemini API) that moves beyond static chat to actively trigger transactions and call backend APIs via natural language.
+* Conversational Logic: Smoothly resolves user prompts regarding account status, complex financial calculations, or localized platform actions.
+Incubation Target Readiness (Demo Day)
+20%
+* Incubator Viability: The team demonstrates high commercial viability, articulating an investment-ready pitch calibrated for accelerators like the UII Incubator.
+* Technical Defensibility: The architectural choices, localized compliance considerations, and AI implementations are resilient enough to handle production-scale financial operations.
+Key Adjustments for the Competition Format:
+Shift from Grades to Moats: Academic requirements for documentation are replaced by evaluations of the startup's "Technical Defensibility" and "Data Moats".
+Localization Priority: Teams are heavily incentivized to fix systemic operational limitations (such as global API currency bugs) by creating custom backend servers tailored specifically to their regional target markets.
+Incubation Focus: The traditional "Future Roadmap" section is adapted directly into an active evaluation of incubation readiness, preparing the founders to pitch face-to-face against institutional criteria.

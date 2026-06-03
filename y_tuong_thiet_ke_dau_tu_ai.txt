@@ -1,0 +1,165 @@
+========================================================================================
+             TÀI LIỆU Ý TƯỞNG THIẾT KẾ & VẬN HÀNH TÍNH NĂNG ĐẦU TƯ AI (ROBO-ADVISOR)
+========================================================================================
+
+Tài liệu này tóm tắt toàn bộ ý tưởng thiết kế, logic xử lý dữ liệu AI và bố cục giao diện của chức năng "Đầu tư" mới trên ứng dụng Fincore Wallet. Tài liệu được viết bằng ngôn từ dễ hiểu, liền mạch để bạn và nhóm phát triển có thể nắm bắt và triển khai code được ngay.
+
+----------------------------------------------------------------------------------------
+PHẦN 1: BỘ 13 CHỈ SỐ HÀNH VI (FEATURES) & CÁCH THU THẬP TRONG BẢN MVP
+----------------------------------------------------------------------------------------
+
+Để tư vấn đầu tư chính xác, hệ thống không bắt người dùng điền khảo sát, mà tự động đo lường hành vi của họ qua 13 chỉ số (chia làm 3 nhóm). Dưới đây là cách thu thập thực tế trong ứng dụng MVP (sử dụng Next.js + Appwrite + Web API):
+
+NHÓM 1: KHẢ NĂNG CHỊU RỦI RO TÀI CHÍNH (Năng lực dòng tiền thực tế)
+Đây là nhóm biến quyết định xem ví của người dùng có đủ "sức bền" để đầu tư hay không:
+1. income_regularity_index (Độ ổn định thu nhập): 
+   - Cách thu thập: Quét lịch sử giao dịch (Collection 'transactions') trên Appwrite. Tính toán độ lệch ngày giữa các khoản nạp tiền lớn hàng tháng để xem thu nhập ổn định hay bấp bênh.
+2. liquidity_buffer_ratio (Đệm thanh khoản):
+   - Cách thu thập: Lấy số dư ví hiện tại chia cho tổng chi tiêu 30 ngày gần nhất (đọc từ Appwrite).
+3. immediate_cash_out_rate (Tỷ lệ rút tiền ngay):
+   - Cách thu thập: Đo khoảng cách thời gian giữa giao dịch nạp tiền và giao dịch rút/chuyển tiền đi trong ví. Nếu khoảng cách < 2 tiếng, tính tỷ lệ số tiền rút.
+4. p2p_network_density (Mạng lưới quan hệ):
+   - Cách thu thập: Đếm số lượng tài khoản nhận/gửi tiền độc nhất của user này trong 90 ngày qua (đọc từ bảng giao dịch).
+   
+NHÓM 2: THÁI ĐỘ CHẤP NHẬN RỦI RO TÂM LÝ (Khẩu vị đầu tư)
+Đo lường mức độ bình thản hoặc bốc đồng của người dùng trước các quyết định tài chính:
+5. discretionary_spend_ratio (Tỷ lệ chi tiêu không thiết yếu):
+   - Cách thu thập: Cộng tổng tiền các giao dịch thuộc danh mục mua sắm, ăn uống, giải trí rồi chia cho tổng chi tiêu trong tháng (phân loại qua trường 'category' trong bảng giao dịch).
+6. impulse_purchase_index (Mức bốc đồng mua sắm):
+   - Cách thu thập: Đếm tần suất các giao dịch mua sắm ngẫu hứng phát sinh ngoài giờ hành chính.
+7. late_night_spend_ratio (Tỷ lệ tiêu tiền đêm muộn):
+   - Cách thu thập: Quét mốc thời gian giao dịch xem có phát sinh trong khung giờ từ 23h đêm đến 5h sáng hay không.
+8. onboarding_attention_score (Thời gian đọc điều khoản rủi ro):
+   - Cách thu thập: Ở frontend, đo thời gian từ lúc mở màn hình Cảnh báo rủi ro đầu tư cho đến khi người dùng bấm nút "Tôi đồng ý". Bấm quá nhanh thể hiện sự nóng vội, mạo hiểm.
+9. balance_check_frequency (Tần suất check ví):
+   - Cách thu thập: Đếm số lần người dùng gọi API tải trang chủ hoặc tải số dư trong 24 giờ. Check ví quá nhiều lần thể hiện tâm lý lo âu, sợ mất mát.
+
+NHÓM 3: KỶ LUẬT ĐẦU TƯ & TÍCH LŨY (Tính nhất quán)
+Đo lường xem người dùng có thể duy trì đầu tư dài hạn định kỳ hay không:
+10. save_after_payday_ratio (Tích lũy sau lương):
+    - Cách thu thập: Theo dõi xem người dùng có chuyển tiền vào quỹ đầu tư hoặc tiết kiệm trong vòng 48 giờ kể từ khi nhận một khoản tiền inflow lớn (nhận lương) hay không.
+11. auto_save_completion_rate (Tỷ lệ tự động tích lũy thành công):
+    - Cách thu thập: Đo lường tỷ lệ các lệnh tích lũy tự động (Autopilot) chạy thành công mà không bị lỗi thiếu số dư hay bị người dùng chủ động tắt.
+12. bill_on_time_rate (Tỷ lệ đóng hóa đơn đúng hạn):
+    - Cách thu thập: Sử dụng một API giả lập (Mock API) trả về danh sách hóa đơn điện, nước, internet của người dùng kèm hạn đóng và ngày đóng thực tế để tính tỷ lệ % đúng hạn.
+13. low_battery_transaction (Giao dịch khi pin yếu):
+    - Cách thu thập: Frontend Next.js gọi trực tiếp API của trình duyệt web (navigator.getBattery()) ngay khi người dùng nhấn nút "Xác nhận đầu tư" để lấy % pin thiết bị và gửi kèm lên backend.
+
+----------------------------------------------------------------------------------------
+PHẦN 2: QUY TRÌNH GÁN NHÃN TỰ ĐỘNG BẰNG HỌC KHÔNG GIÁM SÁT (UNSUPERVISED CLUSTERING)
+----------------------------------------------------------------------------------------
+
+Vì đây là ứng dụng mới, ngân hàng chưa có sẵn nhãn (nhóm rủi ro của từng người dùng) để dạy cho AI. Chúng ta sẽ giải quyết bài toán "khởi động lạnh" này bằng thuật toán phân cụm:
+
+1. Thu thập dữ liệu thô:
+   - Gom dữ liệu của 10.000 người dùng cũ trong lịch sử (mỗi người có đủ 13 chỉ số hành vi ở Phần 1).
+2. Phân cụm tự động bằng thuật toán:
+   - Đưa dữ liệu 10.000 người này vào thuật toán K-Means Clustering ở máy chủ Python để máy tính tự động nhóm họ thành 3 cụm (hoặc có thể điều chỉnh bằng các thuật toán tối ưu số cụm) dựa trên sự tương đồng về thói quen chi tiêu và dòng tiền.
+3. Định nghĩa cụm (Dán nhãn ý nghĩa tài chính):
+   - Đội ngũ phân tích sẽ đọc các chỉ số trung bình của từng cụm để đặt tên:
+     * Cụm đóng hóa đơn trễ, ví mỏng, hay rút tiền ngay $\rightarrow$ Nhãn: Thận Trọng (Conservative).
+     * Cụm chi tiêu bốc đồng cao, hay tiêu đêm, thích mua sắm $\rightarrow$ Nhãn: Mạo Hiểm (Aggressive).
+     * Cụm các chỉ số ở mức trung bình $\rightarrow$ Nhãn: Cân Bằng (Balanced).
+4. Kết quả:
+   - Gán ngược lại các nhãn này vào hồ sơ của 10.000 người dùng cũ. Lúc này chúng ta đã tự tạo ra được một tập dữ liệu huấn luyện hoàn chỉnh có sẵn nhãn $y$ cực kỳ chuẩn xác mà không cần khảo sát.
+
+----------------------------------------------------------------------------------------
+PHẦN 3: DỰ ĐOÁN KHÁCH HÀNG MỚI BẰNG XGBOOST & GIẢI THÍCH QUA SHAP VALUES
+----------------------------------------------------------------------------------------
+
+Khi có một người dùng mới tham gia hệ thống và bắt đầu thực hiện các giao dịch, làm sao AI biết họ thuộc nhóm nào?
+
+1. Huấn luyện mô hình XGBoost Classifier:
+   - Sử dụng tập dữ liệu 10.000 người dùng cũ (đã được dán nhãn tự động ở Phần 2) làm đầu vào để huấn luyện mô hình XGBoost. Mô hình này sẽ học quy luật phân loại cực kỳ sắc bén.
+2. Dự đoán người dùng mới:
+   - Khi người dùng mới phát sinh hành vi, hệ thống Next.js gom 13 chỉ số của họ gửi sang Python. XGBoost sẽ tính toán xác suất và đưa ra kết quả phân loại (Ví dụ: Dự đoán 75% khả năng người này thuộc nhóm Cân bằng).
+3. Giải thích mô hình bằng SHAP Values (Explainable AI):
+   - Để AI không phải là một "hộp đen" bí ẩn, thư viện toán học SHAP được tích hợp để giải thích cụ thể điểm cộng/trừ của từng hành vi.
+   - Bạn hãy tưởng tượng SHAP giống như một **"Bảng kê chi tiết điểm số"**:
+     * AI sẽ hiển thị cho người dùng thấy: *"Hành vi đóng tiền nước trễ hạn làm giảm 15% mức độ an toàn của bạn; tuy nhiên hành động tự động trích lương đầu tư đều đặn đã cộng lại cho bạn 30% điểm kỷ luật..."*. Cách này giúp người dùng tin tưởng và hiểu rõ tại sao AI lại xếp họ vào nhóm đó.
+
+----------------------------------------------------------------------------------------
+PHẦN 4: BỐ CỤC GIAO DIỆN UI/UX CỦA TÍNH NĂNG "ĐẦU TƯ" VÀ CƠ CHẾ VẬN HÀNH
+----------------------------------------------------------------------------------------
+
+Giao diện tab "Đầu tư" sẽ được thiết kế thành một bảng điều khiển (Dashboard) cao cấp và liền mạch gồm 5 phần chính từ trên xuống dưới:
+
+1. Scroll list danh sách sản phẩm đầu tư (Đặt ở đầu trang):
+   - Hiển thị danh sách các quỹ mở và cổ phiếu liên kết (VESAF, DCDS, TCBF, FPT...).
+   - Cho phép người dùng tự do bấm vào từng sản phẩm để đầu tư lẻ theo ý muốn cá nhân mà không cần đi qua AI.
+2. Nút kích hoạt Trợ lý AI phân tích:
+   - Nằm ở giữa trang. Khi người dùng click vào, giao diện sẽ ẩn đi nút bấm và hiện hiệu ứng quét dữ liệu (AI scanning) khoảng 2 giây, sau đó trượt mượt mà để hiển thị toàn bộ Phân khu 3 bên dưới.
+3. Phân khu kết quả phân tích AI (Hiện ra sau khi click):
+   - Nhãn khẩu vị rủi ro hiện tại: Hiển thị nổi bật nhãn (Thận trọng / Cân bằng / Mạo hiểm).
+   - Biểu đồ mạng nhện sức khỏe tài chính (Radar Chart): Vẽ trực quan 3 trục Willingness - Capacity - Discipline để người dùng thấy điểm mạnh/yếu của họ.
+   - Hộp tư vấn chi tiết: Hiển thị văn bản nhận xét của AI về thói quen tài chính của user và đề xuất tỷ lệ phân bổ danh mục tối ưu (Ví dụ: đề xuất 50% VESAF, 30% TCBF, 20% FPT).
+4. Danh mục đầu tư khuyến nghị & Nút "Đầu tư cả danh mục" (One-click Invest):
+   - Hiển thị cấu trúc danh mục đề xuất dưới dạng biểu đồ cột nhóm hoặc vòng tròn.
+   - Tích hợp tính năng **Đầu tư cả danh mục**: Người dùng chỉ cần nhập tổng số tiền muốn đầu tư (Ví dụ: 10.000.000 ₫). Hệ thống sẽ tự động tính toán và chia tiền theo tỷ lệ đề xuất (5M mua VESAF, 3M mua TCBF, 2M mua FPT) và thực hiện mua tất cả chỉ bằng **1 lần bấm nút duy nhất**.
+5. Biểu đồ dự phóng tương lai:
+   - Biểu đồ đường (Line Chart) mô phỏng tài sản của người dùng tăng trưởng thế nào trong 10 năm tới nếu họ thực hiện đầu tư theo tỷ lệ AI khuyến nghị, so sánh trực tiếp với gửi tiết kiệm thông thường hoặc giữ tiền mặt.
+6. Bảng điều khiển tích lũy tự động (Autopilot - Đặt ở cuối trang):
+   - Quản lý các lệnh đầu tư tự động định kỳ hàng tháng. Đi kèm công tắc bật/tắt (Toggle Switch) và nút Xóa (Delete) nhanh để người dùng luôn có toàn quyền kiểm soát dòng tiền tự động của mình.
+
+----------------------------------------------------------------------------------------
+PHẦN 5: CHIẾN LƯỢC DỮ LIỆU MVP (COLD START) & PHƯƠNG PHÁP TỔNG HỢP BIẾN HÀNH VI
+----------------------------------------------------------------------------------------
+
+Để giải quyết câu hỏi: "Làm sao có dữ liệu 10.000 người dùng khi ứng dụng mới ra mắt?", hệ thống áp dụng chiến lược Cold Start kết hợp xử lý dữ liệu thông minh dưới đây:
+
+1. Giải pháp Khởi động lạnh (Cold Start) bằng Dữ liệu giả lập (Synthetic Data):
+   - Trong bối cảnh MVP chưa có người dùng thật, chúng ta sử dụng một kịch bản giả lập (đã cài đặt trong file train.py) để tự động sinh ra dữ liệu của 10.000 người dùng ảo.
+   - Các chỉ số hành vi này không sinh ngẫu nhiên hoàn toàn mà tuân theo các quy luật phân phối thực tế và các ràng buộc logic tài chính do chuyên gia thiết lập (Ví dụ: Người có tỷ lệ đóng hóa đơn trễ cao thường có xu hướng bốc đồng và đệm thanh khoản mỏng hơn).
+   - Mô hình XGBoost sẽ được huấn luyện trên 10.000 mẫu giả lập này để hình thành bộ khung logic dự đoán chạy được ngay.
+
+2. Lộ trình chuyển dịch dữ liệu từ MVP lên Production (3 Giai đoạn):
+   - Giai đoạn 1 (Ra mắt MVP): Sử dụng mô hình huấn luyện bằng dữ liệu giả lập để chạy thử nghiệm và kiểm thử hệ thống.
+   - Giai đoạn 2 (Gom dữ liệu thật): Khi có những người dùng thật đầu tiên, song song với việc AI nhận diện bằng mô hình hiện tại, chúng ta áp dụng hệ thống luật cứng (Rule-based) để kiểm tra chéo và thu thập lịch sử giao dịch của họ vào Appwrite.
+   - Giai đoạn 3 (Huấn luyện lại - Re-training): Khi tích lũy đủ dữ liệu giao dịch của một lượng lớn khách hàng thật, chúng ta xuất dữ liệu thật này ra, thực hiện phân cụm K-Means lại để gán nhãn thực tế, rồi dùng XGBoost huấn luyện một phiên bản mô hình mới thông minh hơn, thay thế hoàn toàn mô hình giả lập ban đầu.
+
+3. Phương pháp tổng hợp dữ liệu (Từ hàng nghìn giao dịch về 1 dòng đặc trưng):
+   Mặc dù một người dùng phát sinh hàng nghìn giao dịch qua nhiều tháng, mô hình AI chỉ cần duy nhất 1 dòng đặc trưng chứa 13 chỉ số cho mỗi người dùng. Hệ thống tự động nén dữ liệu giao dịch thô bằng 4 phép toán tổng hợp sau:
+   - Phép toán Tỷ lệ (Ratio): Tính toán tỷ lệ phần trăm hành vi (Ví dụ: bill_on_time_rate = Số hóa đơn đúng hạn / Tổng hóa đơn).
+   - Phép toán Tần suất (Count): Đếm số lần lặp lại hành vi trong một khoảng thời gian (Ví dụ: balance_check_frequency = Tổng số lần check ví / 30 ngày).
+   - Phép toán Biến động (Volatility - Standard Deviation): Đo lường độ trồi sụt của số dư ví qua các ngày. Ví ổn định có độ biến động thấp, ví tiêu dùng thất thường có độ biến động cao.
+   - Phép toán Thời điểm (Snapshot): Lấy giá trị chính xác tại một sự kiện đặc biệt (Ví dụ: % pin điện thoại low_battery_transaction ngay khi bấm nút "Đầu tư").
+
+4. Phương pháp "Bơm dữ liệu giả lập tự động" (Data Seeding) phục vụ Demo trực tiếp:
+   - Cơ chế hoạt động: Khi có tài khoản đăng ký mới trong giai đoạn Demo, hệ thống không để trống ví mà sẽ chạy một script tự động "bơm" (seed) sẵn một bộ lịch sử giao dịch giả lập vào bảng `transactions` trên Appwrite của tài khoản đó.
+   - Phân loại kịch bản bằng từ khóa Email: Để người trình bày (demo) dễ dàng kiểm soát nhãn dự đoán của AI trước hội đồng, hệ thống nhận diện từ khóa trong email đăng ký:
+     * Email chứa từ khóa `thantrong` (Ví dụ: `huy.thantrong@gmail.com`) -> Hệ thống tự động bơm dữ liệu lịch sử của một người có thói quen tài chính lành mạnh, an toàn (AI sẽ quét và dự đoán ra nhãn Thận Trọng).
+     * Email chứa từ khóa `maohiem` (Ví dụ: `huy.maohiem@gmail.com`) -> Bơm dữ liệu thói quen bốc đồng, tiêu tiền muộn, rút tiền ngay (AI sẽ quét và dự đoán ra nhãn Mạo Hiểm).
+     * Các email thông thường khác -> Mặc định bơm dữ liệu hành vi ở mức trung bình (AI dự đoán ra nhãn Cân Bằng).
+   - Kết quả: Ngay sau khi đăng ký tài khoản thành công và bấm quét AI ở tab "Đầu tư", người dùng lập tức nhìn thấy các biểu đồ tài chính trực quan và nhãn khẩu vị cá nhân hóa mà không cần phải chờ đợi tích lũy dòng tiền thực tế. Điều này tạo hiệu ứng trình diễn trơn tru và thuyết phục nhất.
+
+----------------------------------------------------------------------------------------
+PHẦN 6: THIẾT KẾ HỆ THỐNG TRỢ LÝ ẢO AGENTIC AI (CHATBOT)
+----------------------------------------------------------------------------------------
+
+Để hiện thực hóa yêu cầu của thầy giáo về việc chatbot tự động tương tác trực tiếp với logic ứng dụng thông qua OpenAPI server và dữ liệu thay thế hành vi, hệ thống phát triển chatbot theo mô hình Agentic AI (AI đại lý tự chủ) thay vì chatbot trả lời tự động hoặc nhận diện ý định (intent) cứng nhắc.
+
+1. Nguyên lý tự chủ dựa trên Gọi hàm (Function Calling / Tool Use):
+   - Thay vì code cứng logic (if/else), chatbot được trang bị một bộ công cụ (Tools) gồm các hàm gọi API thực tế của hệ thống.
+   - Khi nhận câu lệnh ngôn ngữ tự nhiên từ người dùng, Gemini AI sẽ tự động phân tích ngữ cảnh, lựa chọn công cụ phù hợp để gọi, nhận kết quả trả về từ backend, và tiếp tục suy luận bước tiếp theo cho đến khi hoàn thành nhiệm vụ.
+   - Danh sách bộ công cụ cung cấp cho Chatbot:
+     * Nhóm tài khoản & giao dịch: get_balance() (Số dư ví & ngân hàng), get_recipients() (Danh sách người nhận đã lưu), get_transaction_history() (Lịch sử giao dịch), execute_transfer() (Thực hiện chuyển tiền).
+     * Nhóm phân tích hành vi & đầu tư: get_risk_profile() (Đọc khẩu vị rủi ro và 13 chỉ số thô từ DB), get_investment_advice() (Đọc danh mục quỹ khuyến nghị tương ứng).
+     * Nhóm hóa đơn ngoài (External APIs): get_utility_bills() (Lấy danh sách hóa đơn điện, nước, mạng quá hạn), pay_utility_bill() (Thanh toán hóa đơn trực tiếp).
+     * Nhóm tự động hóa Autopilot: get_autopilot_rules() (Lấy danh sách lệnh tích lũy), create_autopilot_rule() (Tạo lệnh tích lũy tự động), toggle_autopilot_rule() (Bật/tắt lệnh), delete_autopilot_rule() (Xóa lệnh).
+
+2. Quy trình suy luận ReAct (Reasoning & Acting) chạy ngầm ở Backend:
+   - Khi nhận yêu cầu phức tạp (Ví dụ: "Kiểm tra xem tôi còn hóa đơn nào chưa đóng không rồi đóng giúp tôi, còn dư bao nhiêu tiền đem đầu tư vào danh mục đề xuất"):
+     * Bước 1 (Suy luận): Nhận thấy cần quét hóa đơn chưa thanh toán -> Gọi get_utility_bills().
+     * Bước 2 (Suy luận): Nhận kết quả có hóa đơn Internet 250K chưa thanh toán -> Lên phương án đóng hóa đơn qua pay_utility_bill().
+     * Bước 3 (Suy luận): Nhận thấy cần biết số dư còn lại -> Gọi get_balance().
+     * Bước 4 (Suy luận): Đọc số dư ví, tính toán số tiền còn lại và chuẩn bị lệnh đầu tư danh mục tương ứng qua execute_portfolio_investment().
+     * Bước 5 (Kết luận): Trả kết quả cuối cùng cho người dùng dưới dạng văn bản và giao diện trực quan.
+
+3. Loại bỏ Mock cứng bằng Kết nối Dữ liệu Động:
+   - Tái cấu trúc hàm đánh giá chủ động (evaluateProactiveTriggers) của chatbot: Loại bỏ hoàn toàn việc gán cứng bài đăng MXH và hóa đơn tiện ích theo tên người dùng (if name.includes("nam")).
+   - Chatbot sẽ trực tiếp gọi API thực tế /api/v1/external/utility-bills và đọc hồ sơ AI đã lưu trong local-ai-db.ts. Nhờ đó, nếu người dùng thanh toán hóa đơn hoặc điểm rủi ro thay đổi, chatbot sẽ tự động cập nhật phản hồi theo thời gian thực thay vì chạy theo kịch bản tĩnh.
+
+4. Cơ chế bảo mật Giao dịch (Human-in-the-loop):
+   - Để đảm bảo an toàn tài chính (ngăn chặn AI tự ý chuyển tiền hoặc đầu tư sai lệch), các lệnh thực thi giao dịch tài chính (như chuyển tiền, thanh toán hóa đơn, mua quỹ đầu tư) của chatbot sẽ không chạy ngầm hoàn toàn.
+   - Thay vào đó, khi AI gọi hàm thực thi, backend chỉ tạo trạng thái chờ duyệt (pending_confirmation) và trả về một cấu trúc dữ liệu giao dịch có tổ chức.
+   - Frontend sẽ dựng một Thẻ Xác nhận Giao dịch (Interactive Card) trực quan ngay trong ô chat kèm hai nút bấm [Xác nhận] và [Hủy]. Giao dịch chỉ thực sự được ghi nhận khi người dùng chủ động tương tác bấm nút xác nhận.

@@ -39,8 +39,17 @@ const RecentTransactions = ({
         ...allBankTransactions.flatMap(b => b.transactions),
         ...walletTransactions
       ];
+      // DEDUPLICATE based on transaction ID ($id or id)
+      const uniqueTxMap = new Map<string, Transaction>();
+      allTxns.forEach((tx) => {
+        const txId = tx.$id || tx.id;
+        if (txId && !uniqueTxMap.has(txId)) {
+          uniqueTxMap.set(txId, tx);
+        }
+      });
+      const uniqueTxns = Array.from(uniqueTxMap.values());
       // Sort by date (newest first)
-      return allTxns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return uniqueTxns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } else if (selectedView === 'wallet') {
       // Sort wallet transactions by date (newest first)
       return [...walletTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -179,7 +188,7 @@ const RecentTransactions = ({
       {/* Content based on selection */}
       {selectedOption.type === 'bank' && selectedOption.account && (
         <div className="glass-panel !rounded-xl p-4 overflow-hidden">
-          <TransactionsTable transactions={currentTransactions} />
+          <TransactionsTable transactions={currentTransactions} viewContext="bank" />
         </div>
       )}
 
@@ -195,7 +204,7 @@ const RecentTransactions = ({
             </div>
           </div>
           <div className="glass-panel !rounded-xl p-4 overflow-hidden">
-            <TransactionsTable transactions={currentTransactions} />
+            <TransactionsTable transactions={currentTransactions} viewContext="wallet" />
           </div>
         </div>
       )}
@@ -206,7 +215,7 @@ const RecentTransactions = ({
             <LayoutGrid className="w-5 h-5 text-emerald-400" />
             <h3 className="text-16 font-semibold text-white">All Transactions</h3>
           </div>
-          <TransactionsTable transactions={currentTransactions} />
+          <TransactionsTable transactions={currentTransactions} viewContext="all" />
         </div>
       )}
 

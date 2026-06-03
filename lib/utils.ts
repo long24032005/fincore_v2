@@ -1,3 +1,4 @@
+
 /* eslint-disable no-prototype-builtins */
 import { type ClassValue, clsx } from "clsx";
 import qs from "query-string";
@@ -67,13 +68,51 @@ export const formatDateTime = (dateString: Date) => {
 };
 
 export function formatAmount(amount: number): string {
-  const formatter = new Intl.NumberFormat("en-US", {
+  const formatter = new Intl.NumberFormat("vi-VN", {
     style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
+    currency: "VND",
+    minimumFractionDigits: 0,
   });
 
   return formatter.format(amount);
+}
+
+/**
+ * Extract userId string from either a string or an expanded user object
+ * Appwrite sometimes expands userId fields into full user objects
+ * @param user - Can be a userId string or a user object
+ * @returns userId string or null if invalid
+ */
+export function extractUserId(user: any): string | null {
+  if (!user) return null;
+  if (typeof user === 'string') return user;
+  if (typeof user === 'object') {
+    // CRITICAL: Prioritize $id (Appwrite Document ID) FIRST
+    // This is required for database.updateDocument() and database.getDocument()
+    return user.$id || user.userId || user.id || null;
+  }
+  return null;
+}
+
+/**
+ * 🔧 ROBUST ID SANITIZER - Prevents "[object Object]" payload errors
+ * Extract a clean ID string from various input formats
+ * Handles: String, Object with $id, Object with userId, Object with appwriteItemId, etc.
+ * @param item - Can be a string ID or any object with ID properties
+ * @returns Clean ID string or empty string if invalid
+ */
+export function extractId(item: any): string {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object") {
+    // CRITICAL PRIORITY ORDER:
+    // 1. $id (Appwrite Document ID) - MUST be first for database operations
+    // 2. appwriteItemId (Bank Account Document ID)
+    // 3. userId (Custom user field - NOT a document ID)
+    // 4. id (Generic fallback)
+    return item.$id || item.appwriteItemId || item.userId || item.id || "";
+  }
+  return "";
 }
 
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
@@ -212,18 +251,34 @@ export const getTransactionStatus = (date: Date) => {
 };
 
 export const authFormSchema = (type: string) => z.object({
-  // sign up
-  firstName: type === 'sign-in' ? z.string().optional() : z.string().min(3),
-  lastName: type === 'sign-in' ? z.string().optional() : z.string().min(3),
-  address1: type === 'sign-in' ? z.string().optional() : z.string().max(50),
-  city: type === 'sign-in' ? z.string().optional() : z.string().max(50),
-  state: type === 'sign-in' ? z.string().optional() : z.string().min(2).max(2),
-  postalCode: type === 'sign-in' ? z.string().optional() : z.string().min(3).max(6),
-  dateOfBirth: type === 'sign-in' ? z.string().optional() : z.string().min(3),
-  ssn: type === 'sign-in' ? z.string().optional() : z.string().min(3),
-  // both
-  email: z.string().email(),
-  password: z.string().min(8),
+  // sign up fields
+  firstName: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().min(2, 'Họ và tên lót phải ít nhất 2 ký tự'),
+  lastName: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().min(2, 'Tên phải ít nhất 2 ký tự'),
+  phone: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().regex(/^(03|05|07|08|09|01[2|6|8|9])([0-9]{8})$/, 'Số điện thoại không hợp lệ (định dạng 10 số VN)'),
+  address: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().min(5, 'Địa chỉ phải ít nhất 5 ký tự').max(100, 'Địa chỉ không được quá 100 ký tự'),
+  city: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().min(2, 'Quận/Huyện phải ít nhất 2 ký tự').max(50, 'Quận/Huyện không được quá 50 ký tự'),
+  province: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().min(2, 'Tỉnh/Thành phố phải ít nhất 2 ký tự').max(50, 'Tỉnh/Thành phố không được quá 50 ký tự'),
+  dateOfBirth: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().min(3, 'Ngày sinh là bắt buộc'),
+  citizenId: type === 'sign-in'
+    ? z.string().optional()
+    : z.string().regex(/^\d{9}$|^\d{12}$/, 'Số CCCD/CMND phải là 9 hoặc 12 số'),
+  // both sign-in and sign-up
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(8, 'Mật khẩu phải từ 8 ký tự trở lên'),
 })
 // Type-safe category configuration for transaction styling
 type CategoryConfig = {

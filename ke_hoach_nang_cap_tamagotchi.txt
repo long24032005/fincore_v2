@@ -1,0 +1,67 @@
+KẾ HOẠCH NÂNG CẤP: TÍCH HỢP THÚ ẢO TÀI CHÍNH (TAMAGOTCHI) & SERVER PYTHON XGBOOST
+========================================================================
+
+Kế hoạch này chi tiết hóa kiến trúc và các bước triển khai để tích hợp một "Bản sao tài chính ảo (AI Financial Tamagotchi)" ngay trong Chatbot của bạn. Điểm tín dụng và trạng thái thú ảo sẽ được chấm điểm thật bằng mô hình XGBoost (chạy trên máy chủ Python FastAPI độc lập) phân tích dữ liệu thay thế (tiền điện nước, bài viết mạng xã hội, thói quen tiêu dùng).
+
+------------------------------------------------------------------------
+
+1. MÔ TẢ CHI TIẾT TÍNH NĂNG THÚ ẢO TÀI CHÍNH ("FINNY")
+
+A. Giao diện Thú ảo trên Chatbot (Mascot Panel)
+* Vị trí hiển thị: Một khung bảng điều khiển (dashboard) nhỏ có thể thu gọn/mở rộng nằm ngay phía trên danh sách tin nhắn chat của ChatbotWindow.
+* Trạng thái và biểu cảm thay đổi theo điểm số tín dụng:
+  - Trạng thái Vui Vẻ (✿◕‿◕✿) [Điểm 750 - 850]: Vòng hào quang xanh lá cây sáng, thú ảo bay lên xuống nhẹ nhàng. Thể hiện tài chính xuất sắc, trả hóa đơn đúng hạn 100%.
+  - Trạng thái Bình Thường (•‿•) [Điểm 650 - 749]: Hào quang xanh dương, lơ lửng ổn định. Tài chính tốt nhưng cần cải thiện thêm.
+  - Trạng thái Lo Lắng (⊙_⊙) [Điểm 550 - 649]: Hào quang màu cam nhấp nháy, thú ảo rung rẩy nhẹ. Kích hoạt khi có hóa đơn trễ hạn hoặc chi tiêu mua sắm quá tay gần đây.
+  - Trạng thái Kiệt Quệ (✖╭╮✖) [Điểm 300 - 549]: Hào quang màu đỏ xám, thú ảo nằm bẹp/run rẩy mạnh. Kích hoạt khi nợ hóa đơn kéo dài, cạn kiệt ví điện tử hoặc điểm tín dụng quá thấp.
+
+B. Các chức năng tương tác cốt lõi & Hộp thoại bong bóng động (NEW):
+* Hộp thoại Bong Bóng Thần Kỳ (Comic Speech Bubble): Ngay khi mở hộp chat, thú ảo sẽ hiển thị một bong bóng thoại (Speech Bubble dạng truyện tranh) kế bên mình.
+* Lời chào sinh tự động bởi AI: Lời thoại chào mừng đầu tiên KHÔNG dùng quy tắc cố định (Rule-based) mà sẽ được sinh ra trực tiếp bởi Gemini AI dựa theo tình hình tài chính thực tế của người dùng:
+  - Nếu tài chính tệ (Điểm thấp): *"Chủ nhân ơi em đói quá, nhà mình nghèo quá rồi..."* hoặc *"Chủ nhân ơi đừng chi tiêu bốc đồng nữa để em được no bụng nha!"*.
+  - Nếu tài chính tốt (Điểm cao): *"Chào chủ nhân yêu quý! Hôm nay ví chúng mình xanh tươi quá, em no căng bụng rồi nè! Moah 💖"*.
+* Nút bấm "Chẩn đoán Thú Cưng" (Analyze Pet's Condition): Nằm ngay dưới bóng thoại của Pet. Khi người dùng click vào nút này, nó sẽ gửi tin nhắn tự động kích hoạt chatbot phân tích sâu toàn bộ tình trạng sức khỏe tài chính (Credit Score, Hóa đơn trễ, Cảm xúc mạng xã hội) và đưa ra các hành động giải pháp.
+* Lá chắn tiêu dùng cảm xúc (Emotional Spend Shield): Khi chuyển tiền lớn, nếu thú ảo đang ở trạng thái Lo lắng/Kiệt quệ, nó sẽ Flashing Đỏ cảnh báo: "Ối! Khoản chuyển này sẽ khiến ví chúng mình cạn kiệt. Cân nhắc kỹ nhé!".
+* Khuyến nghị tài chính: Gõ "Tư vấn tài chính" -> AI đọc các chỉ số thay thế định lượng và gợi ý cụ thể để tăng điểm tín dụng.
+* Quản lý Hồ sơ Dữ liệu từ Cơ sở dữ liệu: Hệ thống hoạt động 100% tự động theo phiên đăng nhập. Chúng ta khởi tạo sẵn 3 tài khoản người dùng tương ứng với 3 hồ sơ hành vi trong Appwrite DB (Huy - Tốt, Lan - Trung bình, Nam - Xấu). Khi người dùng đăng nhập tài khoản nào, hệ thống sẽ tự động tải dữ liệu của tài khoản đó để tính điểm và cập nhật thú ảo mà không cần nút bấm mô phỏng.
+
+------------------------------------------------------------------------
+
+2. LUỒNG DỮ LIỆU VÀ HẠ TẦNG KỸ THUẬT (DATA FLOW)
+
+Next.js (Frontend) ──> Lấy dữ liệu thô người dùng (Appwrite: alternative_data)
+     │
+     ▼ (Gửi văn bản thô qua Gemini NLP để số hóa thành thông số 0 -> 1)
+JSON { bill_on_time_ratio, social_sentiment, spend_discipline }
+     │
+     ▼ (Gửi thông số qua HTTP POST tới Python FastAPI Server)
+Python FastAPI (XGBoost.predict() trên model thật)
+     │
+     ▼ (Trả về kết quả chấm điểm định lượng)
+JSON { credit_score, risk_class }
+     │
+     ▼ (Lưu vào Appwrite DB của User)
+Next.js cập nhật trạng thái Thú ảo (Thú vui/buồn) & Trả lời chatbot của user.
+
+------------------------------------------------------------------------
+
+3. LỘ TRÌNH TRIỂN KHAI TỪNG BƯỚC (STEPS)
+
+BƯỚC 1: Xây dựng máy chủ máy học Python (`/ml_server`)
+* Viết script sinh tập dữ liệu giả lập 10.000 dòng gồm các trường hành vi và nhãn quỵt nợ.
+* Viết script huấn luyện mô hình XGBoost Classifier bằng python (`xgboost`, `scikit-learn`) và xuất ra file model `credit_model.xgb`.
+* Viết server FastAPI (`main.py`) lắng nghe cổng 8000, nhận diện đặc trưng và dự đoán điểm số trả về JSON.
+
+BƯỚC 2: Cấu hình Collection dữ liệu thay thế và API Next.js
+* Tạo bảng `alternative_data` trên Appwrite lưu bài viết mạng xã hội thô và hóa đơn thô của người dùng A, B, C.
+* Tạo server action `alternative-data.actions.ts` kết nối luồng: Đọc DB -> Gọi Gemini trích xuất đặc trưng -> Gửi sang Python lấy điểm XGBoost -> Cập nhật bảng `users`.
+* Tạo endpoint API `/api/v1/alternative-data/credit-score` và cập nhật OpenAPI spec (`/api/v1/openapi.json`).
+
+BƯỚC 3: Thiết kế Giao diện Thú ảo trực quan trong Chatbot
+* Chỉnh sửa component `ChatbotWindow.tsx` để chèn thêm bảng điều khiển thú ảo "Finny" với CSS Animation hào quang (xanh/cam/đỏ) và biểu cảm tương ứng với điểm tín dụng.
+* Thiết kế **Bong bóng thoại (Speech Bubble)** truyện tranh bên cạnh avatar Pet hiển thị lời chào tự động bằng AI.
+* Thêm nút bấm **"Chẩn đoán Thú cưng"** ngay trong khu vực bong bóng thoại.
+
+BƯỚC 4: Kết nối Chatbot với ngữ cảnh Thú ảo
+* Cập nhật prompt hệ thống của Chatbot để Gemini đóng vai thú ảo "Finny" trò chuyện thân thiện, dí dỏm bằng tiếng Việt dựa theo dữ liệu điểm số thực tế của người dùng.
+* Tích hợp các ý định (intent) hỏi đáp điểm số tín dụng và khuyên bảo đầu tư vào chatbot.

@@ -1,0 +1,168 @@
+========================================================================================
+            TÀI LIỆU THIẾT KẾ CHI TIẾT HỆ THỐNG & ĐÁNH GIÁ KHẢ THI FINTECH
+        Dự án: Fincore Wallet (Hệ thống E-Wallet & Tích hợp AI Robo-Advisor)
+             (ẤN BẢN KẾT HỢP ĐẶC TẢ TỪ PERPLEXITY, GEMINI VÀ CLAUDE)
+========================================================================================
+
+Tài liệu này tổng hợp toàn bộ giải pháp kỹ thuật nâng cấp hệ thống Fincore Wallet, bám sát
+yêu cầu của bài tập lớn "Advanced Fintech Synthesis", thiết kế kiến trúc Frontend-Backend
+chặt chẽ, và phân tích tính khả thi thương mại để phục vụ nộp báo cáo và thuyết trình UII.
+
+----------------------------------------------------------------------------------------
+PHẦN I: TỔNG QUAN CHỨC NĂNG & SỰ CHUYỂN DỊCH HẠ TẦNG
+----------------------------------------------------------------------------------------
+
+1. Ví điện tử Fincore Wallet & Phân hệ AI Robo-Advisor:
+   * Bản chất dự án: Fincore là một ứng dụng Ví điện tử (E-Wallet) hoàn chỉnh có đầy đủ tính năng thanh toán cơ bản (nạp tiền, rút tiền, liên kết ngân hàng nội địa, chuyển khoản ví-ví, ví-ngân hàng, quản lý danh bạ). 
+   * Tính năng nâng cấp: Tích hợp phân hệ "AI Robo-Advisor" – Trợ lý tự động tích lũy và đầu tư tối ưu dòng tiền nhàn rỗi cho người dùng trẻ (Gen Z, sinh viên, freelancers) tại Việt Nam.
+   * Phương pháp đổi mới (Behavioral Finance): Loại bỏ các bảng hỏi khảo sát rủi ro lý thuyết tĩnh truyền thống (vốn dễ bị điền hời hợt hoặc sai lệch) bằng cách sử dụng AI phân tích "Dữ liệu thay thế" (Alternative Data) gồm hành vi thanh toán/tiêu dùng nội bộ trên ví và dữ liệu hành vi liên kết ngoài để tính toán điểm số tài chính và phân loại hồ sơ rủi ro thực tế.
+   * Trợ lý chủ động (AI-Driven Proactive Agent): Thay vì thiết kế một linh vật tĩnh giải trí, hệ thống tập trung xây dựng một bộ não AI chủ động kiểm tra tình hình tài chính của người dùng, tự động phân tích ngữ cảnh để đưa ra các nhắc nhở, cảnh báo cá nhân hóa và các nút bấm hành động (Action Buttons) động trong khung chat.
+
+2. Chuyển đổi sang OpenAPI tự chủ (Bỏ hoàn toàn bên thứ ba Plaid/Dwolla):
+   * Khắc phục giới hạn: Dwolla và Plaid chỉ hỗ trợ USD, bắt buộc KYC bằng số an sinh xã hội Mỹ (SSN) không thể triển khai tại Việt Nam.
+   * Giải pháp tự chủ:
+     - Xây dựng hệ thống Sổ cái nội bộ (Local Transaction Ledger) lưu trữ dữ liệu số dư và lịch sử giao dịch.
+     - Thiết lập các API Route Handlers trong Next.js tại `app/api/v1/...` đóng vai trò là một máy chủ OpenAPI nội địa.
+     - Sử dụng tiền tệ VND (₫) ở toàn bộ luồng giao dịch, khởi tạo sẵn số dư demo 50.000.000 ₫.
+     - Tích hợp trang tài liệu tương tác trực quan tại `/api-docs` (bản tương đương Swagger UI) kết nối trực tiếp với backend để chạy thử nghiệm các API.
+
+----------------------------------------------------------------------------------------
+PHẦN II: KHUNG ĐÁNH GIÁ 3 CHIỀU & BỘ BIẾN DỮ LIỆU THAY THẾ (ALTERNATIVE DATA)
+----------------------------------------------------------------------------------------
+
+Để đánh giá chính xác khẩu vị đầu tư của người dùng mà không tạo cảm giác bị "áp đặt", Fincore tổ chức bộ biến dữ liệu thay thế theo 3 trục riêng biệt:
+1. Willingness (Thái độ chấp nhận rủi ro tâm lý): Đo lường mức độ sẵn sàng chịu biến động thông qua hành vi chi tiêu tùy ý và tương tác UI/UX.
+2. Ability / Risk Capacity (Khả năng chịu rủi ro tài chính): Đo lường sức bền dòng tiền mặt, tỷ lệ số dư đệm tránh việc phải bán tháo tài sản khi có biến cố.
+3. Discipline (Kỷ luật tích lũy thực tế): Đo lường sự cẩn trọng và tính nhất quán qua lịch sử thanh toán hóa đơn đúng hạn và streaks tiết kiệm định kỳ.
+
+BẢNG TỔNG HỢP BỘ BIẾN DỮ LIỆU THAY THẾ (FEATURE DICTIONARY):
+
+| Nhóm biến | Tên biến (Code) | Kiểu dữ liệu | Mô tả & Cách trích xuất | Ý nghĩa hành vi & Logic tài chính |
+|---|---|---|---|---|
+| **Ổn định dòng tiền** | `income_regularity_index` | Float (0-1) | Độ lệch chuẩn của chu kỳ dòng tiền nạp vào (inflow) trong 30/90 ngày. | Đo lường mức độ ổn định thu nhập (Đặc biệt quan trọng với Freelancers để khuyến nghị danh mục thanh khoản). |
+| | `liquidity_buffer_ratio` | Float | Số dư ví trung bình / Chi tiêu trung bình 30 ngày. | Đo lường "khả năng chịu lỗ". Tỷ lệ này cao cho thấy người dùng thiên hướng bảo thủ, an toàn. |
+| **Kỷ luật tích lũy** | `save_after_payday_ratio` | Float (0-1) | Tỷ lệ tiền chuyển vào quỹ tích lũy trong vòng 48h sau khi nhận inflow lớn. | Đo lường tính kỷ luật tài chính và tư duy trì hoãn sự sung sướng (delayed gratification). |
+| | `auto_save_completion_rate`| Float (0-1) | % lệnh tích lũy tự động thực hiện thành công (không bị hủy/thiếu số dư). | Phản ánh tính nhất quán và cam kết tích lũy dài hạn thực tế của người dùng. |
+| **Kỷ luật thanh toán**| `bill_on_time_rate` | Float (0-1) | % hóa đơn sinh hoạt (điện, nước, viễn thông) được trả trước hoặc đúng hạn. | Chỉ số cẩn trọng (Reliability). Tương quan cao (0.65 - 0.72) với tính kỷ luật tài chính trong đời thực. |
+| **Cấu trúc chi tiêu** | `discretionary_spend_ratio`| Float (0-1) | Chi tiêu tùy ý (F&B, game, mua sắm) / Tổng chi tiêu trong tháng. | Biến số đo lường "Willingness". Tỷ lệ chi tiêu tùy ý cao thường đi kèm tâm lý chấp nhận biến động lớn để tìm lợi nhuận. |
+| | `impulse_purchase_index` | Float (0-1) | Tần suất giao dịch mua sắm giá trị nhỏ phát sinh đột ngột ngoài khung giờ hành chính. | Đo lường tính bốc đồng (impulsive buying). Điểm cao cho thấy kỷ luật tài chính thấp, dễ bị FOMO. |
+| | `late_night_spend_ratio` | Float (0-1) | Tỷ lệ giao dịch phát sinh sau 23h đêm / Tổng giao dịch. | Correlate trực tiếp với tính bộc phát và thiếu tính toán kế hoạch chi tiêu dài hạn. |
+| **Stress thanh khoản**| `immediate_cash_out_rate` | Float (0-1) | Tỷ lệ tiền mặt bị rút ra (hoặc chuyển khoản đi) lập tức trong vòng 2h sau khi nạp vào. | Cảnh báo dòng tiền dễ tổn thương, cần khuyến nghị các sản phẩm tích lũy linh động có thể rút bất kỳ lúc nào. |
+| **Hành vi đầu tư số** | `onboarding_attention_score`| Float (0-1) | Thời gian dừng lại đọc màn hình cảnh báo rủi ro đầu tư và các điều khoản điều kiện. | Tốc độ lướt qua quá nhanh thể hiện sự tự tin thái quá (overconfidence) hoặc thiếu kiên nhẫn. |
+| | `balance_check_frequency` | Integer | Số lần mở ví chỉ để kiểm tra số dư / ngày. | Đo lường chứng sợ mất mát (Loss Aversion). Check liên tục thể hiện độ nhạy cảm cao với biến động ngắn hạn. |
+| **Mạng lưới P2P** | `p2p_network_density` | Integer | Số lượng tài khoản nhận/gửi tiền thường xuyên trên ví Fincore. | Đo lường mạng lưới xã hội hỗ trợ tài chính (Social Cushion) khi xảy ra biến cố. |
+| **Lời nhắn chuyển tiền**| `message_urgency_score` | Float (0-1) | Phân tích từ khóa lời nhắn chuyển tiền (NLP) phát hiện các cụm từ gấp, vay, gồng nợ... | Ngôn ngữ phản ánh trực tiếp áp lực tài chính. Điểm khẩn cấp cao báo hiệu dòng tiền suy kiệt, cần hạ mức rủi ro đề xuất. |
+| **Thiết bị & Ngoại lai**| `low_battery_transaction` | Boolean | Giao dịch lớn được thực hiện khi pin thiết bị dưới 10% (Cần opt-in thiết bị). | Nghiên cứu hành vi chỉ ra thói quen quyết định tài chính khi pin yếu thể hiện tính cách thích rủi ro, thiếu sự chuẩn bị. |
+
+----------------------------------------------------------------------------------------
+PHẦN III: THIẾT KẾ KIẾN TRÚC FRONTEND - BACKEND CHẶT CHẼ
+----------------------------------------------------------------------------------------
+
+1. Sơ đồ Kiến trúc Hướng Sự kiện (Event-Driven Architecture) - Đảm bảo Zero-Latency:
+Để việc chạy các mô hình AI phức tạp không làm chậm luồng thanh toán cốt lõi của ví (Core Payment), hệ thống áp dụng kiến trúc xử lý bất đồng bộ (Asynchronous):
+
+  [User thực hiện Payment] ──> (Core Payment Engine - Node.js/Next.js) ──> Trả về kết quả tức thì (ms)
+                                       │
+                                       ▼ (Đẩy Event sang Message Queue: Kafka / RabbitMQ)
+                              [Message Queue]
+                                       │
+                                       ▼ (Xử lý bất đồng bộ)
+                             [AI Processing Pipeline]
+                                  ├──> Gemini NLP: Trích xuất Text lời nhắn & Hóa đơn thô
+                                  ├──> LSTM Model: Phân tích chuỗi giao dịch time-series
+                                  └──> FastAPI (XGBoost/LightGBM): Chấm điểm & phân loại hồ sơ rủi ro
+                                       │
+                                       ▼
+                              (Appwrite Database) ──> Đồng bộ hiển thị lên UI Dashboard của User
+
+2. Thiết kế các Thành phần Frontend (GUI & CUI):
+   * **Trang AI Portfolio Dashboard (`/ai-insights`)**:
+     - *Risk Profile Gauge*: Đồng hồ đo điểm tích lũy hành vi thực tế dựa trên 3 trục Willingness - Capacity - Discipline.
+     - *Interactive Asset Allocation Chart*: Biểu đồ cơ cấu danh mục đề xuất đầu tư tích lũy (Cổ phiếu, Trái phiếu, Quỹ tiền tệ) kèm nút "Đầu tư ngay" bên cạnh mỗi quỹ để thực thi nhanh trên giao diện đồ họa.
+     - *Performance Line Chart*: Biểu đồ mô phỏng tăng trưởng tài sản lũy kế.
+     - *AI Autopilot Manager Panel*: Khu vực hiển thị toàn bộ các lệnh tự động tích lũy đang hoạt động (ví dụ: "Tự động trích 5% lương đầu tư vào ngày 5 hàng tháng"). Mỗi lệnh đi kèm một **ON/OFF Toggle Switch** để bật/tắt tức thì và nút **Delete** để hủy bỏ hoàn toàn tác vụ, đảm bảo người dùng luôn nắm quyền kiểm soát dòng tiền cao nhất.
+   * **Trang Tài liệu OpenAPI (`/api-docs`)**:
+     - Trang tài liệu tương tác trực quan cho phép gọi trực tiếp các API route của Fincore Server với đầy đủ tham số đầu vào và kết quả JSON đầu ra.
+   * **Custom Bank Link Modal**:
+     - Hộp thoại chọn ngân hàng Việt Nam (Vietcombank, Techcombank, BIDV, ACB, UOB...) và điền số tài khoản, đồng bộ trực tiếp với Sổ cái nội bộ (Local Transaction Ledger) thay cho Plaid Link cũ.
+   * **Chatbot Window Component (`ChatbotWindow.tsx`)**:
+     - Cửa sổ chat hiển thị các tin nhắn giao tiếp chủ động được sinh động hóa dựa trên kết quả phân tích của AI.
+     - **Thẻ Hành động Động (Dynamic Action Cards)**: Thay vì chỉ hiển thị text thường, chatbot hiển thị các thẻ chứa nội dung tư vấn được sinh bởi Gemini API kèm theo các nút bấm thực thi nhanh (ví dụ: nút bấm [Đóng tiền điện], [Tích lũy ngay 5 triệu]).
+     - *Disambiguation UI*: Màn hình lựa chọn người nhận khi người dùng ra lệnh chuyển tiền trùng tên qua chatbot (lưu giữ lại state `amount` trong bộ nhớ tạm để không hỏi lại số tiền).
+     - *Confirm Card*: Thẻ tóm tắt thông tin đầu tư/chuyển khoản kèm nút "Confirm & Send" để xác thực giao dịch bằng mã PIN/OTP trước khi thực thi.
+
+3. Thiết kế API Route Handlers (Backend):
+   * `GET /api/v1/openapi.json`: Trả về tài liệu đặc tả OpenAPI Specification (v3.0) của hệ thống.
+   * `GET /api/v1/alternative-data/credit-score`: Tính toán và trả về điểm số rủi ro/kỷ luật tài chính.
+   * `GET /api/v1/alternative-data/investment-advice`: Cung cấp danh mục đầu tư tích lũy khuyến nghị từ AI.
+   * `POST /api/v1/transfers`: API thực hiện giao dịch chuyển khoản đầu tư hoặc chuyển khoản nội địa bằng VND. 
+     Tích hợp cơ chế kiểm tra hạn mức cứng (Daily Transfer Limits) bảo vệ tài khoản khỏi bị cạn kiệt.
+   * `GET/POST/PATCH/DELETE /api/v1/automations`: APIs để lấy danh sách, tạo mới, cập nhật trạng thái hoạt động (bật/tắt) hoặc xóa các tác vụ lập lịch đầu tư tự động.
+
+4. Mô hình AI cụ thể được ứng dụng:
+   * **XGBoost / LightGBM**: Mô hình phân loại chính, xử lý dữ liệu dạng bảng (Tabular data) của các biến số 7/30/90 ngày. Kết hợp công nghệ **SHAP Values (Explainable AI - XAI)** để giải thích rõ lý do tại sao người dùng bị phân vào nhóm rủi ro đó, đáp ứng yêu cầu tuân thủ của các tổ chức tài chính.
+   * **LSTM (Long Short-Term Memory)**: Phân tích chuỗi thời gian (Time-series) của 50 giao dịch gần nhất để dự báo dòng tiền và khả năng rút tiền khẩn cấp của người dùng trong 30 ngày tới, từ đó gợi ý đệm thanh khoản phù hợp.
+   * **ViSoBERT**: Mô hình ngôn ngữ tự nhiên tối ưu cho tiếng Việt, dùng để phân tích cảm xúc và bóc tách ngữ cảnh/ý định từ "lời nhắn chuyển tiền" thô (phát hiện các hành vi gồng nợ, vay mượn, khẩn cấp...).
+
+5. Thiết kế Schema Cơ sở dữ liệu Appwrite:
+   * Collection `users`: `userId` (string), `email` (string), `creditScore` (integer), `riskClass` (string), `balanceVND` (integer).
+   * Collection `alternative_data`: `userId` (string), `rawInvoices` (text), `rawSocialPosts` (text), `updatedAt` (datetime).
+   * Collection `automations`: `id` (string), `userId` (string), `actionType` (string), `amount` (integer), `destinationFund` (string), `cronExpression` (string), `isActive` (boolean), `lastRun` (datetime).
+   * Collection `transactions`: `transactionId` (string), `senderId` (string), `receiverId` (string), `amount` (integer), `status` (string), `sourceType` (string), `destinationType` (string), `createdAt` (datetime).
+
+----------------------------------------------------------------------------------------
+PHẦN IV: LUỒNG TƯƠNG TÁC ĐẠI LÝ AI CHỦ ĐỘNG (PROACTIVE AGENT REASONING LOOP)
+----------------------------------------------------------------------------------------
+
+Hệ thống loại bỏ hoàn toàn các kịch bản tương tác cứng (rule-based). Trợ lý hoạt động thông qua một chu trình suy luận thông minh (Reasoning Loop) chạy ngầm bất đồng bộ bằng Gemini API:
+
+1. Kích hoạt & Gom Ngữ cảnh (Context Aggregation):
+   * Định kỳ hằng ngày hoặc khi có sự kiện (Nhận khoản tiền lớn/Hóa đơn mới được nhập hệ thống), hệ thống backend gom toàn bộ thông tin của người dùng (số dư ví, danh sách hóa đơn chưa thanh toán, các lệnh đầu tư tự động đang chạy, điểm hành vi) thành một đối tượng JSON.
+
+2. Bộ não AI phân tích ngữ cảnh (LLM Evaluation):
+   * Gửi đối tượng JSON này lên Gemini API với System Prompt chuyên dụng: 
+     *"Bạn là Trợ lý tài chính chủ động. Phân tích dữ liệu người dùng để phát hiện các cơ hội đầu tư tốt hoặc rủi ro thanh toán cần giải quyết ngay. Hãy soạn một thông báo tiếng Việt ngắn gọn cá nhân hóa và đề xuất các nút bấm hành động (Action Buttons) tương ứng dạng API Payload. Trả về cấu trúc JSON."*
+
+3. Phản hồi có cấu trúc & Thực thi (Structured JSON Execution):
+   * Gemini tự phân tích và trả về một cấu trúc JSON định dạng chuẩn bao gồm: `message_content` (Nội dung thông báo) và `suggested_actions` (Mảng chứa nhãn nút bấm, endpoint API cần gọi và data payload).
+   * Ví dụ: AI phát hiện lương 50 triệu vừa về và hóa đơn điện 1.2 triệu sắp đến hạn sau 2 ngày. AI sẽ tự trả về tin nhắn: *"Lương 50 triệu đã về ví. Tránh trễ tiền điện ngày kia để bảo vệ điểm tài chính, tôi đề xuất trích ngay 1.2 triệu trả hóa đơn, và chuyển 5 triệu vào Quỹ Trái Phiếu để bắt đầu lấy lãi nhàn rỗi. Bạn đồng ý chứ?"*.
+   * Giao diện Chatbot render tin nhắn kèm 2 nút bấm tương ứng: **[Đóng hóa đơn điện (1.2M)]** và **[Đầu tư 5M vào Quỹ Trái Phiếu]**. Người dùng bấm vào nút nào, Frontend sẽ tự động gọi API tương ứng trên OpenAPI Server để hoàn thành giao dịch mà không cần gõ phím.
+
+4. Bốn kịch bản phối hợp điển hình của AI:
+   * *Cảnh báo trước giờ G (Pre-execution)*: Thông báo xác nhận và đề xuất sửa đổi/tạm ngưng 24h trước khi một lệnh tự động tích lũy được kích hoạt.
+   * *Phân bổ thu nhập đột xuất (Salary Allocator)*: Đề xuất chuyển một phần tiền nhàn rỗi vào các quỹ đầu tư khi số dư ví tăng mạnh bất ngờ.
+   * *Nhắc nhở hóa đơn bảo vệ điểm tín dụng (Bill Reminder)*: Chủ động đề xuất thanh toán khi phát hiện hóa đơn tiện ích sắp quá hạn.
+   * *Lá chắn chi tiêu cảm xúc (Emotional Spend Shield)*: Chatbot tự cảnh báo đỏ cản trở mua sắm bốc đồng nếu người dùng đặt lệnh giao dịch chiếm tỷ lệ quá cao trong ví trong lúc điểm kỷ luật tài chính đang thấp.
+
+----------------------------------------------------------------------------------------
+PHẦN V: ĐÁNH GIÁ TÍNH KHẢ THI KINH DOANH (BUSINESS FEASIBILITY)
+----------------------------------------------------------------------------------------
+
+1. Giải quyết Nỗi đau của Người dùng (User Pain Points):
+   * *Nâng cao trải nghiệm tích lũy*: Xóa bỏ rào cản từ các bài khảo sát rủi ro khô khan, thay bằng đề xuất thông minh dựa trên hành vi thực tế.
+   * *Tránh rủi ro bị AI chạy ngầm rút tiền*: Người dùng luôn làm chủ hoàn toàn các lệnh tự động hóa nhờ bảng điều khiển AI Autopilot trực quan và cơ chế thông báo nhắc nhở trước 24 giờ của chatbot.
+
+2. Mô hình Doanh thu của Doanh nghiệp (How the Business Makes Money):
+   * **Phí quản lý tài sản (AUM Fee)**: Thu phí từ 0.5% - 1.5%/năm trên tổng giá trị tài sản tích lũy của khách hàng thông qua ví.
+   * **Hoa hồng phân phối (Distribution Commission)**: Nhận từ 1% - 2% hoa hồng môi giới từ các công ty quản lý quỹ liên kết (Dragon Capital, VinaCapital, VCBF...) khi chuyển dòng tiền đầu tư của người dùng ví đến quỹ của họ.
+   * **B2B Credit Scoring API**: Thương mại hóa cổng API `/alternative-data/credit-score` chấm điểm hành vi phi truyền thống cho các đối tác tiêu dùng khác.
+   * **SaaS Subscription**: Thu phí định kỳ hàng tháng đối với phiên bản hỗ trợ dòng tiền nâng cao (Virtual CFO) dành cho các hộ kinh doanh/chủ shop online.
+
+3. AI & Dữ liệu thay thế cải thiện Hiệu quả Doanh nghiệp như thế nào?
+   * *Giảm chi phí vận hành (Operational Cost Reduction)*: Tự động hóa hoàn toàn quy trình phân tích rủi ro và thẩm định đầu tư tích lũy của khách hàng bằng mô hình XGBoost và LSTM trong vài giây, giảm đến 85% chi phí nhân sự tư vấn tài chính thủ công.
+   * *Hạn chế rủi ro pháp lý & tranh chấp*: Cơ chế bật/tắt thủ công (Autopilot Toggle) và chatbot thông báo trước 24h giúp giảm 99% các khiếu nại về giao dịch tự động không mong muốn.
+   * *Tăng gắn kết và vòng đời khách hàng (Customer Lifetime Value - LTV)*: Việc chatbot chủ động phân tích gợi ý thông minh giúp tăng tần suất mở ứng dụng (User Session) gấp 3 lần và cải thiện tỷ lệ giữ chân khách hàng (Retention Rate).
+
+----------------------------------------------------------------------------------------
+PHẦN VI: PHÁP LÝ & BẢO MẬT TUÂN THỦ TẠI VIỆT NAM
+----------------------------------------------------------------------------------------
+
+1. Tuân thủ Nghị định 13/2023/NĐ-CP về Bảo vệ Dữ liệu Cá nhân:
+   * **Nguyên tắc Consent-based (Đồng ý rõ ràng)**: Hệ thống Fincore không tự ý thu thập dữ liệu thiết bị, hóa đơn EVN hay mạng xã hội. Tất cả phải đi qua màn hình xác nhận cho phép (Opt-in) rõ ràng của người dùng, không chấp nhận im lặng làm mặc định.
+   * **Quyền rút Consent**: Cung cấp tùy chọn hủy liên kết và xóa toàn bộ dữ liệu thay thế liên quan trong vòng 72 giờ theo đúng quy định pháp luật.
+   * **Bảo mật dữ liệu nhạy cảm**: Đối với các dữ liệu nhạy cảm như lời nhắn chuyển tiền hay bài đăng MXH, hệ thống chỉ lưu trữ và xử lý dưới dạng Metadata tổng hợp đã ẩn danh hóa (anonymized metadata) thay vì lưu trữ văn bản thô.
+
+2. Tuân thủ Luật các Tổ chức Tín dụng và Chứng khoán:
+   * **Vai trò Kênh Phân Phối (Distribution Channel)**: Ví điện tử Fincore không tự mình quản lý hay vận hành các quỹ đầu tư (để tránh vi phạm giấy phép quản lý quỹ của Ủy ban Chứng khoán Nhà nước). 
+   * **Hợp tác liên kết**: Fincore hoạt động thuần túy như một trung gian kết nối và phân phối chứng chỉ quỹ cho các công ty quản lý quỹ có đầy đủ giấy phép hợp pháp (như Dragon Capital, VinaCapital). OpenAPI của ví đóng vai trò kết nối kỹ thuật giúp quá trình giao dịch diễn ra an toàn, minh bạch.
+========================================================================================

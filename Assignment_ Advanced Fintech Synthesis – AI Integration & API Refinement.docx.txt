@@ -1,0 +1,107 @@
+﻿Assignment: Advanced Fintech Synthesis – AI Integration & API Refinement
+
+
+  
+
+
+
+
+
+This assignment serves as a continuation of your Fintech Innovation Project from last semester. 
+
+
+You will evolve your previous fintech business plan and MVP by integrating advanced AI techniques and refining your technical infrastructure to be more robust and localized.
+
+
+1. Assignment Overview
+
+
+The objective of this project is to bridge your foundational fintech knowledge with the advanced techniques learned in AI for Finance and Banking. You will enhance your existing Minimum Viable Product (MVP) by using AI to leverage non-traditional data sources and by building custom backend infrastructure to solve previous technical limitations.
+
+
+2. Updated Learning Objectives
+
+
+* Utilise AI for Financial Intelligence: Apply AI techniques to collect and analyse Alternative Data (e.g., data scrapped from public/private databases, social media, utilities bills, etc) relevant to your specific fintech business model.
+* Architect Custom API Solutions: Develop a proprietary OpenAPI server to resolve integration issues and handle localized financial data (e.g., non-Vietnamese currency issues).
+* Enhance Agentic Automation: Refine the integration of Large Language Models (LLMs) to move beyond basic chat toward functional account interaction.
+* Professional Pitching: Prepare a high-stakes demonstration for external stakeholders, including the UII incubator.
+
+
+--------------------------------------------------------------------------------
+
+
+3. Core Requirements & Updates
+
+
+Part A: AI-Driven Alternative Data Analysis
+
+
+Instead of relying solely on traditional financial data (like balance and transaction history), you must now integrate Alternative Data.
+* Requirement: Use AI techniques covered in the course to collect and analyse data sets such as social media sentiment, satellite imagery, web-scraped retail trends, or mobile usage patterns.
+* Application: Your MVP must demonstrate how this AI-analysed data improves your fintech service (e.g., better credit scoring, personalized investment advice, fraud detection, etc.).
+Part B: Custom OpenAPI Server Implementation
+
+
+To fix the limitations of external providers regarding currency (such as the non-Vietnamese currency issues found in services like Stripe, Plaid, etc.), you must move beyond simple sandbox integration.
+
+
+* Requirement: Create your own OpenAPI server (or use existing local api server in local currency, e.g., United Overseas Bank, UOB) specifically designed for your application.
+* AI Data Serving: If using a external OpenAPI server for local currency, then include your OpenAPI server to serve specific endpoints designed to serve the AI Alternative Data analytics processed in Part A. This allows your frontend and agentic chatbot to access and display complex financial insights (e.g., credit scores derived from social media or investment trends from web-scraped data) in a structured format.
+* Functionality: This server should act as your backend, managing your application's logic and ensuring it can handle local requirements that standard global APIs might lack.
+Part C: MVP Functional Refinements
+
+
+Your existing MVP must be updated to include:
+
+
+1. Localized Transactions: Use your custom server to ensure transactions and balances are displayed and processed correctly for your target market.
+2. Advanced Agentic Chatbot: The previous bonus challenge is now a focal point. Your bot should use the Gemini API (or other cloud AI) to interact with the application’s underlying logic via your OpenAPI server, allowing users to ask about their AI-derived insights or execute transactions through natural language
+
+
+________________
+
+
+--------------------------------------------------------------------------------
+
+
+4. Updated Deliverables
+
+
+1. Project Report (PDF, Max 5 Pages):
+   * AI Methodology: Detailed explanation of the AI techniques used for Alternative Data collection and analysis.
+   * Server Architecture: Documentation of your custom OpenAPI server and how it resolves previous currency/integration issues.
+   * Updated Roadmap: How these AI enhancements make the business more viable for an incubator like UII.
+2. OpenAPI Specification & AI Analytics Server:
+   * Technical Assets: You must provide the OpenAPI documentation (e.g., Swagger UI or a YAML/JSON file) and the backend server implementation.
+   * Functionality: This deliverable must specifically demonstrate the endpoints created to serve the AI Alternative Data analytics to your frontend or agentic chatbot.
+3. Advanced MVP Prototype: A deployed application link demonstrating the AI insights and the custom API functionality.
+
+
+--------------------------------------------------------------------------------
+
+
+5. Evaluation Criteria & Demo Day
+
+
+Your project will be evaluated on the sophistication of your AI integration and the stability of your custom server.
+
+
+Criteria
+	Weight
+	Description
+	AI & Alternative Data
+	30%
+	Success in using AI to extract value from non-traditional data sources.
+	Custom API Infrastructure
+	30%
+	Functionality and design of your proprietary OpenAPI server.
+	MVP UX & Agentic AI
+	20%
+	The seamlessness of the user interface and the chatbot's ability to perform actions.
+	Technical Documentation
+	20%
+	Clarity in explaining the new AI and backend technical stack.
+	
+
+Demo Day Note: Be prepared for a professional-level presentation. Representatives from the UII incubator will be in attendance to evaluate the viability and innovation of your enhanced fintech solution.

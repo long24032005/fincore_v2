@@ -1,20 +1,22 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wallet, Building2, ArrowRight, User, Hash, DollarSign, FileText, CheckCircle2, Share2, Download } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import html2canvas from 'html2canvas';
+import toast from 'react-hot-toast';
 
-// ✅ HYBRID MODE: Support cả Wallet và Bank transfers
-import { transferBalance } from "@/lib/actions/wallet.actions";
+// ✅ HYBRID MODE: Support Wallet, Bank, and Bank→Wallet transfers
+import { transferBalance, bankToWalletTransfer, getUserByWalletId, walletToBank } from "@/lib/actions/wallet.actions";
 import { getAvailableBalance } from "@/lib/actions/bankBalance.actions";
 import { createTransfer } from "@/lib/actions/dwolla.actions";
 import { createTransaction } from "@/lib/actions/transaction.actions";
-import { getBank, getBankByAccountId, getBankByAppwriteItemId } from "@/lib/actions/user.actions";
+import { getBank, getBankByAccountId, getBankByAppwriteItemId, getUserInfo, getLoggedInUser, getUserByIdentifier } from "@/lib/actions/user.actions";
 import { saveRecipient } from "@/lib/actions/savedRecipient.actions";
-import { decryptId } from "@/lib/utils";
+import { decryptId, formatAmount, extractUserId, extractId } from "@/lib/utils";
 
 import { BankDropdown } from "./BankDropdown";
 import { Button } from "./ui/button";
@@ -29,68 +31,63 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 
+// ✅ Schema with conditional senderBank validation
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
   name: z.string().min(4, "Transfer note is too short"),
-  amount: z.string().min(4, "Amount is too short"),
-  senderBank: z.string().min(4, "Please select a valid bank account"),
-  sharableId: z.string().min(8, "Please select a valid sharable Id"),
+  amount: z.string().min(1, "Amount is required"),
+  senderBank: z.string().optional(), // ✅ Optional - only required if source === 'bank'
+  sharableId: z.string().min(8, "Please enter a valid Receiver ID"),
   source: z.enum(["wallet", "bank"], {
     required_error: "Please select a transfer source",
   }),
+}).refine((data) => {
+  // If source is 'bank', senderBank must be provided and valid
+  if (data.source === 'bank') {
+    return data.senderBank && data.senderBank.length >= 4;
+  }
+  return true; // Wallet transfers don't need senderBank
+}, {
+  message: "Please select a bank account for bank transfers",
+  path: ["senderBank"],
 });
 
 const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams(); // NEW
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [shouldSaveRecipient, setShouldSaveRecipient] = useState(false);
+  const [transferSource, setTransferSource] = useState<"wallet" | "bank">("wallet");
+  const [successData, setSuccessData] = useState<any>(null); // State for success modal
+
+  // Real-time recipient lookup states
+  const [recipientInfo, setRecipientInfo] = useState<any>(null);
+  const [isLookingUpRecipient, setIsLookingUpRecipient] = useState(false);
   const [recipientNickname, setRecipientNickname] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      email: "",
       amount: "",
       senderBank: "",
       sharableId: "",
-      source: "wallet", // Default to wallet
+      source: "wallet",
     },
   });
 
-  // NEW: Pre-fill from URL
+  // Pre-fill from URL (for Quick Transfer from Saved Recipients)
   useEffect(() => {
     const recipientParam = searchParams.get('recipient');
     if (recipientParam) {
       try {
         const parsed = JSON.parse(decodeURIComponent(recipientParam));
-        if (parsed.email) {
-          form.setValue('email', parsed.email);
-          // If we ever save sharableId, we could set it here too
-          // form.setValue('sharableId', parsed.sharableId);
-
-          // Also disable source selection if it's strictly a bank transfer? 
-          // Nah, let user decide.
-
-          // Auto-open save recipient checkbox if we want? No, they already saved it.
-          // Maybe check if nickname exists and populate it?
-          if (parsed.nickname) {
-            setRecipientNickname(parsed.nickname);
-            setShouldSaveRecipient(true); // Though it's already saved, maybe this is cleaner to show?
-            // Actually if it's "Quick Transfer" from "Saved Recipients", we shouldn't ask to save again.
-            // But logic inside PaymentTransferForm might not know it's *already* saved unless we pass a flag.
-            // For now, just filling email is good.
-            setShouldSaveRecipient(false); // Ensure it is false
-          }
+        if (parsed.sharableId) {
+          form.setValue('sharableId', parsed.sharableId);
+        }
+        // Auto-disable save checkbox if coming from saved recipient
+        if (parsed.nickname) {
+          setShouldSaveRecipient(false);
         }
       } catch (e) {
         console.error("Failed to parse recipient", e);
@@ -98,33 +95,207 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
     }
   }, [searchParams, form]);
 
+  // Real-time recipient lookup (debounced)
+  useEffect(() => {
+    const sharableId = form.watch('sharableId');
 
-  // Helper to save recipient after successful transfer
-  const saveRecipientIfNeeded = async (senderBank: any, receiverBank: any, data: z.infer<typeof formSchema>) => {
-    if (!shouldSaveRecipient || !recipientNickname.trim()) {
+    if (!sharableId || sharableId.trim().length < 8) {
+      setRecipientInfo(null);
+      setRecipientNickname("");
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setIsLookingUpRecipient(true);
+      try {
+        console.log('🔍 [Normal Transfer] Starting recipient lookup...');
+        console.log('📥 Raw sharableId:', sharableId);
+
+        const sanitizedId = extractId(sharableId);
+        console.log('🧹 Sanitized ID:', sanitizedId);
+
+        if (!sanitizedId) {
+          console.log('❌ Sanitization returned null/empty');
+          setRecipientInfo(null);
+          setRecipientNickname("");
+          return;
+        }
+
+        console.log('🔍 Calling getUserByIdentifier with:', sanitizedId);
+        const resolvedUser = await getUserByIdentifier(sanitizedId);
+        console.log('📤 getUserByIdentifier result:', resolvedUser);
+
+        if (resolvedUser) {
+          const fullName = `${resolvedUser.firstName} ${resolvedUser.lastName}`;
+          console.log('✅ User resolved:', fullName);
+
+          // Determine account type (wallet or bank)
+          let accountType = 'wallet';
+          let bankDetails = null;
+
+          // Check if it's a bank shareable ID
+          try {
+            const accountId = decryptId(sanitizedId);
+            console.log('🔓 Trying to decrypt as bank ID, accountId:', accountId);
+            const bank = await getBankByAccountId({ accountId });
+            if (bank) {
+              accountType = 'bank';
+              bankDetails = bank;
+              console.log('🏦 Bank details found:', bank.name);
+            }
+          } catch (e) {
+            console.log('💰 Not a bank ID, treating as wallet ID');
+          }
+
+          setRecipientInfo({
+            ...resolvedUser,
+            fullName,
+            accountType,
+            bankDetails
+          });
+          setRecipientNickname(fullName); // Auto-fill nickname
+        } else {
+          console.log('❌ No user found');
+          setRecipientInfo(null);
+          setRecipientNickname("");
+        }
+      } catch (error) {
+        console.error('💥 Failed to lookup recipient:', error);
+        setRecipientInfo(null);
+        setRecipientNickname("");
+      } finally {
+        setIsLookingUpRecipient(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [form.watch('sharableId')]);
+
+  const handleShare = async () => {
+    if (!successData) return;
+
+    const shareText = `Finecore Transfer Receipt\nAmount: $${successData.amount}\nTo: ${successData.to}\nRef ID: ${successData.id}\nTime: ${successData.time}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Finecore Receipt',
+          text: shareText,
+        });
+      } catch (err) {
+        console.log('Share cancelled or failed', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        toast.success('Receipt details copied to clipboard!');
+      } catch (err) {
+        toast.error('Failed to copy to clipboard');
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    const receiptElement = document.getElementById('receipt-modal-content');
+    if (!receiptElement) return;
+
+    try {
+      const canvas = await html2canvas(receiptElement, {
+        backgroundColor: '#0f1012', // Match modal background
+        scale: 2 // Higher resolution
+      });
+
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `finecore-receipt-${successData.id.slice(-8)}.png`;
+      link.click();
+
+      toast.success('Receipt saved successfully!');
+    } catch (err) {
+      console.error('Save failed:', err);
+      toast.error('Failed to save receipt image');
+    }
+  };
+
+  // ✨ AUTO-RESOLVE & SAFE SAVE LOGIC (Using Advanced Resolution)
+  const saveRecipientIfNeeded = async (
+    data: z.infer<typeof formSchema>,
+    senderUserId: any,
+    receiverIdentifier: string, // Email, Wallet ID, or Bank Shareable ID entered by user
+    receiverBank?: any
+  ) => {
+    if (!shouldSaveRecipient) {
+      console.log('⏭️ Skipping recipient save (checkbox not checked)');
+      return;
+    }
+
+    // ✅ NEW: Validate nickname is not empty
+    if (!recipientNickname || recipientNickname.trim() === '') {
+      console.error('❌ Nickname is required when saving recipient');
+      toast.error('Please enter a nickname for the recipient');
       return;
     }
 
     try {
-      const saveResult = await saveRecipient({
-        userId: senderBank.userId, // ✅ FIXED: Save to SENDER's account
-        nickname: recipientNickname,
-        transferType: data.source === 'wallet' ? 'wallet' : 'bank',
-        recipientUserId: receiverBank.userId,
-        recipientEmail: data.email,
-        recipientBankId: receiverBank.$id,
-        bankName: receiverBank.name,
-        accountMask: receiverBank.mask,
-        createdFrom: 'normal_transfer'
-      });
+      // 🔧 STEP A: Sanitize Sender ID
+      const sanitizedSenderId = extractUserId(senderUserId);
 
-      if (saveResult.success) {
-        alert(`✅ ${saveResult.message}`);
+      if (!sanitizedSenderId) {
+        console.error('❌ Invalid sender ID - cannot save recipient');
+        return;
+      }
+
+      if (!receiverIdentifier || receiverIdentifier.trim() === '') {
+        console.error('❌ Invalid receiver identifier - cannot save recipient');
+        return;
+      }
+
+      console.log('🔍 Auto-resolving recipient details for:', receiverIdentifier);
+
+      // 🎯 STEP B: Resolve the User (The "Magic" Step using advanced logic)
+      const resolvedUser = await getUserByIdentifier(receiverIdentifier);
+
+      if (resolvedUser) {
+        // ✅ User found - Save with USER-PROVIDED nickname
+        const recipientName = `${resolvedUser.firstName} ${resolvedUser.lastName}`;
+
+        console.log('✅ Recipient auto-resolved:', {
+          id: resolvedUser.$id,
+          name: recipientName,
+          nickname: recipientNickname, // ✨ User's custom nickname
+          walletId: resolvedUser.walletId,
+          email: resolvedUser.email
+        });
+
+        const saveResult = await saveRecipient({
+          userId: sanitizedSenderId,
+          nickname: recipientNickname.trim(), // ✨ Use USER'S nickname (not auto-generated)
+          transferType: data.source === 'wallet' ? 'wallet' : 'bank',
+          recipientUserId: resolvedUser.$id, // ✨ Real DB ID
+          recipientWalletId: resolvedUser.walletId, // ✨ Real Wallet ID
+          recipientEmail: resolvedUser.email, // ✨ Real Email
+          recipientName: recipientName, // ✨ Real Full Name
+          recipientBankId: receiverBank?.$id,
+          bankName: receiverBank?.name,
+          accountMask: receiverBank?.mask,
+          createdFrom: 'normal_transfer'
+        });
+
+        if (saveResult.success) {
+          console.log(`✅ Recipient saved with nickname: ${recipientNickname}`);
+          toast.success(saveResult.message);
+        } else {
+          console.log(`ℹ️ ${saveResult.message}`);
+          toast(saveResult.message, { icon: 'ℹ️' });
+        }
       } else {
-        alert(`ℹ️ ${saveResult.message}`);
+        // ⚠️ External/Not Found - Skip save (external transfers)
+        console.log('⚠️ Recipient not found in system (external transfer) - skipping save');
       }
     } catch (error) {
-      console.error('Failed to save recipient:', error);
+      console.error('❌ Auto-save failed:', error);
+      toast.error('Failed to save recipient');
     }
   };
 
@@ -132,47 +303,212 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
     setIsLoading(true);
 
     try {
-      const receiverAccountId = decryptId(data.sharableId);
-      const receiverBank = await getBankByAccountId({
-        accountId: receiverAccountId,
-      });
+      // 🔧 STEP A: Sanitize Inputs Immediately
+      const receiverIdRaw = extractId(data.sharableId);
 
-      // ✅ FIX: Get sender bank by appwriteItemId (data.senderBank is appwriteItemId from BankDropdown)
-      const senderBank = await getBankByAppwriteItemId(data.senderBank);
+      console.log('🔍 Sanitized receiverId:', receiverIdRaw);
 
-      if (!receiverBank || !senderBank) {
-        alert("Invalid bank account. Please check the shareable ID.");
+      if (!receiverIdRaw || receiverIdRaw.trim() === '') {
+        alert("❌ Invalid Receiver ID. Please enter a valid identifier.");
         setIsLoading(false);
         return;
       }
 
-      // ✅ HYBRID: User chọn Wallet hoặc Bank
+      // 🎯 STEP B: Resolve the User (The "Magic" Step)
+      console.log('🔍 Resolving user from identifier:', receiverIdRaw);
+      const resolvedUser = await getUserByIdentifier(receiverIdRaw);
+
+      // Try to decode as a Bank Shareable ID
+      let receiverBank = null;
+      let receiverWalletUser = null;
+      let isWalletTransfer = false;
+
+      try {
+        const receiverAccountId = decryptId(receiverIdRaw);
+        receiverBank = await getBankByAccountId({ accountId: receiverAccountId });
+      } catch (e) {
+        console.log("Not a bank shareable ID, checking if Wallet ID...");
+      }
+
+      // If not a bank, check if it's a Wallet ID
+      if (!receiverBank) {
+        receiverWalletUser = await getUserByWalletId(receiverIdRaw);
+        if (receiverWalletUser) {
+          isWalletTransfer = true;
+          console.log("Detected Wallet ID, switching to Bank→Wallet flow");
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // HANDLE WALLET TRANSFERS (No senderBank needed)
+      // ═══════════════════════════════════════════════════════════════════
       if (data.source === "wallet") {
+        // For wallet transfers, we don't need senderBank - the backend uses getLoggedInUser
+        if (!receiverBank && !receiverWalletUser) {
+          alert("❌ Invalid Receiver ID. Please verify the Wallet ID or Bank Shareable ID.");
+          setIsLoading(false);
+          return;
+        }
+
         // 💰 WALLET TRANSFER - Instant, FREE
-        const result = await transferBalance({
-          senderId: senderBank.userId,
-          receiverId: receiverBank.userId,
-          amount: parseFloat(data.amount),
-          description: data.name,
-          email: data.email,
-        });
+        if (isWalletTransfer) {
+          // 🔧 STEP C: Prepare Payload (Must use String ID)
+          const receiverUserIdStr = extractId(receiverWalletUser!.$id);
 
-        if (result && result.success) {
-          // Save recipient if needed
-          await saveRecipientIfNeeded(senderBank, receiverBank, data);
+          // Wallet → Wallet (receiver is wallet user)
+          const result = await transferBalance({
+            senderId: "", // Backend overrides with authenticated user
+            receiverId: receiverUserIdStr, // ✅ Sanitized String ID
+            amount: parseFloat(data.amount),
+            description: data.name,
+          });
 
-          alert(
-            `✅ Instant Transfer Successful!\n\n` +
-            `Your new wallet balance: $${result.newBalance.toFixed(2)}\n` +
-            `Fee: $0 (FREE!)`
+          if (result && result.success) {
+            // 🎯 STEP D: Auto-Save (Only if saveRecipient is true)
+            const currentUser = await getLoggedInUser();
+            if (currentUser && shouldSaveRecipient) {
+              // Use resolvedUser if available, otherwise fallback to receiverWalletUser
+              const userToSave = resolvedUser || receiverWalletUser;
+              if (userToSave) {
+                await saveRecipientIfNeeded(data, currentUser.$id, receiverIdRaw, undefined);
+              }
+            }
+
+
+            setSuccessData({
+              amount: parseFloat(data.amount).toFixed(2),
+              to: `${receiverWalletUser!.firstName} ${receiverWalletUser!.lastName}`,
+              toBank: 'Finecore Wallet',
+              toId: receiverWalletUser!.walletId,
+              from: 'Wallet Balance',
+              fromDetail: 'Finecore Wallet',
+              fromId: currentUser?.walletId || 'N/A',
+              senderName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`,
+              id: result.transactionId || 'N/A',
+              time: new Date().toLocaleString()
+            });
+            // Don't navigate away - success modal will show
+          } else {
+            alert(`❌ Transfer Failed!\n\n${result?.message || "Unknown error"}`);
+          }
+        } else {
+          // Wallet → Bank Account
+          // Need to determine if this is:
+          // A) WITHDRAWAL: User withdrawing to their OWN bank account
+          // B) P2P TRANSFER: User sending to another user's bank account
+
+          // Get the bank's appwriteItemId for the withdrawal
+          const bankAccountId = receiverBank!.appwriteItemId || receiverBank!.$id || receiverBank!.id;
+
+          // Check if this is the user's own bank (self-withdrawal)
+          // We detect this by checking if the bank's shareable ID starts with their user ID prefix
+          // or if it's in the user's accounts list
+          const isOwnBank = accounts.some(
+            (acc: Account) => acc.appwriteItemId === bankAccountId || acc.id === receiverBank!.accountId
           );
-          form.reset();
-          router.push("/");
+
+          if (isOwnBank) {
+            // 💸 WALLET → OWN BANK (Withdrawal)
+            console.log("Detected Wallet → Own Bank withdrawal flow");
+
+            const result = await walletToBank({
+              destinationBankId: bankAccountId,
+              amount: parseFloat(data.amount),
+              description: data.name || "Wallet Withdrawal",
+            });
+
+            if (result && result.success) {
+              // Get current user for success modal display
+              const senderUser = await getLoggedInUser();
+              const receiverBankDetails = await getBank({ documentId: bankAccountId });
+
+              setSuccessData({
+                amount: parseFloat(data.amount).toFixed(2),
+                to: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
+                toBank: receiverBankDetails?.name || 'Bank Account',
+                toId: receiverBankDetails?.shareableId || 'N/A',
+                from: 'Wallet Balance',
+                fromDetail: 'Finecore Wallet',
+                fromId: senderUser?.walletId || 'N/A',
+                senderName: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
+                id: result.transactionId || 'N/A',
+                time: new Date().toLocaleString()
+              });
+              // Don't navigate away - success modal will show
+            } else {
+              alert(`❌ Withdrawal Failed!\n\n${result?.message || "Unknown error"}`);
+            }
+          } else {
+            // 💰 WALLET → ANOTHER USER'S BANK (External Transfer)
+            // 🔧 STEP C: Prepare Payload (Must use String IDs)
+            // 🔴 CRITICAL FIX: Pass receiverBankId to enforce Bank routing (NOT P2P wallet)
+            const receiverUserIdStr = extractId(receiverBank!.userId);
+            const receiverBankIdStr = extractId(receiverBank!.appwriteItemId || receiverBank!.$id);
+
+            const result = await transferBalance({
+              senderId: "", // Backend overrides with authenticated user
+              receiverId: receiverUserIdStr, // ✅ Sanitized String ID
+              receiverBankId: receiverBankIdStr, // 🔴 CRITICAL: Forces Wallet→Bank routing
+              amount: parseFloat(data.amount),
+              description: data.name,
+            });
+
+            if (result && result.success) {
+              // 🎯 STEP D: Auto-Save (Only if saveRecipient is true)
+              const currentUser = await getLoggedInUser();
+              if (currentUser && shouldSaveRecipient) {
+                // Use resolvedUser if available (has full user data)
+                if (resolvedUser) {
+                  await saveRecipientIfNeeded(data, currentUser.$id, receiverIdRaw, receiverBank);
+                }
+              }
+
+              // Get receiver user for success modal display
+              const receiverUser = await getUserInfo({ userId: receiverUserIdStr });
+
+              setSuccessData({
+                amount: parseFloat(data.amount).toFixed(2),
+                to: `${receiverUser?.firstName || 'Recipient'} ${receiverUser?.lastName || ''}`,
+                toBank: receiverBank?.name || 'Bank Account',
+                toId: receiverBank?.shareableId || 'N/A',
+                from: 'Wallet Balance',
+                fromDetail: 'Finecore Wallet',
+                fromId: currentUser?.walletId || 'N/A',
+                senderName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`,
+                id: result.transactionId || 'N/A',
+                time: new Date().toLocaleString()
+              });
+              // Don't navigate away - success modal will show
+            } else {
+              alert(`❌ Transfer Failed!\n\n${result?.message || "Unknown error"}`);
+            }
+          }
         }
       } else {
-        // 🏦 BANK TRANSFER - 1-3 days, $0.25 fee
+        // ═══════════════════════════════════════════════════════════════════
+        // HANDLE BANK TRANSFERS (senderBank required)
+        // ═══════════════════════════════════════════════════════════════════
+        if (!data.senderBank) {
+          alert("❌ Please select a source bank for bank transfers.");
+          setIsLoading(false);
+          return;
+        }
 
-        // ✅ CHECK AVAILABLE BALANCE (actual - pending)
+        const senderBank = await getBankByAppwriteItemId(data.senderBank);
+
+        if (!senderBank) {
+          alert("❌ Invalid source bank. Please select a valid bank account.");
+          setIsLoading(false);
+          return;
+        }
+
+        if (!receiverBank && !receiverWalletUser) {
+          alert("❌ Invalid Receiver ID. Please verify the Wallet ID or Bank Shareable ID.");
+          setIsLoading(false);
+          return;
+        }
+
+        // 🏦 BANK as source
         const balanceInfo = await getAvailableBalance(data.senderBank);
         const transferAmount = parseFloat(data.amount);
 
@@ -189,43 +525,100 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
           return;
         }
 
-        const transferParams = {
-          sourceFundingSourceUrl: senderBank.fundingSourceUrl,
-          destinationFundingSourceUrl: receiverBank.fundingSourceUrl,
-          amount: data.amount,
-        };
+        if (isWalletTransfer) {
+          // 🏦➡️💰 BANK → WALLET (Top-up flow)
+          console.log("Executing Bank → Wallet transfer...");
 
-        const transfer = await createTransfer(transferParams);
-
-        if (transfer) {
-          const transaction = {
-            name: data.name,
-            amount: data.amount,
+          // 🔧 STEP C: Prepare Payload (Must use String ID)
+          const result = await bankToWalletTransfer({
             senderId: senderBank.userId,
             senderBankId: senderBank.$id,
-            receiverId: receiverBank.userId,
-            receiverBankId: receiverBank.$id,
-            email: data.email,
-            category: "Transfer",
-            pending: true,
+            receiverWalletId: receiverIdRaw, // ✅ Sanitized String (Wallet ID)
+            amount: transferAmount,
+            description: data.name || "Bank to Wallet Transfer",
+          });
+
+          if (result.success) {
+            // 🎯 STEP D: Auto-Save (Only if saveRecipient is true)
+            if (shouldSaveRecipient && resolvedUser) {
+              await saveRecipientIfNeeded(data, senderBank.userId, receiverIdRaw, undefined);
+            }
+
+            // Get current user for success modal display
+            const senderUser = await getUserInfo({ userId: senderBank.userId });
+            const senderBankDetails = await getBank({ documentId: senderBank.$id });
+
+            setSuccessData({
+              amount: transferAmount.toFixed(2),
+              to: `${receiverWalletUser!.firstName} ${receiverWalletUser!.lastName}`,
+              toBank: 'Finecore Wallet',
+              toId: receiverWalletUser!.walletId,
+              from: senderBankDetails?.name || 'Bank Account',
+              fromDetail: senderBankDetails?.subtype || 'Checking',
+              fromId: senderBankDetails?.shareableId || 'N/A',
+              senderName: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
+              id: result.transactionId || 'N/A',
+              time: new Date().toLocaleString()
+            });
+            // Don't navigate away - success modal will show
+          } else {
+            alert(`❌ Transfer Failed!\n\n${result.message}`);
+          }
+        } else {
+          // 🏦➡️🏦 BANK → BANK (Dwolla flow)
+          // 🔧 STEP C: Prepare Payload (Must use String IDs)
+          const senderUserIdStr = extractId(senderBank.userId);
+          const receiverUserIdStr = extractId(receiverBank!.userId);
+          const senderBankIdStr = extractId(senderBank.$id);
+          const receiverBankIdStr = extractId(receiverBank!.$id);
+
+          const transferParams = {
+            sourceFundingSourceUrl: senderBank.fundingSourceUrl,
+            destinationFundingSourceUrl: receiverBank!.fundingSourceUrl,
+            amount: data.amount,
           };
 
-          const newTransaction = await createTransaction(transaction);
+          const transfer = await createTransfer(transferParams);
 
-          if (newTransaction) {
-            // Save recipient if needed
-            await saveRecipientIfNeeded(senderBank, receiverBank, data);
+          if (transfer) {
+            const transaction = {
+              name: data.name,
+              amount: data.amount,
+              senderId: senderUserIdStr, // ✅ Sanitized String ID
+              senderBankId: senderBankIdStr, // ✅ Sanitized String ID
+              receiverId: receiverUserIdStr, // ✅ Sanitized String ID
+              receiverBankId: receiverBankIdStr, // ✅ Sanitized String ID
+              category: "Transfer",
+              pending: true,
+            };
 
-            alert(
-              `⏳ Bank Transfer Initiated!\n\n` +
-              `Amount: $${transferAmount.toFixed(2)}\n` +
-              `New Available Balance: $${(balanceInfo.available - transferAmount).toFixed(2)}\n\n` +
-              `Your transfer will complete in 1-3 business days.\n` +
-              `Fee: $0.25\n\n` +
-              `You will receive a confirmation email.`
-            );
-            form.reset();
-            router.push("/");
+            const newTransaction = await createTransaction(transaction);
+
+            if (newTransaction) {
+              // 🎯 STEP D: Auto-Save (Only if saveRecipient is true)
+              if (shouldSaveRecipient && resolvedUser) {
+                await saveRecipientIfNeeded(data, senderBank.userId, receiverIdRaw, receiverBank);
+              }
+
+              // Get sender and receiver users for success modal display
+              const senderUser = await getUserInfo({ userId: senderBank.userId });
+              const receiverUser = await getUserInfo({ userId: receiverUserIdStr });
+              const senderBankDetails = await getBank({ documentId: senderBank.$id });
+
+              setSuccessData({
+                amount: transferAmount.toFixed(2),
+                to: `${receiverUser?.firstName || 'Recipient'} ${receiverUser?.lastName || ''}`,
+                toBank: receiverBank?.name || 'Bank Account',
+                toId: receiverBank?.shareableId || 'N/A',
+                from: senderBankDetails?.name || 'Bank Account',
+                fromDetail: senderBankDetails?.subtype || 'Checking',
+                fromId: senderBankDetails?.shareableId || 'N/A',
+                senderName: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
+                id: newTransaction.$id || 'N/A',
+                time: new Date().toLocaleString()
+              });
+              // Don't navigate away - success modal will show
+            }
           }
         }
       }
@@ -237,261 +630,441 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
     setIsLoading(false);
   };
 
+  const handleSourceChange = (source: "wallet" | "bank") => {
+    setTransferSource(source);
+    form.setValue("source", source);
+  };
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(submit)} className="flex flex-col glass-panel p-6 md:p-8">
-
-        {/* TRANSFER SOURCE SELECTOR */}
-        <FormField
-          control={form.control}
-          name="source"
-          render={({ field }) => (
-            <FormItem className="border-b border-gray-200 pb-6 mb-6">
-              <div className="payment-transfer_form-item">
-                <FormLabel className="text-16 font-semibold text-gray-900">
-                  Transfer Method
-                </FormLabel>
-                <FormDescription className="text-14 font-normal text-gray-600 mt-2">
-                  Choose how you want to send money
-                </FormDescription>
-                <div className="mt-4">
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select transfer method" />
-                      </SelectTrigger>
-                      <SelectContent
-                        className="!bg-gray-900 border border-gray-700 shadow-2xl"
-                        style={{ backgroundColor: '#111827', color: '#fff' }}
-                      >
-                        <SelectItem value="wallet" className="hover:bg-gray-800 cursor-pointer">
-                          <div className="flex items-center gap-3 py-2">
-                            <span className="text-2xl">💰</span>
-                            <div>
-                              <p className="font-semibold text-white">Wallet Balance</p>
-                              <p className="text-sm text-emerald-400">Instant • FREE</p>
-                            </div>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="bank" className="hover:bg-gray-800 cursor-pointer">
-                          <div className="flex items-center gap-3 py-2">
-                            <span className="text-2xl">🏦</span>
-                            <div>
-                              <p className="font-semibold text-white">Bank Account</p>
-                              <p className="text-sm text-gray-400">1-3 days • $0.25 fee</p>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage className="text-12 text-red-500 mt-2" />
-                </div>
+    <>
+      {/* Success Modal */}
+      {successData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div id="receipt-modal-content" className="bg-[#0f1012] border border-gray-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Header */}
+            <div className="bg-emerald-500/10 p-6 flex flex-col items-center border-b border-gray-800">
+              <div className="size-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4 ring-2 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
               </div>
-            </FormItem>
-          )}
-        />
+              <h2 className="text-20 font-bold text-white mb-1">Transfer Successful!</h2>
+              <p className="text-14 text-gray-400">Transaction completed</p>
 
-        <FormField
-          control={form.control}
-          name="senderBank"
-          render={() => (
-            <FormItem className="border-t border-gray-200">
-              <div className="payment-transfer_form-item pb-6 pt-5">
-                <div className="payment-transfer_form-content">
-                  <FormLabel className="text-14 font-medium text-gray-700">
-                    Select Source Bank
-                  </FormLabel>
-                  <FormDescription className="text-12 font-normal text-gray-600">
-                    Select the bank account you want to transfer funds from
-                  </FormDescription>
-                </div>
-                <div className="flex w-full flex-col">
-                  <FormControl>
-                    <BankDropdown
-                      accounts={accounts}
-                      setValue={form.setValue}
-                      otherStyles="!w-full"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-12 text-red-500" />
-                </div>
+              <div className="mt-6 text-center">
+                <p className="text-14 text-gray-400 mb-1">Total Amount</p>
+                <p className="text-36 font-bold text-white tracking-tight">
+                  ${successData.amount}
+                </p>
               </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem className="border-t border-gray-200">
-              <div className="payment-transfer_form-item pb-6 pt-5">
-                <div className="payment-transfer_form-content">
-                  <FormLabel className="text-14 font-medium text-gray-700">
-                    Transfer Note (Optional)
-                  </FormLabel>
-                  <FormDescription className="text-12 font-normal text-gray-600">
-                    Please provide any additional information or instructions
-                    related to the transfer
-                  </FormDescription>
-                </div>
-                <div className="flex w-full flex-col">
-                  <FormControl>
-                    <Textarea
-                      placeholder="Write a short note here"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-12 text-red-500" />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <div className="payment-transfer_form-details">
-          <h2 className="text-18 font-semibold text-gray-900">
-            Bank account details
-          </h2>
-          <p className="text-16 font-normal text-gray-600">
-            Enter the bank account details of the recipient
-          </p>
-        </div>
-
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem className="border-t border-gray-200">
-              <div className="payment-transfer_form-item py-5">
-                <FormLabel className="text-14 w-full max-w-[280px] font-medium text-gray-700">
-                  Recipient&apos;s Email Address
-                </FormLabel>
-                <div className="flex w-full flex-col">
-                  <FormControl>
-                    <Input
-                      placeholder="ex: johndoe@gmail.com"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-12 text-red-500" />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="sharableId"
-          render={({ field }) => (
-            <FormItem className="border-t border-gray-200">
-              <div className="payment-transfer_form-item pb-5 pt-6">
-                <FormLabel className="text-14 w-full max-w-[280px] font-medium text-gray-700">
-                  Receiver&apos;s Plaid Sharable Id
-                </FormLabel>
-                <div className="flex w-full flex-col">
-                  <FormControl>
-                    <Input
-                      placeholder="Enter the public account number"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-12 text-red-500" />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem className="border-y border-gray-200">
-              <div className="payment-transfer_form-item py-5">
-                <FormLabel className="text-14 w-full max-w-[280px] font-medium text-gray-700">
-                  Amount
-                </FormLabel>
-                <div className="flex w-full flex-col">
-                  <FormControl>
-                    <Input
-                      placeholder="ex: 5.00"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-12 text-red-500" />
-                </div>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        {/* Save Recipient Section */}
-        <div className="border-t border-gray-200">
-          <div className="payment-transfer_form-item py-5">
-            <div className="w-full max-w-[280px]">
-              <h3 className="text-14 font-medium text-gray-700 mb-2">Save Recipient</h3>
-              <p className="text-12 text-gray-600">Quick access for future transfers</p>
             </div>
-            <div className="flex w-full flex-col gap-4">
-              <label className="flex items-center gap-3 cursor-pointer group">
+
+            {/* Receipt Details */}
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
+                <span className="text-14 text-gray-400">To</span>
+                <div className="text-right flex flex-col items-end">
+                  <p className="text-14 font-semibold text-white">{successData.to}</p>
+                  <p className="text-12 text-emerald-400 font-medium">{successData.toBank}</p>
+                  {successData.toId && (
+                    <p className="text-12 text-gray-500 font-mono mt-0.5">
+                      {successData.toBank === 'Finecore Wallet' ? successData.toId : `Account • ${successData.toId}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
+                <span className="text-14 text-gray-400">From</span>
+                <div className="text-right flex flex-col items-end">
+                  <p className="text-14 font-semibold text-white">{successData.senderName}</p>
+                  <p className="text-12 text-emerald-400 font-medium">{successData.from}</p>
+                  {successData.fromId && (
+                    <p className="text-12 text-gray-500 font-mono mt-0.5">
+                      {successData.fromId}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
+                <span className="text-14 text-gray-400">Time</span>
+                <span className="text-14 text-gray-300">{successData.time}</span>
+              </div>
+              <div className="flex justify-between items-center py-3">
+                <span className="text-14 text-gray-400">Ref ID</span>
+                <span className="text-12 font-mono text-gray-500 uppercase tracking-wider">{successData.id.slice(-8)}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="p-6 pt-2 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  form.reset();
+                  setSuccessData(null);
+                }}
+                className="col-span-2 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+              >
+                Done
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex items-center justify-center gap-2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl transition-colors border border-gray-700"
+              >
+                <Share2 className="w-4 h-4" /> Share
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center justify-center gap-2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl transition-colors border border-gray-700"
+              >
+                <Download className="w-4 h-4" /> Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(submit)} className="space-y-6">
+
+          {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 1: TRANSFER METHOD TOGGLE
+        ═══════════════════════════════════════════════════════════════════ */}
+          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center">
+                <ArrowRight className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Transfer Method</h3>
+                <p className="text-sm text-gray-400">Choose how you want to send money</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Wallet Option */}
+              <button
+                type="button"
+                onClick={() => handleSourceChange("wallet")}
+                className={`relative p-4 rounded-xl border-2 transition-all duration-300 group ${transferSource === "wallet"
+                  ? "border-emerald-500 bg-emerald-500/10"
+                  : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                  }`}
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${transferSource === "wallet"
+                    ? "bg-emerald-500/20"
+                    : "bg-gray-700/50 group-hover:bg-gray-700"
+                    }`}>
+                    <Wallet className={`w-6 h-6 ${transferSource === "wallet" ? "text-emerald-400" : "text-gray-400"
+                      }`} />
+                  </div>
+                  <div className="text-center">
+                    <p className={`font-semibold ${transferSource === "wallet" ? "text-white" : "text-gray-300"
+                      }`}>Wallet Balance</p>
+                    <p className="text-xs text-emerald-400 font-medium mt-1">Instant • FREE</p>
+                  </div>
+                </div>
+                {transferSource === "wallet" && (
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                )}
+              </button>
+
+              {/* Bank Option */}
+              <button
+                type="button"
+                onClick={() => handleSourceChange("bank")}
+                className={`relative p-4 rounded-xl border-2 transition-all duration-300 group ${transferSource === "bank"
+                  ? "border-emerald-500 bg-emerald-500/10"
+                  : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                  }`}
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${transferSource === "bank"
+                    ? "bg-emerald-500/20"
+                    : "bg-gray-700/50 group-hover:bg-gray-700"
+                    }`}>
+                    <Building2 className={`w-6 h-6 ${transferSource === "bank" ? "text-emerald-400" : "text-gray-400"
+                      }`} />
+                  </div>
+                  <div className="text-center">
+                    <p className={`font-semibold ${transferSource === "bank" ? "text-white" : "text-gray-300"
+                      }`}>Bank Account</p>
+                    <p className="text-xs text-gray-400 font-medium mt-1">1-3 days • $0.25</p>
+                  </div>
+                </div>
+                {transferSource === "bank" && (
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 2: SOURCE BANK SELECTION (Only for Bank transfers)
+        ═══════════════════════════════════════════════════════════════════ */}
+          {transferSource === "bank" && (
+            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Source Bank Account</h3>
+                  <p className="text-sm text-gray-400">Select which bank to transfer from</p>
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="senderBank"
+                render={() => (
+                  <FormItem>
+                    <FormControl>
+                      <BankDropdown
+                        accounts={accounts}
+                        setValue={form.setValue}
+                        otherStyles="!w-full"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-400 text-sm mt-2" />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 3: RECIPIENT ID (CRITICAL - HIGHLIGHTED)
+        ═══════════════════════════════════════════════════════════════════ */}
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-900/50 border-2 border-emerald-500/30 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
+            {/* Glow effect */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl" />
+
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 flex items-center justify-center">
+                  <User className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    Recipient Details
+                    <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Required</span>
+                  </h3>
+                  <p className="text-sm text-gray-400">Enter the receiver's unique identifier</p>
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="sharableId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
+                      <Hash className="w-4 h-4 text-emerald-400" />
+                      Receiver's Wallet ID / Account ID
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="Enter the unique Wallet ID or Bank Shareable ID"
+                          className="bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 h-12 pl-4 pr-4 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
+                          {...field}
+                        />
+                        {isLookingUpRecipient && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-gray-500 text-xs mt-2">
+                      💡 Recipient details will appear automatically as you type
+                    </FormDescription>
+                    <FormMessage className="text-red-400 text-sm" />
+
+                    {/* Real-time Recipient Preview Card */}
+                    {recipientInfo && !isLookingUpRecipient && (
+                      <div className="mt-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 animate-in fade-in duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-center size-12 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-lg">
+                            {recipientInfo.firstName[0]}{recipientInfo.lastName[0]}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-white font-semibold text-16">{recipientInfo.fullName}</p>
+                            <p className="text-gray-400 text-14">{recipientInfo.email}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {recipientInfo.accountType === 'wallet' ? (
+                                <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                                  💰 Wallet Account
+                                </span>
+                              ) : (
+                                <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
+                                  🏦 {recipientInfo.bankDetails?.name || 'Bank Account'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Not Found State */}
+                    {!recipientInfo && !isLookingUpRecipient && field.value && field.value.length >= 8 && (
+                      <div className="mt-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                        <p className="text-yellow-400 text-14">⚠️ Recipient not found. Please check the ID and try again.</p>
+                      </div>
+                    )}
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 4: PAYMENT DETAILS (Amount + Note)
+        ═══════════════════════════════════════════════════════════════════ */}
+          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Payment Details</h3>
+                <p className="text-sm text-gray-400">Enter the amount and optional note</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Amount Field */}
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-purple-400" />
+                      Amount
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">$</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          placeholder="0.00"
+                          className="bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 h-12 pl-8 pr-4 rounded-xl focus:border-purple-500 focus:ring-purple-500/20 text-lg font-semibold"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-400 text-sm" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Note Field */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-purple-400" />
+                      Transfer Note
+                      <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="What's this transfer for? e.g., Rent, Dinner, Gift..."
+                        className="bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500 focus:ring-purple-500/20 min-h-[80px] resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-400 text-sm" />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 5: SAVE RECIPIENT (Optional)
+        ═══════════════════════════════════════════════════════════════════ */}
+          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+            <label className="flex items-start gap-4 cursor-pointer group">
+              <div className="pt-1">
                 <input
                   type="checkbox"
                   checked={shouldSaveRecipient}
                   onChange={(e) => setShouldSaveRecipient(e.target.checked)}
-                  className="w-5 h-5 rounded border-gray-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                  className="w-5 h-5 rounded border-gray-600 bg-gray-800 text-emerald-500 focus:ring-emerald-500/20 cursor-pointer"
                 />
-                <div className="flex-1">
-                  <span className="text-14 font-medium text-gray-700 group-hover:text-emerald-600 transition-colors">
-                    💾 Save this recipient for future transfers
-                  </span>
-                  <p className="text-12 text-gray-500 mt-1">
-                    No need to enter their details again next time
-                  </p>
-                </div>
-              </label>
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-medium group-hover:text-emerald-400 transition-colors">
+                  💾 Save this person to my contacts automatically
+                </p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Quick access for next time - no need to enter their ID again
+                </p>
+              </div>
+            </label>
 
-              {shouldSaveRecipient && (
-                <div>
-                  <label className="text-14 font-medium text-gray-700 mb-2 block">
-                    Recipient Nickname
-                    <span className="text-gray-500 font-normal ml-1">(for your reference)</span>
-                  </label>
-                  <Input
-                    type="text"
-                    value={recipientNickname}
-                    onChange={(e) => setRecipientNickname(e.target.value)}
-                    placeholder="e.g. Mom, Landlord, Coffee Shop..."
-                    className="input-class"
-                  />
-                  <p className="text-12 text-gray-500 mt-2">
-                    💡 This name is just for you  - it doesn't have to match their real name
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Nickname Input - Appears when checkbox is checked */}
+            {shouldSaveRecipient && (
+              <div className="mt-4 pl-9 animate-in fade-in slide-in-from-top-2 duration-200">
+                <label className="text-14 font-medium text-gray-300 mb-2 block">
+                  Recipient Nickname
+                  <span className="text-gray-500 font-normal ml-1">(for your reference)</span>
+                </label>
+                <input
+                  type="text"
+                  value={recipientNickname}
+                  onChange={(e) => setRecipientNickname(e.target.value)}
+                  placeholder={recipientInfo?.fullName || "e.g., Mom, Coffee Shop, Roommate..."}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+                {!recipientNickname.trim() && (
+                  <p className="text-red-400 text-12 mt-2">⚠️ Nickname cannot be empty</p>
+                )}
+                <p className="text-12 text-gray-500 mt-2">
+                  💡 This name is just for you - it doesn't have to match their real name
+                </p>
+              </div>
+            )}
           </div>
-        </div>
 
-        <div className="payment-transfer_btn-box">
-          <Button type="submit" className="payment-transfer_btn">
+          {/* ═══════════════════════════════════════════════════════════════════
+            SUBMIT BUTTON
+        ═══════════════════════════════════════════════════════════════════ */}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {isLoading ? (
-              <>
-                <Loader2 size={20} className="animate-spin" /> &nbsp; Sending...
-              </>
+              <span className="flex items-center gap-2">
+                <Loader2 size={20} className="animate-spin" />
+                Processing...
+              </span>
             ) : (
-              "Transfer Funds"
+              <span className="flex items-center gap-2">
+                <ArrowRight size={20} />
+                Transfer Funds
+              </span>
             )}
           </Button>
-        </div>
-      </form>
-    </Form>
+
+          {/* Fee Notice */}
+          <p className="text-center text-gray-500 text-sm">
+            {transferSource === "wallet" ? (
+              <span className="text-emerald-400">✓ Instant transfer • No fees</span>
+            ) : (
+              <span>Bank transfer • 1-3 business days • $0.25 fee</span>
+            )}
+          </p>
+        </form>
+      </Form>
+    </>
   );
 };
 

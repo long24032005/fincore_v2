@@ -3,7 +3,7 @@
 import { ID, Query } from "node-appwrite";
 import { createAdminClient, createSessionClient } from "../appwrite";
 import { cookies } from "next/headers";
-import { encryptId, extractCustomerIdFromUrl, parseStringify } from "../utils";
+import { encryptId, extractCustomerIdFromUrl, parseStringify, extractId } from "../utils";
 import { CountryCode, ProcessorTokenCreateRequest, ProcessorTokenCreateRequestProcessorEnum, Products } from "plaid";
 
 import { plaidClient } from '@/lib/plaid';
@@ -15,6 +15,7 @@ const {
   APPWRITE_DATABASE_ID: DATABASE_ID,
   APPWRITE_USER_COLLECTION_ID: USER_COLLECTION_ID,
   APPWRITE_BANK_COLLECTION_ID: BANK_COLLECTION_ID,
+  APPWRITE_TRANSACTION_COLLECTION_ID: TRANSACTION_COLLECTION_ID,
 } = process.env;
 
 export const getUserInfo = async ({ userId }: getUserInfoProps) => {
@@ -27,9 +28,144 @@ export const getUserInfo = async ({ userId }: getUserInfoProps) => {
       [Query.equal('userId', [userId])]
     )
 
-    return parseStringify(user.documents[0]);
+    return user.documents[0] ? parseStringify(user.documents[0]) : null;
   } catch (error) {
     console.log(error)
+  }
+}
+
+/**
+ * Get user by their Appwrite document ID (the $id field)
+ * Used for auto-lookup of recipient email in transfers
+ */
+export const getUserById = async (documentId: string) => {
+  try {
+    const { database } = await createAdminClient();
+    const user = await database.getDocument(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      documentId
+    );
+    return parseStringify(user);
+  } catch (error) {
+    console.error("getUserById error:", error);
+    return null;
+  }
+}
+
+/**
+ * 🎯 ADVANCED RESOLUTION LOGIC - Get user by Email, Wallet ID, Bank Account ID, OR Bank Shareable ID
+ * Used for auto-resolving recipient details during transfer (mimics QR Transfer behavior)
+ * @param identifier - User's email, walletId, bank appwriteItemId, OR bank shareable ID
+ * @returns User object with $id, firstName, lastName, walletId, email, etc.
+ */
+export const getUserByIdentifier = async (identifier: string) => {
+  try {
+    if (!identifier || identifier.trim() === '') {
+      console.log('getUserByIdentifier: Empty identifier provided');
+      return null;
+    }
+
+    const { database } = await createAdminClient();
+
+    // 🔍 STEP 1: Try searching by Email
+    console.log(`🔍 Step 1: Searching by Email (${identifier})...`);
+    let result = await database.listDocuments(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      [Query.equal('email', identifier)]
+    );
+
+    if (result.documents.length > 0) {
+      console.log('✅ User found by Email');
+      return parseStringify(result.documents[0]);
+    }
+
+    // 🔍 STEP 2: Try searching by Wallet ID
+    console.log(`🔍 Step 2: Searching by WalletID (${identifier})...`);
+    result = await database.listDocuments(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      [Query.equal('walletId', identifier)]
+    );
+
+    if (result.documents.length > 0) {
+      console.log('✅ User found by WalletID');
+      return parseStringify(result.documents[0]);
+    }
+
+    // 🏦 STEP 3 (NEW - BANK ACCOUNT ID RESOLUTION): Try direct Bank Account lookup
+    console.log(`🔍 Step 3: Attempting to resolve as Bank Account ID (${identifier})...`);
+    try {
+      // Query the accounts collection by $id (document ID)
+      const bankResult = await database.listDocuments(
+        DATABASE_ID!,
+        BANK_COLLECTION_ID!,
+        [Query.equal('$id', identifier)]
+      );
+
+      if (bankResult.documents.length > 0) {
+        const bankAccount = bankResult.documents[0] as any;
+        console.log(`✅ Found bank account by $id! Owner userId: ${bankAccount.userId}`);
+
+        // Get the User who owns this bank account
+        // 🔧 FIX: Sanitize userId to prevent [object Object] error
+        const ownerUser = await getUserInfo({ userId: extractId(bankAccount.userId) });
+
+        if (ownerUser) {
+          console.log(`✅ Successfully resolved Bank Account ID → User: ${ownerUser.firstName} ${ownerUser.lastName}`);
+          return ownerUser;
+        }
+      } else {
+        console.log('⚠️ Bank account not found by $id');
+      }
+    } catch (bankLookupError) {
+      console.log('⚠️ Bank Account ID lookup failed:', bankLookupError);
+    }
+
+    // 🎯 STEP 4 (BANK SHAREABLE ID - "QR LOGIC"): Try to decode as Bank Shareable ID
+    console.log(`🔍 Step 4: Attempting to resolve as Bank Shareable ID (${identifier})...`);
+    try {
+      const { decryptId } = await import('../utils');
+      const accountId = decryptId(identifier);
+
+      console.log(`🔓 Decrypted to accountId: ${accountId}`);
+
+      // Query the accounts collection where accountId matches
+      const bankAccount = await getBankByAccountId({ accountId });
+
+      if (bankAccount && bankAccount.userId) {
+        console.log(`✅ Found bank account! Owner userId (RAW):`, bankAccount.userId);
+        console.log(`🔧 Type of userId:`, typeof bankAccount.userId);
+
+        // Found the bank! Now get the User who owns it
+        // 🔧 FIX: bankAccount.userId might be a full user object or just a string ID
+        // If it's an object, extract the actual userId field; otherwise use it directly
+        const sanitizedUserId = typeof bankAccount.userId === 'object'
+          ? (bankAccount.userId.userId || bankAccount.userId.$id)
+          : bankAccount.userId;
+        console.log(`🧹 AFTER sanitization:`, sanitizedUserId);
+
+        const ownerUser = await getUserInfo({ userId: sanitizedUserId });
+
+        if (ownerUser) {
+          console.log(`✅ Successfully resolved Bank Shareable ID → User: ${ownerUser.firstName} ${ownerUser.lastName}`);
+          return ownerUser;
+        }
+      } else {
+        console.log('⚠️ Bank account not found for decrypted accountId');
+      }
+    } catch (decryptError) {
+      // Not a valid shareable ID, continue
+      console.log('⚠️ Not a valid Bank Shareable ID (decrypt failed)');
+    }
+
+    // 🚫 STEP 5: All resolution attempts failed
+    console.log(`❌ getUserByIdentifier: No user found for identifier: ${identifier}`);
+    return null;
+  } catch (error) {
+    console.error("getUserByIdentifier error:", error);
+    return null;
   }
 }
 
@@ -64,6 +200,168 @@ export const signIn = async ({ email, password }: signInProps) => {
   }
 }
 
+export const seedUserTransactions = async (userId: string, email: string, database: any) => {
+  const emailLower = email.toLowerCase();
+  let scenario: 'conservative' | 'aggressive' | 'balanced' = 'balanced';
+  
+  if (emailLower.includes('thantrong')) {
+    scenario = 'conservative';
+  } else if (emailLower.includes('maohiem')) {
+    scenario = 'aggressive';
+  }
+  
+  console.log(`🌱 [Seeding] Seeding transactions for user ${userId} using scenario: ${scenario}`);
+  
+  const transactionsToCreate = [];
+  
+  if (scenario === 'conservative') {
+    // 2 Payroll deposits
+    transactionsToCreate.push({ name: "Nạp tiền lương tháng 4 - Fincore Corp", amount: "25000000", senderId: "system_payroll", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+    transactionsToCreate.push({ name: "Nạp tiền lương tháng 5 - Fincore Corp", amount: "25000000", senderId: "system_payroll", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+
+    // 4 Utility bills paid on time
+    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN HCMC", amount: "1250000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    transactionsToCreate.push({ name: "Thanh toán Nước sinh hoạt SAWACO", amount: "280000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    transactionsToCreate.push({ name: "Thanh toán Internet Viettel Telecom", amount: "250000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    transactionsToCreate.push({ name: "Thanh toán Phí quản lý chung cư Vinhomes", amount: "1100000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+
+    // 24 other transactions. Total spend = 10,000,000.
+    // 10% is Shopping/Dining = 1,000,000.
+    transactionsToCreate.push({ name: "Mua thực phẩm sạch WinMart+", amount: "500000", senderId: userId, receiverId: "merchant_partner", category: "Shopping", status: "Success" });
+    transactionsToCreate.push({ name: "Mua sách nhà sách Fahasa", amount: "500000", senderId: userId, receiverId: "merchant_partner", category: "Shopping", status: "Success" });
+
+    // Rest (9,000,000) are non-Shopping/Dining (Utilities, Personal Care, Transportation)
+    const conservativePool = [
+      { name: "Mua thuốc nhà thuốc Pharmacity", category: "Personal Care" },
+      { name: "Đặt xe GrabBike đi làm", category: "Transportation" },
+      { name: "Đi taxi Mai Linh công vụ", category: "Transportation" },
+      { name: "Mua thuốc nhà thuốc An Khang", category: "Personal Care" }
+    ];
+    for (let i = 0; i < 22; i++) {
+      const template = conservativePool[i % conservativePool.length];
+      transactionsToCreate.push({
+        name: template.name,
+        amount: "409000", // 409000 * 22 ~= 9,000,000
+        senderId: userId,
+        receiverId: "merchant_partner",
+        category: template.category,
+        status: "Success"
+      });
+    }
+
+  } else if (scenario === 'aggressive') {
+    // Top-ups
+    transactionsToCreate.push({ name: "Nạp tiền ví Fincore từ Vietcombank", amount: "20000000", senderId: "system_topup", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+
+    // Immediate cash out: 65% of topup (13,000,000) is cash-out/withdrawn right after.
+    transactionsToCreate.push({ name: "Rút tiền nhanh ATM Vietcombank", amount: "13000000", senderId: userId, receiverId: "merchant_partner", category: "Withdrawal", status: "Success" });
+
+    // Utility bills paid late
+    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN HCMC (Trễ hạn phạt)", amount: "1850000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+
+    // 40 transactions. Total spending: 20,000,000.
+    // 65% is Shopping/Dining = 13,000,000 (13 transactions of 1,000,000).
+    for (let i = 0; i < 13; i++) {
+      transactionsToCreate.push({
+        name: i % 2 === 0 ? "Mua sắm bốc đồng Shopee Tech Store" : "Săn sale Lazada Flagship Store",
+        amount: "1000000",
+        senderId: userId,
+        receiverId: "shopee_merchant",
+        category: "Shopping",
+        status: "Success"
+      });
+    }
+
+    // 35% is non-Shopping/Dining = 7,000,000 (27 transactions of ~259,259 VND)
+    const aggressiveNonShoppingPool = [
+      { name: "Nạp thẻ game Steam Wallet VIP", category: "Entertainment" },
+      { name: "Thanh toán hóa đơn Bar/Pub The Alley", category: "Entertainment" },
+      { name: "Đặt vé máy bay Bamboo Airways", category: "Travel" },
+      { name: "Xem phim CGV Gold Class VIP", category: "Entertainment" }
+    ];
+    for (let i = 0; i < 27; i++) {
+      const template = aggressiveNonShoppingPool[i % aggressiveNonShoppingPool.length];
+      transactionsToCreate.push({
+        name: template.name,
+        amount: "259259",
+        senderId: userId,
+        receiverId: "merchant_partner",
+        category: template.category,
+        status: "Success"
+      });
+    }
+
+  } else {
+    // Balanced
+    transactionsToCreate.push({ name: "Nạp tiền ví Fincore từ Techcombank", amount: "15000000", senderId: "system_topup", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+
+    // Immediate cash out: 20% of 15,000,000 = 3,000,000
+    transactionsToCreate.push({ name: "Rút tiền nhanh ATM Techcombank", amount: "3000000", senderId: userId, receiverId: "merchant_partner", category: "Withdrawal", status: "Success" });
+
+    // Utility bills
+    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN", amount: "850000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    transactionsToCreate.push({ name: "Thanh toán Tiền nước SAWACO", amount: "180000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+
+    // 35 transactions. Total spending: 15,000,000.
+    // 35% is Shopping/Dining = 5,250,000 (5 transactions of 1,050,000)
+    for (let i = 0; i < 5; i++) {
+      transactionsToCreate.push({
+        name: "Chi tiêu thiết yếu siêu thị Lotte Mart",
+        amount: "1050000",
+        senderId: userId,
+        receiverId: "grocery_merchant",
+        category: "Shopping",
+        status: "Success"
+      });
+    }
+
+    // 65% is non-Shopping/Dining = 9,750,000 (30 transactions of 325,000)
+    const balancedNonShoppingPool = [
+      { name: "Mua thực phẩm chức năng Watson", category: "Personal Care" },
+      { name: "Xem phim cuối tuần CGV Cinema", category: "Entertainment" },
+      { name: "Đặt xe GrabCar đi công tác", category: "Transportation" },
+      { name: "Cà phê Highlands Coffee gặp đối tác", category: "Food and Drink" }
+    ];
+    for (let i = 0; i < 30; i++) {
+      const template = balancedNonShoppingPool[i % balancedNonShoppingPool.length];
+      transactionsToCreate.push({
+        name: template.name,
+        amount: "325000",
+        senderId: userId,
+        receiverId: "merchant_partner",
+        category: template.category,
+        status: "Success"
+      });
+    }
+  }
+  
+  // Create all documents in Appwrite
+  for (const txn of transactionsToCreate) {
+    try {
+      await database.createDocument(
+        DATABASE_ID!,
+        TRANSACTION_COLLECTION_ID!,
+        ID.unique(),
+        {
+          name: txn.name,
+          amount: txn.amount,
+          senderId: txn.senderId,
+          senderBankId: "",
+          receiverId: txn.receiverId,
+          receiverBankId: "",
+          email: emailLower,
+          channel: "online",
+          category: txn.category,
+          status: txn.status
+        }
+      );
+    } catch (e: any) {
+      console.error(`❌ [Seeding] Error creating document: ${e.message}`);
+    }
+  }
+  console.log(`✅ [Seeding] Completed seeding ${transactionsToCreate.length} transactions for user ${userId}`);
+};
+
 export const signUp = async ({ password, ...userData }: SignUpParams) => {
   const { email, firstName, lastName } = userData;
 
@@ -95,71 +393,16 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
       return { error: true, message: 'Failed to create account. Please try again.' };
     }
 
-    // Format dateOfBirth to strict "YYYY-MM-DD" format required by Dwolla
-    let formattedDateOfBirth: string;
-    try {
-      const dateObj = new Date(userData.dateOfBirth);
-      if (isNaN(dateObj.getTime())) {
-        throw new Error('Invalid date');
-      }
-      formattedDateOfBirth = dateObj.toISOString().split('T')[0];
-    } catch (dateError) {
-      console.error('signUp: Failed to parse dateOfBirth:', userData.dateOfBirth);
-
-      // Fallback: if it already looks like YYYY-MM-DD, use it directly
-      if (typeof userData.dateOfBirth === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(userData.dateOfBirth)) {
-        formattedDateOfBirth = userData.dateOfBirth;
-      } else {
-        // Delete the Appwrite account we just created
-        try {
-          const { account: adminAccount } = await createAdminClient();
-          await adminAccount.delete(newUserAccount.$id);
-        } catch { }
-
-        return {
-          error: true,
-          message: 'Invalid date format. Please use YYYY-MM-DD (e.g., 1990-12-31).'
-        };
-      }
-    }
-
-    console.log('signUp: Formatted dateOfBirth for Dwolla:', formattedDateOfBirth);
-
-    // Create Dwolla customer
-    const dwollaCustomerData = {
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      email: userData.email,
-      dateOfBirth: formattedDateOfBirth,
-      ssn: userData.ssn,
-      address1: userData.address1,
-      city: userData.city,
-      state: userData.state,
-      postalCode: userData.postalCode,
-      type: 'personal' as const
-    };
-
-    const dwollaCustomerUrl = await createDwollaCustomer(dwollaCustomerData);
-
-    if (!dwollaCustomerUrl) {
-      console.error('signUp: Error creating Dwolla customer');
-
-      // Delete the Appwrite account we just created
-      try {
-        const { account: adminAccount } = await createAdminClient();
-        await adminAccount.delete(newUserAccount.$id);
-      } catch { }
-
-      return {
-        error: true,
-        message: 'Failed to set up payment account. Please check your information and try again.'
-      };
-    }
-
-    const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
-
     // Generate unique wallet ID
     const walletId = await createWalletId();
+
+    // Xác định số dư ban đầu dựa trên kịch bản email
+    let initialBalance = 60000000;
+    if (email.toLowerCase().includes('thantrong')) {
+      initialBalance = 70000000;
+    } else if (email.toLowerCase().includes('maohiem')) {
+      initialBalance = 52000000;
+    }
 
     // Create user document in database
     const newUser = await database.createDocument(
@@ -169,12 +412,13 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
       {
         ...userData,
         userId: newUserAccount.$id,
-        dwollaCustomerId,
-        dwollaCustomerUrl,
-        balance: 0, // Initialize e-wallet balance
+        balance: initialBalance, // Initialize e-wallet balance (VND)
         walletId, // Unique wallet ID for wallet transfers
       }
     );
+
+    // Bơm dữ liệu giao dịch giả lập tự động
+    await seedUserTransactions(newUserAccount.$id, email, database);
 
     // Create session
     const session = await account.createEmailPasswordSession(email, password);
@@ -198,8 +442,8 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
     // Clean up: try to delete the account if it was created
     if (newUserAccount?.$id) {
       try {
-        const { account: adminAccount } = await createAdminClient();
-        await adminAccount.delete(newUserAccount.$id);
+        const { user } = await createAdminClient();
+        await user.delete(newUserAccount.$id);
       } catch (cleanupError) {
         console.error('Failed to cleanup account:', cleanupError);
       }
@@ -249,7 +493,7 @@ export const logoutAccount = async () => {
   try {
     const { account } = await createSessionClient();
 
-    cookies().delete('appwrite-session');
+    (await cookies()).delete('appwrite-session');
 
     await account.deleteSession('current');
   } catch (error) {
@@ -311,51 +555,25 @@ export const createBankAccount = async ({
 export const exchangePublicToken = async ({
   publicToken,
   user,
+  accountId,
+  bankName,
 }: exchangePublicTokenProps) => {
   try {
-    // Exchange public token for access token and item ID
-    const response = await plaidClient.itemPublicTokenExchange({
-      public_token: publicToken,
-    });
-
-    const accessToken = response.data.access_token;
-    const itemId = response.data.item_id;
-
-    // Get account information from Plaid using the access token
-    const accountsResponse = await plaidClient.accountsGet({
-      access_token: accessToken,
-    });
-
-    const accountData = accountsResponse.data.accounts[0];
-
-    // Create a processor token for Dwolla using the access token and account ID
-    const request: ProcessorTokenCreateRequest = {
-      access_token: accessToken,
-      account_id: accountData.account_id,
-      processor: "dwolla" as ProcessorTokenCreateRequestProcessorEnum,
-    };
-
-    const processorTokenResponse = await plaidClient.processorTokenCreate(request);
-    const processorToken = processorTokenResponse.data.processor_token;
-
-    // Create a funding source URL for the account using the Dwolla customer ID, processor token, and shareableId ID
-    const fundingSourceUrl = await addFundingSource({
-      dwollaCustomerId: user.dwollaCustomerId,
-      processorToken,
-      bankName: accountData.name,
-    });
-
-    // If the funding source URL is not created, throw an error
-    if (!fundingSourceUrl) throw Error;
-
-    // Create a bank account using the user ID, item ID, account ID, access token, funding source URL, and shareableId ID
+    // Generate mock details or use custom provided ones
+    const cleanAccountId = accountId || Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    const cleanBankName = bankName || "Vietcombank";
+    
+    const mockAccessToken = `mock_access_token_${cleanAccountId}`;
+    const mockFundingSourceUrl = `https://api-sandbox.dwolla.com/funding-sources/mock_${cleanAccountId}`;
+    
+    // Create bank account using the user ID, bank name as bankId, account ID, access token, funding source URL, and shareableId ID
     await createBankAccount({
       userId: user.$id,
-      bankId: itemId,
-      accountId: accountData.account_id,
-      accessToken,
-      fundingSourceUrl,
-      shareableId: encryptId(accountData.account_id),
+      bankId: cleanBankName, // We store the bankName in bankId
+      accountId: cleanAccountId,
+      accessToken: mockAccessToken,
+      fundingSourceUrl: mockFundingSourceUrl,
+      shareableId: encryptId(cleanAccountId),
     });
 
     // Revalidate the path to reflect the changes

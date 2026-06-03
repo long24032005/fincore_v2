@@ -1,0 +1,112 @@
+KẾ HOẠCH THIẾT KẾ TOÀN BỘ LOGIC BACKEND TỪ ĐẦU (PHIÊN BẢN VIỆT HÓA CHUẨN APP VN - SẠCH SẼ)
+=============================================================================
+
+Chào bạn, xin lỗi vì sự bất tiện này. Tôi đã loại bỏ hoàn toàn tên biến `ssn` và `state` (đây là các tên biến cũ của Mỹ) để thay thế bằng các trường chuẩn của Việt Nam là `citizenId` (CCCD/CMND) và `province` (Tỉnh/Thành phố). 
+
+Dưới đây là thiết kế cơ sở dữ liệu đã làm sạch 100% không còn bất kỳ dấu vết nào của SSN hay ZIP code:
+
+------------------------------------------------------------------------
+
+PHẦN 1: THIẾT KẾ CƠ SỞ DỮ LIỆU (DATABASE SCHEMA) VIỆT HÓA HOÀN TOÀN
+
+Chúng ta sẽ sử dụng database Appwrite mới của bạn và tạo 4 Collections với các thuộc tính được điều chỉnh phù hợp với thị trường Việt Nam:
+
+1. Collection `users` (Bảng người dùng Việt Nam)
+   * Tên hiển thị: `users` | ID: `users`
+   * Thuộc tính (Attributes):
+     - `userId` (Kiểu String, Size 255): ID tài khoản hệ thống.
+     - `email` (Kiểu String, Size 255): Địa chỉ email.
+     - `phone` (Kiểu String, Size 255): Số điện thoại (định dạng VN: bắt đầu bằng 0, gồm 10 chữ số).
+     - `firstName` (Kiểu String, Size 255): Họ và tên đệm (VD: "Nguyễn Văn").
+     - `lastName` (Kiểu String, Size 255): Tên (VD: "Huy").
+     - `address` (Kiểu String, Size 255): Địa chỉ chi tiết (Số nhà, tên đường, phường/xã) [Thay thế cho address1].
+     - `city` (Kiểu String, Size 255): Quận / Huyện.
+     - `province` (Kiểu String, Size 255): Tỉnh / Thành phố [Thay thế hoàn toàn cho state].
+     - `dateOfBirth` (Kiểu String, Size 255): Ngày sinh (định dạng YYYY-MM-DD).
+     - `citizenId` (Kiểu String, Size 255): Số CCCD / CMND (định dạng Việt Nam gồm đúng 9 hoặc 12 chữ số) [Thay thế hoàn toàn cho ssn].
+     - `balance` (Kiểu Float hoặc Integer): Số dư Ví điện tử bằng VND (mặc định cấp 50.000.000 ₫).
+     - `walletId` (Kiểu String, Size 255): Mã Ví điện tử (dùng để quét mã QR và nhận tiền P2P).
+
+   * LƯU Ý: Loại bỏ hoàn toàn các trường `postalCode` và `dwollaCustomerId` / `dwollaCustomerUrl`.
+
+2. Collection `banks` (Tài khoản ngân hàng nội địa liên kết)
+   * Tên hiển thị: `banks` | ID: `banks`
+   * Thuộc tính (Attributes):
+     - `userId` (Kiểu String, Size 255): ID người dùng liên kết.
+     - `bankId` (Kiểu String, Size 255): Mã định danh ngân hàng (VD: "vcb" cho Vietcombank).
+     - `accountId` (Kiểu String, Size 255): Số tài khoản ngân hàng thật/giả lập của VN (VD: "1023456789").
+     - `accessToken` (Kiểu String, Size 255): Token xác thực ảo của hệ thống Sandbox.
+     - `fundingSourceUrl` (Kiểu String, Size 255): Địa chỉ nguồn tiền Sandbox (mô phỏng).
+     - `shareableId` (Kiểu String, Size 255): Mã chia sẻ đã mã hóa (sử dụng khi tạo QR chuyển khoản).
+
+3. Collection `transactions` (Lịch sử giao dịch tiền VND)
+   * Tên hiển thị: `transactions` | ID: `transactions`
+   * Thuộc tính (Attributes):
+     - `name` (Kiểu String, Size 255): Nội dung chuyển tiền (VD: "Chuyển tiền ăn trưa").
+     - `amount` (Kiểu String, Size 255): Số tiền giao dịch (Ví dụ: "50000" cho 50.000 ₫).
+     - `senderId` (Kiểu String, Size 255): ID người gửi.
+     - `senderBankId` (Kiểu String, Size 255): ID ngân hàng gửi (nếu gửi từ ngân hàng liên kết).
+     - `receiverId` (Kiểu String, Size 255): ID người nhận.
+     - `receiverBankId` (Kiểu String, Size 255): ID ngân hàng nhận (nếu nhận vào tài khoản ngân hàng).
+     - `email` (Kiểu String, Size 255): Email người nhận.
+     - `channel` (Kiểu String, Size 255): Kênh chuyển tiền (VD: "wallet", "online").
+     - `category` (Kiểu String, Size 255): Danh mục chi tiêu (VD: "Food and Drink", "Shopping", "Transfer", "Withdrawal").
+     - `status` (Kiểu String, Size 255): Trạng thái giao dịch ("Success" hoặc "Processing").
+
+4. Collection `saved_recipients` (Danh bạ thụ hưởng đã lưu)
+   * Tên hiển thị: `saved_recipients` | ID: `saved_recipients`
+   * Thuộc tính (Attributes):
+     - `userId` (Kiểu String, Size 255): ID người sở hữu danh bạ.
+     - `nickname` (Kiểu String, Size 255): Biệt danh người nhận (VD: "Huy Bạn Thân").
+     - `transferType` (Kiểu String, Size 255): Loại chuyển khoản ("wallet" hoặc "bank").
+     - `recipientUserId` (Kiểu String, Size 255, Optional): ID tài khoản người nhận.
+     - `recipientWalletId` (Kiểu String, Size 255, Optional): Mã Ví người nhận.
+     - `recipientBankId` (Kiểu String, Size 255, Optional): ID ngân hàng người nhận.
+     - `recipientEmail` (Kiểu String, Size 255, Optional): Email người nhận.
+     - `recipientName` (Kiểu String, Size 255, Optional): Tên thật người nhận.
+     - `bankName` (Kiểu String, Size 255, Optional): Tên ngân hàng người nhận.
+     - `accountMask` (Kiểu String, Size 255, Optional): 4 số cuối tài khoản.
+     - `createdFrom` (Kiểu String, Size 255): Nguồn tạo ("normal_transfer" hoặc "qr_transfer").
+     - `isActive` (Kiểu Boolean): Trạng thái hoạt động.
+     - `destinationHash` (Kiểu String, Size 255): Mã băm chống lưu trùng lặp danh bạ.
+     - `lastUsedAt` (Kiểu String, Size 255, Optional): Thời gian sử dụng gần nhất.
+
+------------------------------------------------------------------------
+
+PHẦN 2: THIẾT KẾ CÁC ENDPOINT API (OPENAPI SPECIFICATION) CHO THỊ TRƯỜNG VN
+
+Hệ thống API Route Handlers trong Next.js sẽ được triển khai tại `app/api/v1/...` để cung cấp cho frontend và chatbot:
+
+1. `/api/v1/auth/signup` (POST): Đăng ký tài khoản mới với các trường Việt hóa (Họ tên, SĐT, CCCD, Tỉnh/Thành phố), cấp vốn mặc định `50.000.000 ₫`.
+2. `/api/v1/auth/signin` (POST): Đăng nhập.
+3. `/api/v1/banks` (GET/POST): Lấy danh sách ngân hàng Việt Nam đã liên kết, hoặc thực hiện liên kết một ngân hàng mới bằng cách chọn ngân hàng VN và nhập số tài khoản giả lập.
+4. `/api/v1/transfers` (POST): Chuyển khoản nội địa (Ví - Ví tức thì, Nạp tiền từ ngân hàng VN, Rút tiền về ngân hàng VN).
+5. `/api/v1/openapi.json` (GET): Trả về đặc tả OpenAPI mô tả toàn bộ hệ thống API.
+
+------------------------------------------------------------------------
+
+PHẦN 3: LỘ TRÌNH ĐIỀU CHỈNH CODEFRONTEND ĐỂ ĐỒNG BỘ ỔN ĐỊNH
+
+Để giao diện hiển thị đúng định dạng Việt Nam và khớp với Database mới, tôi sẽ điều chỉnh các tệp tin sau:
+
+1. Chỉnh sửa [AuthForm.tsx](file:///c:/Users/philo/OneDrive/Desktop/bank%20-%20Sao%20ch%C3%A9p%20Huy%20new/bank%20-%20Sao%20ch%C3%A9p%20Huy%20new/banking-main/components/AuthForm.tsx):
+   - Thay đổi các ô nhập liệu: 
+     * `ssn` đổi tên trường và nhãn thành `citizenId` ("Số CCCD / CMND").
+     * `state` đổi tên trường và nhãn thành `province` ("Tỉnh / Thành phố").
+     * `address1` đổi tên trường và nhãn thành `address` ("Địa chỉ chi tiết").
+     * Thêm trường `phone` ("Số điện thoại").
+     * Xóa bỏ hoàn toàn trường `postalCode`.
+
+2. Chỉnh sửa schema xác thực trong [utils.ts](file:///c:/Users/philo/OneDrive/Desktop/bank%20-%20Sao%20ch%C3%A9p%20Huy%20new/bank%20-%20Sao%20ch%C3%A9p%20Huy%20new/banking-main/lib/utils.ts):
+   - Cập nhật Zod schema `authFormSchema` cho phù hợp:
+     * Thay `ssn` bằng `citizenId` (Yêu cầu gồm 9 hoặc 12 số).
+     * Thay `state` bằng `province` (Chuỗi thông thường).
+     * Thay `address1` bằng `address` (Chuỗi thông thường).
+     * Thêm `phone` (Bắt buộc, check sđt Việt Nam).
+     * Xóa bỏ hoàn toàn trường `postalCode` khỏi schema validation.
+
+3. Chỉnh sửa giao diện liên kết ngân hàng [PlaidLink.tsx](file:///c:/Users/philo/OneDrive/Desktop/bank%20-%20Sao%20ch%C3%A9p%20Huy%20new/bank%20-%20Sao%20ch%C3%A9p%20Huy%20new/banking-main/components/PlaidLink.tsx):
+   - Thay thế nút mở hộp thoại Plaid thành nút mở một Hộp thoại (Dialog) nội bộ: cho phép chọn các ngân hàng lớn của Việt Nam (Vietcombank, Techcombank, BIDV, Agribank, ACB, VPBank) từ danh sách và nhập số tài khoản ngân hàng để liên kết.
+
+4. Chuyển đổi định dạng tiền tệ sang VND:
+   - Sửa đổi hàm `formatAmount` trong `lib/utils.ts` sang định dạng VND (`20.000.000 ₫`).

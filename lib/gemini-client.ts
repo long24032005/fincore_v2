@@ -28,13 +28,18 @@ function isQuotaError(error: any): boolean {
     const errorMessage = error?.message?.toLowerCase() || '';
     const errorStatus = error?.status || error?.statusCode;
 
-    // Check for quota-related errors
+    // Check for quota-related or transient server errors
     return (
         errorMessage.includes('quota') ||
         errorMessage.includes('resource_exhausted') ||
         errorMessage.includes('rate limit') ||
+        errorMessage.includes('high demand') ||
+        errorMessage.includes('temporary') ||
+        errorMessage.includes('unavailable') ||
         errorStatus === 429 || // Too Many Requests
-        errorStatus === 403 // Forbidden (quota exceeded)
+        errorStatus === 403 || // Forbidden (quota exceeded)
+        errorStatus === 503 || // Service Unavailable
+        errorStatus === 500    // Internal Server Error
     );
 }
 
@@ -54,44 +59,68 @@ export async function callGeminiWithRotation(options: {
     // Try each API key in sequence
     for (let i = 0; i < API_KEYS.length; i++) {
         const currentKey = API_KEYS[i];
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        try {
-            console.log(`🔑 [Gemini] Attempting with API Key #${i + 1}/${API_KEYS.length}`);
-
-            const ai = new GoogleGenAI({ apiKey: currentKey });
-            const response = await ai.models.generateContent({
-                model: options.model,
-                contents: options.contents,
-            });
-
-            console.log(`✅ [Gemini] Success with API Key #${i + 1}`);
-            return response;
-
-        } catch (error: any) {
-            console.error(`❌ [Gemini] Key #${i + 1} failed:`, error.message);
-            lastError = error;
-
-            // Check if it's a quota error
-            if (isQuotaError(error)) {
-                console.warn(`⚠️  [Gemini] Key #${i + 1} quota exceeded, trying next key...`);
-
-                // Continue to next key if available
-                if (i < API_KEYS.length - 1) {
-                    continue;
+        while (attempts < maxAttempts) {
+            try {
+                if (attempts > 0) {
+                    console.log(`🔑 [Gemini] Retrying with API Key #${i + 1}/${API_KEYS.length} (Attempt ${attempts + 1}/${maxAttempts})...`);
                 } else {
-                    console.error('🚨 [Gemini] All API keys exhausted!');
-                    throw new Error('All Gemini API keys have exceeded their quota. Please try again later.');
+                    console.log(`🔑 [Gemini] Attempting with API Key #${i + 1}/${API_KEYS.length}`);
                 }
-            }
 
-            // For non-quota errors, don't try other keys
-            console.error(`🚨 [Gemini] Non-quota error, not retrying:`, error.message);
-            throw error;
+                const ai = new GoogleGenAI({ apiKey: currentKey });
+                const response = await ai.models.generateContent({
+                    model: options.model,
+                    contents: options.contents,
+                });
+
+                console.log(`✅ [Gemini] Success with API Key #${i + 1}`);
+                return response;
+
+            } catch (error: any) {
+                const errorMessage = error?.message?.toLowerCase() || '';
+                const errorStatus = error?.status || error?.statusCode;
+                const isRetryable = 
+                    errorMessage.includes('quota') || 
+                    errorMessage.includes('rate limit') || 
+                    errorMessage.includes('resource_exhausted') || 
+                    errorMessage.includes('high demand') ||
+                    errorMessage.includes('temporary') ||
+                    errorMessage.includes('unavailable') ||
+                    errorStatus === 429 || 
+                    errorStatus === 503 ||
+                    errorStatus === 500;
+
+                lastError = error;
+
+                // If it is a transient error and we have remaining attempts, sleep and retry
+                if (isRetryable && attempts < maxAttempts - 1) {
+                    attempts++;
+                    const delay = attempts * 3000; // 3s, then 6s
+                    console.warn(`⚠️ [Gemini] Key #${i + 1} rate limited or temporary error. Retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+
+                console.error(`❌ [Gemini] Key #${i + 1} failed:`, error.message);
+
+                // Check if it's a quota / rate limit / permission error to switch keys
+                if (isQuotaError(error)) {
+                    console.warn(`⚠️  [Gemini] Key #${i + 1} marked as exhausted/invalid, switching to next key...`);
+                    break; // Break the while loop to move to next key in the sequence
+                }
+
+                // For non-quota errors, don't try other keys
+                console.error(`🚨 [Gemini] Non-quota error, not retrying:`, error.message);
+                throw error;
+            }
         }
     }
 
-    // Should not reach here, but just in case
-    throw lastError || new Error('Failed to call Gemini API');
+    console.error('🚨 [Gemini] All API keys exhausted!');
+    throw new Error('All Gemini API keys have exceeded their quota or are invalid. Please try again later.');
 }
 
 /**

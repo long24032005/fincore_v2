@@ -1,0 +1,64 @@
+KẾ HOẠCH CHUYỂN ĐỔI SANG OPENAPI TỰ DỰNG (OPENAPI MIGRATION PLAN)
+===================================================================
+
+Yêu cầu cốt lõi của bạn hiện tại là: Thay thế hoàn toàn các API bên thứ ba (Plaid & Dwolla) bằng hệ thống OpenAPI tự dựng để tự chủ hệ thống, xử lý tiền tệ nội địa VND và bảo đảm tính ổn định tối đa cho mã nguồn hiện tại.
+
+Dưới đây là chi tiết những việc cần làm và kế hoạch triển khai từng bước để giữ cho dự án ổn định 100%:
+
+------------------------------------------------------------------------
+
+PHẦN 1: NHỮNG VIỆC CẦN LÀM ĐỂ THAY THẾ PLAID & DWOLLA BẰNG OPENAPI
+
+Để loại bỏ hoàn toàn các thư viện nước ngoài mà không làm gãy giao diện hiện tại của bạn, chúng ta sẽ chuyển đổi theo mô hình "Local Mocking & Database Ledger" (Tự quản lý sổ cái giao dịch cục bộ).
+
+1. Thay thế Plaid (Kết nối ngân hàng):
+   * Vấn đề hiện tại: Nút "Link Bank" mở hộp thoại Plaid bằng tiếng Anh, chỉ hỗ trợ tài khoản USD sandbox.
+   * Giải pháp giữ ổn định:
+     - Tạo một Hộp thoại (Modal) tùy chỉnh ngay trên giao diện khi nhấn nút "Link Bank". Hộp thoại này cho phép người dùng chọn các ngân hàng phổ biến Việt Nam (như Vietcombank, Techcombank, BIDV, ACB) và nhập số tài khoản giả lập.
+     - Sửa hàm `exchangePublicToken` trong `user.actions.ts` để lưu thẳng thông tin ngân hàng nội địa bạn chọn vào database Appwrite (thay vì gọi API Plaid).
+     - Sửa hàm `getAccounts` và `getAccount` trong `bank.actions.ts` để lấy thông tin số dư và giao dịch trực tiếp từ cơ sở dữ liệu của bạn, đồng thời giả lập các giao dịch VND ngẫu nhiên thay vì lấy dữ liệu từ Plaid Sandbox.
+
+2. Thay thế Dwolla (Xử lý chuyển tiền):
+   * Vấn đề hiện tại: Đăng ký tài khoản bắt buộc điền địa chỉ Mỹ, mã SSN, bang của Mỹ vì Dwolla yêu cầu xác thực pháp lý. Việc chuyển tiền ACH qua Dwolla mất 1-3 ngày và chỉ có USD.
+   * Giải pháp giữ ổn định:
+     - Bỏ bước gọi API `createDwollaCustomer` trong hàm `signUp` tại `user.actions.ts`. Điều này giúp bỏ hoàn toàn các trường dữ liệu bắt buộc của Mỹ khi đăng ký (bạn có thể đăng ký tài khoản Việt Nam bình thường).
+     - Trong file `dwolla.actions.ts`, viết đè (stub) các hàm chuyển tiền để nó chỉ thực hiện việc ghi nhận lịch sử giao dịch và cập nhật trực tiếp số dư tài khoản trong cơ sở dữ liệu của bạn, thay vì gọi lên cổng Dwolla.
+
+3. Nội địa hóa tiền tệ (USD sang VND):
+   * Sửa hàm `formatAmount` trong `lib/utils.ts` để định dạng tiền tệ sang VND (VD: `50.000.000 ₫`).
+   * Thay vì tài khoản mới tạo có số dư 0 VND, chúng ta sẽ mặc định cấp cho họ số dư demo ban đầu là `50.000.000 ₫` để thuận tiện chuyển khoản trải nghiệm.
+
+------------------------------------------------------------------------
+
+PHẦN 2: THIẾT KẾ CÁC ENDPOINTS CHO OPENAPI SERVER CỦA BẠN
+
+Chúng ta sẽ xây dựng các API Route Handlers trong Next.js nằm tại thư mục `app/api/v1/...` để xuất bản tài liệu OpenAPI. Thầy giáo và ban giám khảo có thể gọi trực tiếp các API này:
+
+1. `GET /api/v1/openapi.json`: Trả về tài liệu đặc tả OpenAPI Specification (JSON định dạng) mô tả các API.
+2. `GET /api/v1/banks`: Lấy danh sách các tài khoản ngân hàng nội địa của người dùng hiện tại.
+3. `POST /api/v1/banks/link`: Endpoint liên kết một tài khoản ngân hàng Việt Nam mới.
+4. `GET /api/v1/banks/{bankId}`: Lấy thông tin chi tiết và danh sách giao dịch của một ngân hàng cụ thể.
+5. `POST /api/v1/transfers`: Thực hiện chuyển khoản (giữa các ví hoặc giữa ngân hàng và ví) bằng VND.
+
+Đặc biệt: Tạo route `/api-docs` tích hợp giao diện API Explorer trực quan (thay thế Swagger UI) để hiển thị chi tiết các endpoint này, cho phép bấm thử nghiệm "Try it out" trực tiếp trên trình duyệt.
+
+------------------------------------------------------------------------
+
+PHẦN 3: KẾ HOẠCH TRIỂN KHAI TỪNG BƯỚC ĐỂ ĐẢM BẢO ỔN ĐỊNH
+
+Bước 1: Cấu hình Tiền tệ VND
+- Cập nhật hàm format tiền tệ `formatAmount` trong `lib/utils.ts` sang VND.
+- Đặt số dư ví mặc định khi đăng ký tài khoản mới là `50.000.000 ₫`.
+
+Bước 2: Thay thế cổng đăng ký Dwolla & Liên kết Plaid
+- Vô hiệu hóa Dwolla trong `signUp` ở `user.actions.ts`.
+- Thay thế hộp thoại Plaid Link trong components bằng Modal chọn ngân hàng Việt Nam.
+
+Bước 3: Xây dựng Hệ thống endpoints OpenAPI chuẩn
+- Viết file OpenAPI mô tả đặc tả tại `/api/v1/openapi.json`.
+- Viết các API Route Handlers tương ứng kết nối trực tiếp với Appwrite Database của bạn.
+- Triển khai trang tài liệu tương tác `/api-docs`.
+
+Bước 4: Kiểm thử và tinh chỉnh logic chuyển khoản
+- Chạy thử luồng chuyển khoản Ví - Ví, Nạp tiền, Rút tiền để đảm bảo số dư VND cập nhật chính xác và lịch sử giao dịch hiển thị đúng trạng thái.
+- Đảm bảo các component frontend không bị lỗi import hay xung đột dữ liệu.

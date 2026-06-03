@@ -32,41 +32,48 @@ const AuthForm = ({ type }: { type: string }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const formSchema = authFormSchema(type);
 
-  // 1. Define your form.
+  // 1. Define your form with onBlur validation mode for real-time feedback
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    mode: 'onBlur',
     defaultValues: {
       email: "",
-      password: ''
+      password: "",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      address: "",
+      city: "",
+      province: "",
+      dateOfBirth: "",
+      citizenId: ""
     },
   })
 
   // 2. Define a submit handler.
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
 
     try {
       if (type === 'sign-up') {
         const userData = {
           firstName: data.firstName!,
           lastName: data.lastName!,
-          address1: data.address1!,
+          phone: data.phone!,
+          address: data.address!,
           city: data.city!,
-          state: data.state!,
-          postalCode: data.postalCode!,
+          province: data.province!,
           dateOfBirth: data.dateOfBirth!,
-          ssn: data.ssn!,
+          citizenId: data.citizenId!,
           email: data.email,
           password: data.password
         }
 
         const result = await signUp(userData);
 
-        // ✅ Check for errors from signUp
         if (result?.error) {
           toast.error(result.message);
           setError(result.message);
@@ -74,7 +81,6 @@ const AuthForm = ({ type }: { type: string }) => {
           return;
         }
 
-        // ✅ Check if result is null (unexpected error)
         if (!result) {
           const errorMsg = 'Sign up failed. Please try again.';
           toast.error(errorMsg);
@@ -83,7 +89,6 @@ const AuthForm = ({ type }: { type: string }) => {
           return;
         }
 
-        // ✅ Success!
         setUser(result);
         toast.success('Account created successfully! Now link your bank account.');
       }
@@ -165,18 +170,17 @@ const AuthForm = ({ type }: { type: string }) => {
                   <p className="text-sm font-medium">{error}</p>
                 </div>
               )}
-
               {type === 'sign-up' && (
                 <>
                   <div className="flex gap-4">
-                    <CustomInput control={form.control} name='firstName' label="First Name" placeholder='Enter your first name' />
-                    <CustomInput control={form.control} name='lastName' label="Last Name" placeholder='Enter your last name' />
+                    <CustomInput control={form.control} name='firstName' label="Họ và tên đệm" placeholder='Ví dụ: Nguyễn Văn' />
+                    <CustomInput control={form.control} name='lastName' label="Tên" placeholder='Ví dụ: Huy' />
                   </div>
-                  <CustomInput control={form.control} name='address1' label="Address" placeholder='Enter your specific address' />
-                  <CustomInput control={form.control} name='city' label="City" placeholder='Enter your city' />
+                  <CustomInput control={form.control} name='phone' label="Số điện thoại" placeholder='Ví dụ: 0912345678' />
+                  <CustomInput control={form.control} name='address' label="Địa chỉ chi tiết" placeholder='Số nhà, tên đường, phường/xã...' />
                   <div className="flex gap-4">
-                    <CustomInput control={form.control} name='state' label="State" placeholder='Example: NY' />
-                    <CustomInput control={form.control} name='postalCode' label="Postal Code" placeholder='Example: 11101' />
+                    <CustomInput control={form.control} name='city' label="Quận / Huyện" placeholder='Ví dụ: Quận 1' />
+                    <CustomInput control={form.control} name='province' label="Tỉnh / Thành phố" placeholder='Ví dụ: TP. Hồ Chí Minh' />
                   </div>
 
                   {/* ✅ Date of Birth with Dropdowns (Year/Month/Day) */}
@@ -186,7 +190,7 @@ const AuthForm = ({ type }: { type: string }) => {
                     render={({ field }) => (
                       <FormItem>
                         <DateOfBirthInput
-                          value={field.value}
+                          value={field.value || ''}
                           onChange={field.onChange}
                           error={form.formState.errors.dateOfBirth?.message}
                         />
@@ -195,7 +199,7 @@ const AuthForm = ({ type }: { type: string }) => {
                     )}
                   />
 
-                  <CustomInput control={form.control} name='ssn' label="SSN" placeholder='Example: 1234' />
+                  <CustomInput control={form.control} name='citizenId' label="Số CCCD / CMND" placeholder='Nhập 9 hoặc 12 chữ số' />
                 </>
               )}
 

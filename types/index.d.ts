@@ -17,12 +17,12 @@ declare type PlaidPersonalFinanceCategory = {
 declare type SignUpParams = {
   firstName: string;
   lastName: string;
-  address1: string;
+  phone: string;
+  address: string;
   city: string;
-  state: string;
-  postalCode: string;
+  province: string;
   dateOfBirth: string;
-  ssn: string;
+  citizenId: string;
   email: string;
   password: string;
 };
@@ -36,17 +36,15 @@ declare type User = {
   $id: string;
   email: string;
   userId: string;
-  dwollaCustomerUrl: string;
-  dwollaCustomerId: string;
   firstName: string;
   lastName: string;
   name: string;
-  address1: string;
+  phone: string;
+  address: string;
   city: string;
-  state: string;
-  postalCode: string;
+  province: string;
   dateOfBirth: string;
-  ssn: string;
+  citizenId: string;
   balance: number; // E-wallet balance
   walletId: string;
 };
@@ -253,6 +251,7 @@ declare interface CategoryBadgeProps {
 
 declare interface TransactionTableProps {
   transactions: Transaction[];
+  viewContext?: 'all' | 'wallet' | 'bank';
 }
 
 declare interface CategoryProps {
@@ -302,9 +301,10 @@ declare interface CreateTransactionProps {
   senderBankId: string;
   receiverId: string;
   receiverBankId: string;
-  email: string;
+  email?: string; // Optional - auto-resolved from receiverId by backend
   category?: string | string[]; // Plaid sends array, we convert to string
-  pending?: boolean;
+  status?: 'Processing' | 'Success' | 'Failed'; // Transaction status
+  channel?: 'online' | 'wallet' | 'qr' | 'bank'; // Payment channel
 }
 
 declare interface getTransactionsByBankIdProps {
@@ -323,6 +323,8 @@ declare interface getUserInfoProps {
 declare interface exchangePublicTokenProps {
   publicToken: string;
   user: User;
+  accountId?: string;
+  bankName?: string;
 }
 
 declare interface createBankAccountProps {

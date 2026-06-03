@@ -69,23 +69,10 @@ export const createTransfer = async ({
   amount,
 }: TransferParams) => {
   try {
-    const requestBody = {
-      _links: {
-        source: {
-          href: sourceFundingSourceUrl,
-        },
-        destination: {
-          href: destinationFundingSourceUrl,
-        },
-      },
-      amount: {
-        currency: "USD",
-        value: amount,
-      },
-    };
-    return await dwollaClient
-      .post("transfers", requestBody)
-      .then((res) => res.headers.get("location"));
+    console.log(`[Dwolla Mock] Transferring ${amount} from ${sourceFundingSourceUrl} to ${destinationFundingSourceUrl}`);
+    // Simulate successful Dwolla transfer creation by returning a mock location URL
+    const mockTransferId = `mock_transfer_${Date.now()}`;
+    return `https://api-sandbox.dwolla.com/transfers/${mockTransferId}`;
   } catch (err) {
     console.error("Transfer fund failed: ", err);
   }

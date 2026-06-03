@@ -1,0 +1,71 @@
+TỔNG QUAN HỆ THỐNG BACKEND - FINECORE WALLET (Dành cho Người Dùng)
+==================================================================
+
+Hệ thống backend của ứng dụng Finecore Wallet chịu trách nhiệm quản lý người dùng, xử lý các giao dịch tài chính (giữa ví điện tử và các ngân hàng thật), đồng thời tích hợp trí tuệ nhân tạo (AI Chatbot) để hỗ trợ người dùng thực hiện giao dịch qua tin nhắn.
+
+Dưới đây là mô tả chi tiết từng luồng hoạt động chính bằng ngôn ngữ dễ hiểu, không quá kỹ thuật:
+
+1. QUẢN LÝ NGƯỜI DÙNG & TÀI KHOẢN (User Management & Authentication)
+--------------------------------------------------------------------
+* Đăng ký tài khoản (Sign Up):
+  - Khi bạn đăng ký, hệ thống sẽ tạo tài khoản trên Appwrite (hệ thống cơ sở dữ liệu và quản lý người dùng).
+  - Đồng thời, thông tin của bạn được gửi tới Dwolla (một cổng thanh toán tại Mỹ) để tạo một hồ sơ khách hàng pháp lý (yêu cầu điền ngày sinh, số an sinh xã hội SSN, địa chỉ để xác minh danh tính).
+  - Hệ thống cũng tự động tạo cho bạn một mã Ví điện tử duy nhất (Wallet ID) và đặt số dư ví ban đầu là $0.
+  - Nếu quá trình đăng ký ở Dwolla hoặc lưu thông tin bị lỗi, hệ thống sẽ tự động xóa tài khoản Appwrite vừa tạo để tránh rác dữ liệu.
+* Đăng nhập & Đăng xuất (Sign In & Sign Out):
+  - Kiểm tra email và mật khẩu, tạo phiên làm việc (session) và lưu mã bảo mật (session cookie) vào trình duyệt của bạn.
+  - Khi đăng xuất, hệ thống sẽ xóa cookie này và hủy phiên làm việc trên Appwrite.
+* Tra cứu người dùng thông minh (User Resolution):
+  - Khi chuyển tiền, bạn chỉ cần nhập Email, mã Ví (Wallet ID), hoặc mã chia sẻ ngân hàng (Shareable ID - đã mã hóa).
+  - Hệ thống có logic tự động phân tích và dò tìm xem thông tin đó thuộc về ai để tự động hiển thị tên người nhận, giúp tránh chuyển nhầm người.
+
+2. KẾT NỐI NGÂN HÀNG THẬT (Plaid & Dwolla Integration)
+------------------------------------------------------
+Ứng dụng sử dụng hai dịch vụ trung gian uy tín để kết nối với ngân hàng thật:
+* Plaid: Đóng vai trò là cầu nối bảo mật giúp bạn kết nối và đăng nhập vào tài khoản ngân hàng thật của mình (ví dụ: Chase, Bank of America) ngay trên ứng dụng mà không lộ mật khẩu.
+  - Hệ thống tạo ra một mã liên kết tạm thời (Link Token).
+  - Sau khi bạn đăng nhập thành công ngân hàng, Plaid gửi lại một mã công khai (Public Token).
+  - Backend sẽ đổi mã này lấy mã truy cập dài hạn (Access Token) để đọc số dư và danh sách giao dịch từ ngân hàng của bạn.
+* Dwolla: Đóng vai trò là đơn vị vận chuyển tiền thực tế giữa các tài khoản ngân hàng (giao dịch ACH).
+  - Sử dụng mã truy cập từ Plaid để tạo một "Nguồn tiền" (Funding Source) hợp lệ trên Dwolla.
+  - Khi thực hiện chuyển tiền từ ngân hàng này sang ngân hàng khác, Dwolla sẽ thực hiện lệnh chuyển khoản thực tế (mất khoảng 1-3 ngày làm việc).
+
+3. HỆ THỐNG GIAO DỊCH (Transaction & E-Wallet System)
+-----------------------------------------------------
+Hệ thống hỗ trợ 2 hình thức lưu trữ và luân chuyển tiền:
+* Hệ thống Ví điện tử (E-Wallet):
+  - Tiền được lưu trữ và cập nhật trực tiếp trên cơ sở dữ liệu của ứng dụng.
+  - Chuyển tiền giữa hai ví (Wallet-to-Wallet / P2P): Diễn ra ngay lập tức. Hệ thống sẽ trừ tiền ví người gửi và cộng tiền vào ví người nhận đồng thời ghi nhận lịch sử giao dịch ở trạng thái "Thành công" (Success).
+  - Nạp tiền từ ngân hàng vào ví (Top-up): Tiền được nạp từ tài khoản ngân hàng liên kết của bạn vào ví điện tử. Giao dịch này sẽ ở trạng thái "Đang xử lý" (Processing) trong thời gian chờ ngân hàng chuyển tiền (1-3 ngày).
+  - Rút tiền từ ví về ngân hàng (Withdrawal): Hệ thống trừ tiền trong ví điện tử của bạn và ghi nhận trạng thái "Đang xử lý". Tiền sẽ được chuyển về tài khoản ngân hàng của bạn sau 1-3 ngày.
+* Tính toán số dư khả dụng (Balance Calculation):
+  - Số dư ngân hàng hiển thị trên ứng dụng được tính bằng cách lấy số dư thực tế từ ngân hàng (đọc qua Plaid) trừ đi các giao dịch đang xử lý (Pending) để ra số tiền bạn thực sự có thể chi tiêu, tránh việc chi tiêu vượt quá số dư hiện tại.
+
+4. TRỢ LÝ ẢO TRÍ TUỆ NHÂN TẠO (AI Chatbot System)
+-------------------------------------------------
+Chatbot sử dụng mô hình Google Gemini AI để giúp bạn thực hiện các thao tác bằng cách trò chuyện tự nhiên:
+* Đọc hiểu ý định của bạn (Intent Parsing):
+  - Khi bạn nhắn tin (ví dụ: "chuyển 50 đô cho Linda"), chatbot sẽ gửi tin nhắn đến Gemini để phân tích xem bạn muốn làm gì (chuyển tiền, xem số dư, xem danh bạ, hay xem lịch sử giao dịch).
+  - AI sẽ bóc tách các thông tin cần thiết như: Tên người nhận (đối chiếu với danh bạ của bạn), số tiền cần chuyển, nguồn tiền (từ ví hay ngân hàng), điểm đến (vào ví hay ngân hàng của người nhận).
+  - Nếu AI phân tích thiếu thông tin (ví dụ quên nhận diện tên người nhận hoặc số tiền), hệ thống có sẵn các thuật toán tìm kiếm dự phòng bằng biểu thức (Regex) để tự động bổ sung.
+* Phục vụ cuộc trò chuyện (Response Generation):
+  - Chatbot có cá tính chuyên nghiệp, ngắn gọn, và luôn dựa vào dữ liệu thật của bạn (số dư ví, danh sách ngân hàng liên kết, danh bạ người nhận) được cung cấp bảo mật qua ngữ cảnh (Context) để phản hồi chính xác, không tự bịa ra thông tin giả.
+* Kiểm tra hạn mức giao dịch (Daily Limits Check):
+  - Trước khi thực hiện chuyển tiền qua Chatbot, hệ thống sẽ kiểm tra xem giao dịch có hợp lệ không:
+    + Số tiền mỗi lần chuyển không quá $1,000.
+    + Tổng số tiền chuyển trong ngày không quá $5,000.
+    + Số lần chuyển tiền trong ngày không quá 20 lần.
+  - Nếu vi phạm hạn mức, giao dịch sẽ bị từ chối ngay lập tức kèm theo lý do rõ ràng.
+* Thực hiện chuyển tiền qua Chatbot (Chatbot Transfer Execution):
+  - Sau khi bạn xác nhận giao dịch qua chatbot, hệ thống sẽ phân tuyến thông minh (Intelligent Routing) để tự động chọn cách xử lý:
+    + Nếu chuyển từ Ví sang Ví (Wallet to Wallet): Cập nhật số dư hai ví lập tức.
+    + Nếu chuyển từ Ví sang Ngân hàng (Wallet to Bank): Trừ tiền ví của bạn và tạo giao dịch chờ xử lý.
+    + Nếu chuyển từ Ngân hàng sang Ví (Bank to Wallet): Cộng tiền vào ví người nhận và tạo giao dịch chờ xử lý từ ngân hàng của bạn.
+    + Nếu chuyển từ Ngân hàng sang Ngân hàng (Bank to Bank): Sử dụng cổng Dwolla để tạo lệnh chuyển khoản trực tiếp giữa hai ngân hàng thật (có tính phí nhỏ khoảng $0.25).
+
+5. QUẢN LÝ DANH BẠ (Saved Recipients)
+-------------------------------------
+* Lưu người nhận tin cậy:
+  - Khi bạn thực hiện chuyển tiền lần đầu cho ai đó hoặc chủ động thêm mới, thông tin người nhận (tên, email, số ví hoặc ngân hàng) sẽ được lưu lại.
+  - Hệ thống tự động tạo mã băm bảo mật (Destination Hash) từ thông tin người nhận để kiểm tra và ngăn chặn việc bạn vô tình lưu trùng lặp cùng một người nhận nhiều lần.
+  - Mỗi khi bạn chuyển tiền thành công cho một người trong danh bạ, hệ thống sẽ cập nhật thời gian sử dụng gần nhất (Last Used At) để ưu tiên hiển thị những người bạn thường xuyên giao dịch.

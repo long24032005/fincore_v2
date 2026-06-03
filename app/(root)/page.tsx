@@ -4,11 +4,19 @@ import RightSidebar from '@/components/RightSidebar';
 import TotalBalanceBox from '@/components/TotalBalanceBox';
 import { getAccount, getAccounts } from '@/lib/actions/bank.actions';
 import { getLoggedInUser } from '@/lib/actions/user.actions';
-import { getWalletTransactions } from '@/lib/actions/wallet.actions';
+// FIX: Removed static import of wallet.actions to break circular dependency
+// import { getWalletTransactions } from '@/lib/actions/wallet.actions';
+import { redirect } from 'next/navigation';
 
 const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
   const currentPage = Number(page as string) || 1;
   const loggedIn = await getLoggedInUser();
+
+  // Guard clause: Redirect to sign-in if user is not logged in or Appwrite is down
+  if (!loggedIn) {
+    redirect('/sign-in');
+  }
+
   const accounts = await getAccounts({
     userId: loggedIn.$id
   })
@@ -30,7 +38,8 @@ const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
     })
   );
 
-  // Fetch wallet transactions
+  // Fetch wallet transactions (DYNAMIC IMPORT to avoid circular dependency)
+  const { getWalletTransactions } = await import('@/lib/actions/wallet.actions');
   const walletTransactionsData = await getWalletTransactions(loggedIn.$id);
   const walletTransactions = walletTransactionsData.documents.map((txn: any) => ({
     id: txn.$id,
@@ -59,6 +68,7 @@ const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
             accounts={accountsData}
             totalBanks={accounts?.totalBanks}
             totalCurrentBalance={accounts?.totalCurrentBalance}
+            user={loggedIn}
           />
         </header>
 

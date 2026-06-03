@@ -6,7 +6,7 @@ import { createTransaction } from "./transaction.actions";
 import { getBank, getBankByAppwriteItemId } from "./user.actions";
 import { updateRecipientLastUsed } from "./savedRecipient.actions";
 import { checkDailyLimits } from "./chatbot-context.actions";
-import { parseStringify } from "../utils";
+import { parseStringify, formatAmount } from "../utils";
 
 /**
  * Execute transfer via chatbot (with all safety checks)
@@ -76,14 +76,14 @@ export const executeChatbotTransfer = async ({
                 receiverId: recipient.recipientUserId,
                 amount,
                 description: `Chatbot transfer to ${recipient.nickname}`,
-                email: recipient.recipientEmail,
+                // email auto-resolved by backend
             });
 
             if (result.success) {
                 await updateRecipientLastUsed(recipientId);
                 return {
                     success: true,
-                    message: `✅ Sent $${amount.toFixed(2)} to ${recipient.nickname} instantly!`,
+                    message: `✅ Đã chuyển thành công ${formatAmount(amount)} cho ${recipient.nickname} tức thì!`,
                     newBalance: result.newBalance,
                 };
             }
@@ -113,7 +113,8 @@ export const executeChatbotTransfer = async ({
                 receiverBankId: recipientBank.$id,
                 email: recipient.recipientEmail,
                 category: 'Transfer',
-                pending: true,
+                status: 'Processing',
+                channel: 'online',
             });
 
             if (transaction) {
@@ -128,7 +129,7 @@ export const executeChatbotTransfer = async ({
 
                 return {
                     success: true,
-                    message: `✅ Sent $${amount.toFixed(2)} to ${recipient.nickname}'s bank. Will arrive in 1-3 days.`,
+                    message: `✅ Đã chuyển ${formatAmount(amount)} tới ngân hàng của ${recipient.nickname}. Tiền sẽ đến trong 1-3 ngày.`,
                     transactionId: transaction.$id,
                 };
             }
@@ -156,7 +157,8 @@ export const executeChatbotTransfer = async ({
                 receiverBankId: '', // Wallet destination
                 email: recipient.recipientEmail,
                 category: 'Transfer',
-                pending: true,
+                status: 'Processing',
+                channel: 'online',
             });
 
             if (transaction) {
@@ -171,7 +173,7 @@ export const executeChatbotTransfer = async ({
 
                 return {
                     success: true,
-                    message: `✅ Transfer initiated. $${amount.toFixed(2)} will arrive in ${recipient.nickname}'s wallet in 1-3 days.`,
+                    message: `✅ Đã khởi tạo giao dịch. ${formatAmount(amount)} sẽ đến ví của ${recipient.nickname} trong 1-3 ngày.`,
                     transactionId: transaction.$id,
                 };
             }
@@ -208,7 +210,8 @@ export const executeChatbotTransfer = async ({
                     receiverBankId: recipientBank.$id,
                     email: recipient.recipientEmail,
                     category: 'Transfer',
-                    pending: true,
+                    status: 'Processing',
+                    channel: 'online',
                 });
 
                 if (transaction) {
@@ -216,7 +219,7 @@ export const executeChatbotTransfer = async ({
 
                     return {
                         success: true,
-                        message: `✅ Bank transfer initiated. $${amount.toFixed(2)} will arrive in 1-3 days. Fee: $0.25`,
+                        message: `✅ Đã khởi tạo chuyển khoản liên ngân hàng. ${formatAmount(amount)} sẽ đến trong 1-3 ngày. Phí: 0 ₫ (Miễn phí)`,
                         transactionId: transaction.$id,
                     };
                 }

@@ -10,22 +10,37 @@ import { cn, formatAmount, formatDateTime, getTransactionStatus, removeSpecialCh
 
 // ============================================
 // STATUS BADGE COMPONENT
+// Wallet transactions show as "Success" (green) immediately
 // ============================================
 interface StatusBadgeProps {
   status: string;
+  pending?: boolean;
+  channel?: string;
 }
 
-const StatusBadge = ({ status }: StatusBadgeProps) => {
-  const normalizedStatus = status?.toLowerCase() || 'processing';
+const StatusBadge = ({ status, pending, channel }: StatusBadgeProps) => {
+  // ✅ Wallet transactions are always instant success
+  const isWalletTransaction = channel === 'wallet' || pending === false;
+
+  let finalStatus = status?.toLowerCase() || 'processing';
+
+  // Force "success" for wallet transactions
+  if (isWalletTransaction && (pending === false || channel === 'wallet')) {
+    finalStatus = 'success';
+  }
 
   let styles = 'bg-gray-500/10 text-gray-400'; // Default
+  let displayText = finalStatus;
 
-  if (normalizedStatus === 'success' || normalizedStatus === 'completed') {
+  if (finalStatus === 'success' || finalStatus === 'completed') {
     styles = 'bg-green-500/20 text-green-400';
-  } else if (normalizedStatus === 'processing' || normalizedStatus === 'pending') {
+    displayText = channel === 'wallet' ? 'Instant' : 'Success';
+  } else if (finalStatus === 'processing' || finalStatus === 'pending') {
     styles = 'bg-blue-500/20 text-blue-400';
-  } else if (normalizedStatus === 'declined' || normalizedStatus === 'failed') {
+    displayText = 'Processing';
+  } else if (finalStatus === 'declined' || finalStatus === 'failed') {
     styles = 'bg-red-500/20 text-red-400';
+    displayText = 'Failed';
   }
 
   return (
@@ -35,26 +50,27 @@ const StatusBadge = ({ status }: StatusBadgeProps) => {
     )}>
       <span className={cn(
         'mr-1.5 size-1.5 rounded-full',
-        normalizedStatus === 'success' || normalizedStatus === 'completed' ? 'bg-green-400' :
-          normalizedStatus === 'processing' || normalizedStatus === 'pending' ? 'bg-blue-400' :
-            normalizedStatus === 'declined' || normalizedStatus === 'failed' ? 'bg-red-400' :
+        finalStatus === 'success' || finalStatus === 'completed' ? 'bg-green-400' :
+          finalStatus === 'processing' || finalStatus === 'pending' ? 'bg-blue-400' :
+            finalStatus === 'declined' || finalStatus === 'failed' ? 'bg-red-400' :
               'bg-gray-400'
       )} />
-      {status}
+      {displayText}
     </div>
   );
 };
 
 // ============================================
 // CATEGORY BADGE COMPONENT
-// Styles based on REAL category from database
+// Wallet categories get distinct purple/indigo styling
 // ============================================
 interface CategoryBadgeProps {
   category: string | string[] | undefined | null;
+  channel?: string;
 }
 
-const CategoryBadge = ({ category }: CategoryBadgeProps) => {
-  // Handle array vs string vs null (database returns string, but handle edge cases)
+const CategoryBadge = ({ category, channel }: CategoryBadgeProps) => {
+  // Handle array vs string vs null
   let displayCategory: string;
 
   if (Array.isArray(category)) {
@@ -65,12 +81,19 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
     displayCategory = 'General';
   }
 
-  // Style based on CATEGORY NAME from database
   const lowerCat = displayCategory.toLowerCase();
-  let styles = 'bg-gray-500/20 text-gray-400'; // Default: Gray
+  const isWallet = channel === 'wallet' || lowerCat.includes('wallet');
 
+  let styles = 'bg-gray-500/20 text-gray-400'; // Default
+  let icon = '';
+
+  // ✅ WALLET categories get special purple/indigo theme with ⚡ icon
+  if (isWallet) {
+    styles = 'bg-purple-500/20 text-purple-400';
+    icon = '⚡ ';
+  }
   // Food & Drink -> Orange
-  if (lowerCat.includes('food') || lowerCat.includes('drink') || lowerCat.includes('dining') ||
+  else if (lowerCat.includes('food') || lowerCat.includes('drink') || lowerCat.includes('dining') ||
     lowerCat.includes('restaurant') || lowerCat.includes('coffee') || lowerCat.includes('grocery')) {
     styles = 'bg-orange-500/20 text-orange-400';
   }
@@ -90,9 +113,9 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
     styles = 'bg-pink-500/20 text-pink-400';
   }
 
-  // Truncate long category names for display
-  const truncatedCategory = displayCategory.length > 18
-    ? displayCategory.substring(0, 15) + '...'
+  // Truncate long category names
+  const truncatedCategory = displayCategory.length > 16
+    ? displayCategory.substring(0, 13) + '...'
     : displayCategory;
 
   return (
@@ -100,7 +123,7 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
       'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
       styles
     )}>
-      {truncatedCategory}
+      {icon}{truncatedCategory}
     </div>
   );
 };
@@ -108,7 +131,7 @@ const CategoryBadge = ({ category }: CategoryBadgeProps) => {
 // ============================================
 // TRANSACTIONS TABLE COMPONENT
 // ============================================
-const TransactionsTable = ({ transactions }: TransactionTableProps) => {
+const TransactionsTable = ({ transactions, viewContext = 'all' }: TransactionTableProps) => {
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -131,6 +154,18 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
             const isCredit = t.type === 'credit';
             const isNegative = amount.startsWith('-') || amount.includes('-');
 
+            // ✅ CONTEXT-AWARE SIGN LOGIC for Wallet Top-up
+            // When viewing Wallet tab, top-up is a CREDIT (incoming money)
+            // When viewing Bank tab or All, top-up is a DEBIT (outgoing money)
+            const categoryStr = Array.isArray(t.category) ? t.category[0] : t.category;
+            const isWalletTopup = categoryStr?.toLowerCase().includes('wallet top-up') || categoryStr === 'Wallet Top-up';
+
+            let displayAsDebit = isDebit;
+            if (isWalletTopup && viewContext === 'wallet') {
+              // When viewing Wallet, top-up is a CREDIT (incoming money)
+              displayAsDebit = false;
+            }
+
             return (
               <TableRow
                 key={t.id || t.$id}
@@ -148,14 +183,18 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
                 {/* Amount */}
                 <TableCell className={cn(
                   'pl-2 pr-4 font-semibold',
-                  isDebit || isNegative ? 'text-red-400' : 'text-green-400'
+                  displayAsDebit || isNegative ? 'text-red-400' : 'text-green-400'
                 )}>
-                  {isDebit && !amount.startsWith('-') ? `-${amount}` : amount}
+                  {displayAsDebit && !amount.startsWith('-') ? `-${amount}` : amount}
                 </TableCell>
 
-                {/* Status */}
+                {/* Status - Pass pending and channel for wallet detection */}
                 <TableCell className="pl-2 pr-4">
-                  <StatusBadge status={status} />
+                  <StatusBadge
+                    status={status}
+                    pending={t.pending}
+                    channel={t.paymentChannel || t.channel}
+                  />
                 </TableCell>
 
                 {/* Date */}
@@ -168,9 +207,12 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
                   {t.paymentChannel || t.channel || 'Online'}
                 </TableCell>
 
-                {/* Category */}
+                {/* Category - Pass channel for wallet styling */}
                 <TableCell className="pl-2 pr-4 max-lg:hidden">
-                  <CategoryBadge category={t.category} />
+                  <CategoryBadge
+                    category={t.category}
+                    channel={t.paymentChannel || t.channel}
+                  />
                 </TableCell>
               </TableRow>
             )

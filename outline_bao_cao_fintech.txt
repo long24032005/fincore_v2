@@ -1,0 +1,103 @@
+========================================================================================
+             ĐỀ CƯƠNG CHI TIẾT BÁO CÁO DỰ ÁN FINTECH (PROJECT REPORT OUTLINE)
+     Đề tài: AI Integration & API Refinement - Hệ thống Ví điện tử Finecore Wallet
+    (Mô hình: AI Robo-Advisor tích hợp Trợ lý Tự động hóa Chủ động & An toàn Tài chính)
+========================================================================================
+
+Tài liệu này trình bày chi tiết cấu trúc của file Project Report (PDF, tối đa 5 trang) 
+được thiết kế bám sát 100% yêu cầu đề bài của giảng viên và tích hợp ý tưởng kinh doanh 
+"AI Robo-Advisor & AI Autopilot Control" có tính thực tiễn cao để thuyết phục UII Incubator.
+
+---
+
+### PHẦN I: GIỚI THIỆU CHUNG (EXECUTIVE SUMMARY & INTRODUCTION)
+*(Độ dài đề xuất: 0.5 - 1 trang)*
+- **Giới thiệu Finecore Wallet**: Ứng dụng quản lý tài chính cá nhân tích hợp trợ lý AI nâng cao.
+- **Bối cảnh dự án**: 
+  - Kế thừa và nâng cấp từ dự án Fintech của học kỳ trước.
+  - Các hạn chế cũ được giải quyết: Loại bỏ hoàn toàn sự phụ thuộc vào API Plaid/Dwolla của Mỹ chỉ hỗ trợ USD và đòi hỏi định danh phức tạp; thay thế chatbot thụ động bằng Trợ lý tài chính chủ động (Proactive Agentic AI).
+- **Mô hình cốt lõi mới**: Sự kết hợp giữa Giao diện phân tích đầu tư trực quan (GUI) và Trợ lý hội thoại AI chủ động (Proactive CUI) nhằm cá nhân hóa dòng vốn đầu tư an toàn.
+
+---
+
+### PHẦN II: PHƯƠNG PHÁP LUẬN AI (AI METHODOLOGY)
+*(Độ dài đề xuất: 1.5 - 2 trang)*
+*Yêu cầu đề bài: Giải thích các kỹ thuật AI thu thập và phân tích Dữ liệu thay thế (Alternative Data).*
+
+- **1. Xây dựng Hồ sơ rủi ro hành vi bằng Dữ liệu thay thế (Alternative Data Profiling)**:
+  - Giải thích tại sao phương pháp khảo sát rủi ro truyền thống (bằng bảng hỏi tĩnh) là không chính xác và kém hiệu quả ở Việt Nam.
+  - Các nguồn dữ liệu thay thế được Finecore lượng hóa:
+    + *Lịch sử thanh toán hóa đơn điện/nước/internet (Utility Bills)*: Đánh giá tính cam kết và kỷ luật tài chính.
+    + *Tâm thế tiêu dùng qua mạng xã hội (Social Media Sentiment)*: Đánh giá độ ổn định và xu hướng tâm lý hành vi chi tiêu.
+    + *Lịch sử mua sắm bán lẻ (Retail Patterns)*: Phân tích thói quen mua sắm thông minh (thiết yếu vs. xa xỉ).
+
+- **2. Kỹ thuật xử lý AI (AI Pipeline)**:
+  - **Trích xuất thông tin (Feature Extraction - NLP)**: Dùng **Gemini API** để phân tích các văn bản hóa đơn hoặc bài viết mạng xã hội thô, số hóa thành các chỉ số (0.0 đến 1.0) như tỷ lệ trả tiền đúng hạn (`bill_on_time_ratio`), tâm lý mua sắm (`social_sentiment`), và kỷ luật tài chính (`spend_discipline`).
+  - **Mô hình hóa rủi ro (Risk Classification - ML)**: Sử dụng mô hình **XGBoost Classifier** chạy trên máy chủ Python FastAPI để phân loại người dùng thành 3 cấp độ rủi ro đầu tư (Thận trọng - Conservative, Cân bằng - Balanced, Mạo hiểm - Aggressive) tương ứng với điểm số **Finecore Credit Score** (300 - 850).
+
+- **3. Trực quan hóa và Cá nhân hóa đầu tư (Gamification & AI Allocation)**:
+  - Giao diện **AI Portfolio Dashboard**: Hiển thị hồ sơ rủi ro, phân bổ tài sản đề xuất (Cổ phiếu, Trái phiếu, Quỹ tiền tệ) và biểu đồ tăng trưởng tài sản trực quan.
+  - Tích hợp **Thú ảo tài chính "Finny" (Financial Tamagotchi)** làm mascot đại diện cho sức khỏe tài chính của người dùng, thay đổi biểu cảm sinh động (Vui vẻ, Bình thường, Lo lắng, Kiệt quệ) theo điểm tín dụng hành vi và sự phát triển của danh mục tích lũy.
+
+---
+
+### PHẦN III: KIẾN TRÚC MÁY CHỦ OPENAPI & AN TOÀN TÀI CHÍNH (SERVER ARCHITECTURE)
+*(Độ dài đề xuất: 1.5 - 2 trang)*
+*Yêu cầu đề bài: Tài liệu hóa máy chủ OpenAPI tự dựng và cách nó giải quyết các vấn đề về tiền tệ và tích hợp trước đây.*
+
+- **1. Nội địa hóa và Tự chủ hệ thống (Local Banking Integration)**:
+  - Giải pháp loại bỏ hoàn toàn Plaid/Dwolla: Tự phát triển cơ chế **Sổ cái giao dịch nội bộ (Local Ledger Database)** kết nối Appwrite DB.
+  - Tích hợp **Custom Bank Link Modal** hỗ trợ kết nối giả lập với các ngân hàng nội địa Việt Nam bằng đơn vị tiền tệ **VND (₫)** thông qua định dạng tập trung `formatAmount`.
+
+- **2. Đặc tả OpenAPI & Các Endpoint AI (OpenAPI Spec & Route Handlers)**:
+  - Đóng gói các Route Handlers tại `app/api/v1/...` phục vụ dữ liệu phân tích AI và giao dịch:
+    + `GET /api/v1/openapi.json`: Xuất bản tài liệu đặc tả OpenAPI Specification (v3.0).
+    + `GET /api/v1/alternative-data/credit-score`: Xuất kết quả chấm điểm tín dụng/hồ sơ rủi ro của AI.
+    + `GET /api/v1/alternative-data/investment-advice`: Cung cấp danh mục đầu tư đề xuất từ mô hình AI.
+    + `POST /api/v1/transfers`: API thực hiện giao dịch nạp tiền, rút tiền, chuyển khoản đầu tư bằng VND.
+
+- **3. Cơ chế Kiểm soát An toàn Tài chính (AI Autopilot Controls)**:
+  - **Mô tả vấn đề rủi ro**: Tránh tình trạng AI tự chạy các giao dịch ngầm làm người dùng quên hoặc mất tiền ngoài ý muốn.
+  - **Giải pháp thiết kế**: Tích hợp bảng điều khiển **"AI Autopilot Manager"** trên giao diện, hiển thị các tác vụ tự động đã thiết lập kèm công tắc **Bật/Tắt (ON/OFF Toggle)** và nút Hủy lệnh để người dùng luôn giữ quyền kiểm soát tối cao.
+  - Các API quản lý tác vụ tự động: `GET /api/v1/automations`, `PATCH /api/v1/automations/{id}`, `DELETE /api/v1/automations/{id}`.
+
+- **4. Trình khám phá tương tác API**: Trang `/api-docs` tích hợp sẵn trong ứng dụng giúp nhà đầu tư/giảng viên gọi thử nghiệm các API.
+
+---
+
+### PHẦN IV: CHATBOT AI CHỦ ĐỘNG (PROACTIVE AGENTIC CHATBOT)
+*(Độ dài đề xuất: 0.5 - 1 trang)*
+*Yêu cầu đề bài: Chatbot sử dụng Gemini API để tương tác với logic của ứng dụng, trả lời câu hỏi và thực hiện giao dịch.*
+
+- **1. Thiết kế Trợ lý AI chủ động (Proactive Assistant vs. Passive Chatbot)**:
+  - Trợ lý không chỉ trả lời khi được hỏi (Passive), mà tự động tương tác dựa trên sự kiện và ngữ cảnh của người dùng (Event-driven):
+    + **Thông báo trước giờ G (Pre-execution Alert)**: Nhắc nhở người dùng bằng bong bóng chat 24h trước khi kích hoạt lệnh tự động đầu tư định kỳ.
+    + **Gợi ý phân bổ vốn (Contextual Allocator)**: Nhận diện khi người dùng nhận được số dư lớn (như nhận lương) để chủ động gợi ý đầu tư sinh lời thay vì để tiền nằm im.
+    + **Nhắc hóa đơn để bảo vệ điểm tín dụng (Bill Reminder)**: Nhắc nhở thanh toán hóa đơn sắp đến hạn để tránh làm giảm điểm tín dụng AI.
+    + **Lá chắn chi tiêu cảm xúc (Emotional Spend Shield)**: Cảnh báo đỏ ngay lập tức nếu người dùng cố thực hiện chuyển tiền lớn đe dọa sự an toàn dòng tiền.
+
+- **2. Luồng xử lý kỹ thuật nâng cao**:
+  - **Nhận diện ý định (Intent Parsing)**: Gemini API bóc tách câu lệnh tiếng Việt/tiếng Anh thành JSON có cấu trúc.
+  - **Xử lý mập mờ (Disambiguation Flow)**: Tự động giữ số tiền giao dịch (`amount`) khi hỏi phân biệt người nhận trùng tên và hiển thị card xác nhận trực quan để người dùng xác thực trước khi API `/transfers` được gọi.
+
+---
+
+### PHẦN V: LỘ TRÌNH PHÁT TRIỂN & TÍNH KHẢ THI KINH DOANH (ROADMAP & VIABILITY)
+*(Độ dài đề xuất: 0.5 - 1 trang)*
+*Yêu cầu đề bài: Chứng minh các cải tiến AI này làm mô hình kinh doanh trở nên khả thi đối với UII Incubator.*
+
+- **1. Giá trị thương mại & Khả năng sinh lời (Zero Credit Risk Business Model)**:
+  - **Không rủi ro nợ xấu**: Vì ứng dụng chỉ đóng vai trò tư vấn và tích lũy tiền tự có của người dùng chứ không trực tiếp cho vay, loại bỏ hoàn toàn nguy cơ mất vốn.
+  - **Dòng tiền doanh thu ổn định**: Phí quản lý tài sản dài hạn (AUM Fee) và phí hoa hồng môi giới (Brokerage/Distribution commission) từ các công ty quản lý quỹ lớn tại Việt Nam.
+  - **Giảm rủi ro tích hợp**: API tự chủ giúp loại bỏ các khoản phí API bên thứ ba đắt đỏ.
+
+- **2. Lộ trình phát triển sản phẩm cập nhật (Updated 12-Month Roadmap)**:
+  - *Tháng 1 - Tháng 3 (MVP Alpha & AI Tuning)*: Chạy thử phiên bản giới hạn tại UII, tối ưu mô hình XGBoost và các kịch bản tương tác chủ động của Chatbot dựa trên dữ liệu người dùng thật.
+  - *Tháng 4 - Tháng 6 (Partnership Integration)*: Đấu nối API trực tiếp với các quỹ mở hàng đầu (Dragon Capital, VinaCapital) và ngân hàng liên kết (UOB Việt Nam) bằng cổng OpenAPI tự dựng.
+  - *Tháng 7 - Tháng 12 (Scale-up & B2B API)*: Ra mắt ứng dụng rộng rãi, thương mại hóa cổng API `credit-score` hành vi cho các bên tiêu dùng khác và mở rộng tính năng tự động hóa chi tiêu thông minh.
+
+---
+
+### PHẦN VI: KẾT LUẬN (CONCLUSION)
+- Tóm tắt cách Finecore Wallet chuyển dịch thành công từ một ví điện tử cơ bản sang một nền tảng quản lý tài sản thông minh, ứng dụng AI chủ động (Proactive Agentic AI) và mô hình kinh doanh an toàn, bền vững, sẵn sàng cho chương trình ươm tạo của UII.
+========================================================================================

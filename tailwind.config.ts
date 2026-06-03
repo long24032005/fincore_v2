@@ -36,6 +36,7 @@ const config = {
         success: {
           25: "#ECFDF3",
           100: "#D1FADF",
+          400: "#47CD89", // Added missing mint green shade
           500: "#12B76A", // Vibrant Mint (Highlights)
           600: "#039855",
           700: "#027A48",

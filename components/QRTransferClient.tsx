@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { User } from '@/types';
+// User type is globally available from types/index.d.ts
 import { QrCode, Scan } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import MyQRCode from './MyQRCode';

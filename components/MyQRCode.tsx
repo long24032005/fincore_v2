@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { User } from '@/types';
+// User type is globally available from types/index.d.ts
 import { ArrowLeft, Download, Share2 } from 'lucide-react';
 import QRCode from 'qrcode';
 
