@@ -2,42 +2,42 @@ export const sidebarLinks = [
   {
     imgURL: "/icons/home.svg",
     route: "/",
-    label: "Home",
+    label: "Trang chủ",
   },
   {
     imgURL: "/icons/dollar-circle.svg",
     route: "/my-banks",
-    label: "My Accounts",
+    label: "Tài khoản của tôi",
   },
   {
     imgURL: "/icons/transaction.svg",
     route: "/transaction-history",
-    label: "Dashboard",
+    label: "Bảng điều khiển",
   },
   {
     imgURL: "/icons/money-send.svg",
     route: "/payment-transfer",
-    label: "Transfer",
+    label: "Chuyển tiền",
   },
   {
     imgURL: "/icons/qr-code.svg",
     route: "/qr-transfer",
-    label: "QR Transfer",
+    label: "Chuyển khoản QR",
   },
   {
     imgURL: "/icons/user.svg",
     route: "/saved-recipients",
-    label: "Saved Recipients",
+    label: "Người thụ hưởng",
   },
   {
     imgURL: "/icons/monitor.svg",
     route: "/ai-insights",
-    label: "AI Insights",
+    label: "Phân tích AI",
   },
   {
     imgURL: "/icons/connect-bank.svg",
     route: "/api-docs",
-    label: "API Docs",
+    label: "Tài liệu API",
   },
 ];
 

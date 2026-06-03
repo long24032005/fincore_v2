@@ -401,7 +401,7 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                          addAssistantMessage(`✅ Đã chuyển thành công ${formatAmount(payload.amount)} cho ${transferReq.recipientNickname}!`);
                          toast.success('Chuyển tiền thành công!');
                      } else {
-                         addAssistantMessage(`❌ Chuyển tiền thất bại: ${result.message}`);
+                         addAssistantMessage(`❌ Chuyển tiền ${formatAmount(payload.amount)} cho ${transferReq.recipientNickname} thất bại: ${result.message}\n\nBạn có thể nói "chuyển lại" để tôi thử lại ngay.`);
                          toast.error('Chuyển tiền thất bại');
                      }
                  } else if (type === 'bill_payment') {

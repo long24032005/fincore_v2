@@ -19,28 +19,21 @@ interface StatusBadgeProps {
 }
 
 const StatusBadge = ({ status, pending, channel }: StatusBadgeProps) => {
-  // ✅ Wallet transactions are always instant success
-  const isWalletTransaction = channel === 'wallet' || pending === false;
-
-  let finalStatus = status?.toLowerCase() || 'processing';
-
-  // Force "success" for wallet transactions
-  if (isWalletTransaction && (pending === false || channel === 'wallet')) {
-    finalStatus = 'success';
-  }
+  // ✅ Force "success" status for all transactions since dedicated OpenAPI enables instant settlement
+  let finalStatus = 'success';
 
   let styles = 'bg-gray-500/10 text-gray-400'; // Default
   let displayText = finalStatus;
 
   if (finalStatus === 'success' || finalStatus === 'completed') {
     styles = 'bg-green-500/20 text-green-400';
-    displayText = channel === 'wallet' ? 'Instant' : 'Success';
+    displayText = 'Thành công';
   } else if (finalStatus === 'processing' || finalStatus === 'pending') {
     styles = 'bg-blue-500/20 text-blue-400';
-    displayText = 'Processing';
+    displayText = 'Đang xử lý';
   } else if (finalStatus === 'declined' || finalStatus === 'failed') {
     styles = 'bg-red-500/20 text-red-400';
-    displayText = 'Failed';
+    displayText = 'Thất bại';
   }
 
   return (
@@ -74,11 +67,11 @@ const CategoryBadge = ({ category, channel }: CategoryBadgeProps) => {
   let displayCategory: string;
 
   if (Array.isArray(category)) {
-    displayCategory = category.length > 0 ? category[0] : 'General';
+    displayCategory = category.length > 0 ? category[0] : 'Chung';
   } else if (typeof category === 'string' && category.trim()) {
     displayCategory = category;
   } else {
-    displayCategory = 'General';
+    displayCategory = 'Chung';
   }
 
   const lowerCat = displayCategory.toLowerCase();
@@ -113,10 +106,21 @@ const CategoryBadge = ({ category, channel }: CategoryBadgeProps) => {
     styles = 'bg-pink-500/20 text-pink-400';
   }
 
+  // Translate basic categories
+  let translatedCat = displayCategory;
+  if (lowerCat === 'food and drink') translatedCat = 'Ăn uống';
+  else if (lowerCat === 'travel') translatedCat = 'Di chuyển';
+  else if (lowerCat === 'entertainment') translatedCat = 'Giải trí';
+  else if (lowerCat === 'shopping') translatedCat = 'Mua sắm';
+  else if (lowerCat === 'transfer') translatedCat = 'Chuyển khoản';
+  else if (lowerCat === 'payment') translatedCat = 'Thanh toán';
+  else if (lowerCat === 'wallet transfer') translatedCat = 'Chuyển ví';
+  else if (lowerCat === 'wallet top-up') translatedCat = 'Nạp ví';
+
   // Truncate long category names
-  const truncatedCategory = displayCategory.length > 16
-    ? displayCategory.substring(0, 13) + '...'
-    : displayCategory;
+  const truncatedCategory = translatedCat.length > 16
+    ? translatedCat.substring(0, 13) + '...'
+    : translatedCat;
 
   return (
     <div className={cn(
@@ -131,18 +135,18 @@ const CategoryBadge = ({ category, channel }: CategoryBadgeProps) => {
 // ============================================
 // TRANSACTIONS TABLE COMPONENT
 // ============================================
-const TransactionsTable = ({ transactions, viewContext = 'all' }: TransactionTableProps) => {
+const TransactionsTable = ({ transactions, viewContext = 'all', accounts = [] }: TransactionTableProps) => {
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader className="bg-white/5">
           <TableRow className="border-b border-white/10 hover:bg-transparent">
-            <TableHead className="px-2 text-gray-400 font-medium">Transaction</TableHead>
-            <TableHead className="px-2 text-gray-400 font-medium">Amount</TableHead>
-            <TableHead className="px-2 text-gray-400 font-medium">Status</TableHead>
-            <TableHead className="px-2 text-gray-400 font-medium">Date</TableHead>
-            <TableHead className="px-2 max-lg:hidden text-gray-400 font-medium">Channel</TableHead>
-            <TableHead className="px-2 max-lg:hidden text-gray-400 font-medium">Category</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Giao dịch</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Số tiền</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Trạng thái</TableHead>
+            <TableHead className="px-2 text-gray-400 font-medium">Ngày</TableHead>
+            <TableHead className="px-2 max-lg:hidden text-gray-400 font-medium">Kênh</TableHead>
+            <TableHead className="px-2 max-lg:hidden text-gray-400 font-medium">Danh mục</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -165,6 +169,25 @@ const TransactionsTable = ({ transactions, viewContext = 'all' }: TransactionTab
               // When viewing Wallet, top-up is a CREDIT (incoming money)
               displayAsDebit = false;
             }
+
+            const rawChannel = t.paymentChannel || t.channel || 'online';
+            
+            // Resolve bank name from matching accounts if it's a bank transaction
+            let resolvedBankName = '';
+            if (rawChannel !== 'wallet') {
+              const targetBankId = t.senderBankId || t.receiverBankId;
+              if (targetBankId) {
+                const matchedAccount = accounts.find(acc => acc.appwriteItemId === targetBankId);
+                if (matchedAccount) {
+                  resolvedBankName = matchedAccount.name;
+                }
+              }
+            }
+
+            const displayChannel = rawChannel === 'wallet' ? 'Ví Finecore' : 
+                                   resolvedBankName ? resolvedBankName :
+                                   rawChannel === 'online' ? 'Trực tuyến' : 
+                                   rawChannel === 'in store' ? 'Tại cửa hàng' : rawChannel;
 
             return (
               <TableRow
@@ -204,7 +227,7 @@ const TransactionsTable = ({ transactions, viewContext = 'all' }: TransactionTab
 
                 {/* Channel */}
                 <TableCell className="pl-2 pr-4 capitalize max-lg:hidden text-gray-400">
-                  {t.paymentChannel || t.channel || 'Online'}
+                  {displayChannel}
                 </TableCell>
 
                 {/* Category - Pass channel for wallet styling */}

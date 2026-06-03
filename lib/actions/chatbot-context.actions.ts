@@ -90,83 +90,75 @@ export const getChatbotContext = async (userId: string): Promise<ChatbotContext 
             console.log('   Recipients list:', savedRecipients.map((r: any) => `"${r.nickname}" (${r.email})`).join(', '));
         }
 
-        // 4. Get recent transactions (last 10)
-        // Query sent and received transactions separately (Appwrite may not support Query.or)
-        const idList = Array.from(new Set([userId, authUserId])).filter(Boolean) as string[];
-
-        let sentTxns = await database.listDocuments(
-            DATABASE_ID!,
-            TRANSACTION_COLLECTION_ID!,
-            [
-                Query.equal('senderId', idList),
-                Query.orderDesc('$createdAt'),
-                Query.limit(50)
-            ]
+        // 4. Get recent transactions (last 10) - MATCH WITH HOME PAGE FOR DATA CONSISTENCY
+        const allBankTransactions = await Promise.all(
+            bankAccounts.map(async (acc: any) => {
+                const { getAccount } = await import('./bank.actions');
+                const accountData = await getAccount({ appwriteItemId: acc.id });
+                return accountData?.transactions || [];
+            })
         );
 
-        let receivedTxns = await database.listDocuments(
-            DATABASE_ID!,
-            TRANSACTION_COLLECTION_ID!,
-            [
-                Query.equal('receiverId', idList),
-                Query.orderDesc('$createdAt'),
-                Query.limit(50)
-            ]
-        );
-
-        // Auto-seed if user has zero transactions (e.g. newly created demo account)
-        if (sentTxns.total === 0 && receivedTxns.total === 0) {
-            console.log(`🌱 [Chatbot Context] No transactions found. Auto-seeding for user ${userId} / ${authUserId}...`);
+        // Fetch wallet transactions
+        const { getWalletTransactions } = await import('./wallet.actions');
+        let walletTransactionsData = await getWalletTransactions(userId);
+        
+        // Auto-seed if user has zero transactions
+        if (allBankTransactions.flat().length === 0 && (walletTransactionsData?.documents || []).length === 0) {
+            console.log(`🌱 [Chatbot Context] No transactions found. Auto-seeding for user ${userId}...`);
             const { getUserInfo, seedUserTransactions } = await import("./user.actions");
             const userInfo = await getUserInfo({ userId });
             if (userInfo) {
-                await seedUserTransactions(authUserId, userInfo.email, database);
-                
-                // Re-fetch transactions after seeding
-                sentTxns = await database.listDocuments(
-                    DATABASE_ID!,
-                    TRANSACTION_COLLECTION_ID!,
-                    [
-                        Query.equal('senderId', idList),
-                        Query.orderDesc('$createdAt'),
-                        Query.limit(50)
-                    ]
-                );
-
-                receivedTxns = await database.listDocuments(
-                    DATABASE_ID!,
-                    TRANSACTION_COLLECTION_ID!,
-                    [
-                        Query.equal('receiverId', idList),
-                        Query.orderDesc('$createdAt'),
-                        Query.limit(50)
-                    ]
-                );
+                await seedUserTransactions(userId, userInfo.email, database);
+                // Re-fetch after seeding
+                walletTransactionsData = await getWalletTransactions(userId);
             }
         }
 
-        // Merge and sort transactions
-        const mergedTxns = [...sentTxns.documents, ...receivedTxns.documents];
-        // Sort ascending to apply spreading sequence
-        mergedTxns.sort((a: any, b: any) => new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime());
+        const walletTransactions = (walletTransactionsData?.documents || []).map((txn: any) => ({
+            id: txn.$id,
+            name: txn.name,
+            amount: Number(txn.amount),
+            date: txn.$createdAt, // Already virtualized inside getWalletTransactions
+            paymentChannel: txn.channel,
+            category: txn.category,
+            type: txn.senderId === userId ? 'debit' : 'credit',
+        }));
 
-        // Apply virtualization (spreading dates 1.5 days apart)
-        const virtualizedTxns = mergedTxns.map((txn: any, idx: number) => {
-            const realDate = new Date(txn.$createdAt);
-            const offsetDays = (mergedTxns.length - idx) * 1.5;
-            const virtualDate = new Date(realDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
-            
-            return {
-                ...txn,
-                $createdAt: virtualDate.toISOString()
-            };
+        // Merge bank and wallet transactions
+        const allTxns = [
+            ...allBankTransactions.flat().map((t: any) => ({
+                id: t.id || t.$id,
+                name: t.name,
+                amount: Number(t.amount),
+                date: t.date || t.$createdAt,
+                paymentChannel: t.paymentChannel || t.channel,
+                category: t.category,
+                type: t.type
+            })),
+            ...walletTransactions
+        ];
+
+        // Deduplicate based on transaction ID
+        const uniqueTxMap = new Map<string, any>();
+        allTxns.forEach((tx) => {
+            if (tx.id && !uniqueTxMap.has(tx.id)) {
+                uniqueTxMap.set(tx.id, tx);
+            }
         });
+        const uniqueTxns = Array.from(uniqueTxMap.values());
 
-        // Now sort descending and take the top 10
-        const allTransactions = virtualizedTxns
-            .sort((a: any, b: any) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
-            .slice(0, 10);
-        console.log('📜 [Chatbot Context] Recent transactions loaded and virtualized:', allTransactions.length);
+        // Sort by date descending and take top 10
+        const allTransactions = uniqueTxns
+            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10)
+            .map((t: any) => ({
+                ...t,
+                $createdAt: t.date, // Ensure both property variants are populated
+                date: t.date
+            }));
+
+        console.log('📜 [Chatbot Context] Recent transactions loaded (matching home page):', allTransactions.length);
 
         const finalContext = {
             userId,
@@ -212,6 +204,7 @@ export const checkDailyLimits = async (userId: string, amount: number): Promise<
             TRANSACTION_COLLECTION_ID!,
             [
                 Query.equal('senderId', userId),
+                Query.equal('channel', 'chatbot'),
                 Query.greaterThan('$createdAt', todayStart.toISOString()),
             ]
         );
@@ -222,19 +215,21 @@ export const checkDailyLimits = async (userId: string, amount: number): Promise<
 
         const todayCount = todayTransfers.total;
 
-        // Define limits
+        // Define limits (VND)
         const LIMITS: ChatbotLimits = {
-            maxPerTransfer: 1000,
-            maxDailyTotal: 5000,
+            maxPerTransfer: 50_000_000,   // 50 triệu VND/giao dịch
+            maxDailyTotal: 100_000_000,   // 100 triệu VND/ngày
             maxDailyCount: 20,
-            warningThreshold: 500,
+            warningThreshold: 20_000_000, // Cảnh báo từ 20 triệu VND
         };
+
+        const formatVND = (n: number) => n.toLocaleString('vi-VN') + ' ₫';
 
         // Check limits
         if (amount > LIMITS.maxPerTransfer) {
             return {
                 allowed: false,
-                reason: `Single transfer limit is $${LIMITS.maxPerTransfer}. Please transfer a smaller amount.`,
+                reason: `Hạn mức mỗi giao dịch là ${formatVND(LIMITS.maxPerTransfer)}. Vui lòng chuyển số tiền nhỏ hơn.`,
                 todayTotal,
                 todayCount,
             };
@@ -243,7 +238,7 @@ export const checkDailyLimits = async (userId: string, amount: number): Promise<
         if (todayTotal + amount > LIMITS.maxDailyTotal) {
             return {
                 allowed: false,
-                reason: `Daily limit is $${LIMITS.maxDailyTotal}. You've already transferred $${todayTotal.toFixed(2)} today.`,
+                reason: `Hạn mức ngày là ${formatVND(LIMITS.maxDailyTotal)}. Hôm nay bạn đã chuyển ${formatVND(todayTotal)}.`,
                 todayTotal,
                 todayCount,
             };
@@ -252,7 +247,7 @@ export const checkDailyLimits = async (userId: string, amount: number): Promise<
         if (todayCount >= LIMITS.maxDailyCount) {
             return {
                 allowed: false,
-                reason: `Daily transfer count limit is ${LIMITS.maxDailyCount}. You've reached the limit.`,
+                reason: `Bạn đã đạt giới hạn ${LIMITS.maxDailyCount} giao dịch trong ngày hôm nay.`,
                 todayTotal,
                 todayCount,
             };

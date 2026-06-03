@@ -72,7 +72,7 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
     };
 
     const handleDelete = async (recipientId: string, nickname: string) => {
-        if (!confirm(`Are you sure you want to remove "${nickname}"?`)) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa "${nickname}" không?`)) {
             return;
         }
 
@@ -97,7 +97,7 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
 
     const saveEdit = async (recipientId: string) => {
         if (!editNickname.trim()) {
-            toast.error('Nickname cannot be empty');
+            toast.error('Tên gợi nhớ không được để trống');
             return;
         }
 
@@ -112,9 +112,9 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
     };
 
     const formatDate = (dateString?: string) => {
-        if (!dateString) return 'Never';
+        if (!dateString) return 'Chưa từng dùng';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString('vi-VN', {
             month: 'short',
             day: 'numeric',
             year: 'numeric'
@@ -126,7 +126,7 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading saved recipients...</p>
+                    <p className="text-gray-400">Đang tải danh sách người thụ hưởng...</p>
                 </div>
             </div>
         );
@@ -138,9 +138,9 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
                 <div className="flex-center size-20 rounded-full bg-gray-800/50 mx-auto mb-4">
                     <User className="w-10 h-10 text-gray-500" />
                 </div>
-                <h3 className="text-20 font-semibold text-white mb-2">No saved recipients yet</h3>
+                <h3 className="text-20 font-semibold text-white mb-2">Chưa có người thụ hưởng nào được lưu</h3>
                 <p className="text-14 text-gray-400 max-w-md mx-auto">
-                    When you save recipients during QR or normal transfers, they'll appear here for quick access.
+                    Khi bạn lưu thông tin người nhận trong lúc chuyển tiền QR hoặc chuyển tiền thông thường, họ sẽ hiển thị ở đây để thao tác nhanh.
                 </p>
             </div>
         );
@@ -150,7 +150,7 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <p className="text-14 text-gray-400">
-                    {recipients.length} saved recipient{recipients.length !== 1 ? 's' : ''}
+                    Đã lưu {recipients.length} người thụ hưởng
                 </p>
             </div>
 
@@ -186,13 +186,13 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
                                             onClick={() => saveEdit(recipient.$id)}
                                             className="px-3 py-2 bg-emerald-500 text-white rounded-lg text-14 font-semibold hover:bg-emerald-600 transition-colors"
                                         >
-                                            Save
+                                            Lưu
                                         </button>
                                         <button
                                             onClick={cancelEdit}
                                             className="px-3 py-2 bg-gray-700 text-white rounded-lg text-14 font-semibold hover:bg-gray-600 transition-colors"
                                         >
-                                            Cancel
+                                            Hủy
                                         </button>
                                     </div>
                                 ) : (
@@ -221,13 +221,13 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
                                 <div className="flex items-center gap-4 mt-3">
                                     <div className="flex items-center gap-1.5 text-12 text-gray-500">
                                         <Clock className="w-3.5 h-3.5" />
-                                        <span>Last used: {formatDate(recipient.lastUsedAt)}</span>
+                                        <span>Giao dịch cuối: {formatDate(recipient.lastUsedAt)}</span>
                                     </div>
                                     <span className="text-11 px-2 py-1 rounded-md bg-gray-700/50 text-gray-400">
-                                        {recipient.createdFrom === 'qr_transfer' ? '📱 QR Scan' : '📝 Manual'}
+                                        {recipient.createdFrom === 'qr_transfer' ? '📱 Quét QR' : '📝 Thủ công'}
                                     </span>
                                     <span className="text-11 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400">
-                                        {recipient.transferType === 'wallet' ? '💰 Wallet' : '🏦 Bank'}
+                                        {recipient.transferType === 'wallet' ? '💰 Ví' : '🏦 Ngân hàng'}
                                     </span>
                                 </div>
                             </div>
@@ -238,21 +238,21 @@ const SavedRecipientsClient = ({ user }: SavedRecipientsClientProps) => {
                                     <button
                                         onClick={() => handleQuickTransfer(recipient)}
                                         className="p-2 hover:bg-emerald-500/10 rounded-lg transition-colors group"
-                                        title="Quick Transfer"
+                                        title="Chuyển tiền nhanh"
                                     >
                                         <SendHorizontal className="w-5 h-5 text-gray-400 group-hover:text-emerald-400" />
                                     </button>
                                     <button
                                         onClick={() => startEdit(recipient)}
                                         className="p-2 hover:bg-gray-700 rounded-lg transition-colors group"
-                                        title="Edit nickname"
+                                        title="Sửa biệt danh"
                                     >
                                         <Edit2 className="w-5 h-5 text-gray-400 group-hover:text-white" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(recipient.$id, recipient.nickname)}
                                         className="p-2 hover:bg-red-500/10 rounded-lg transition-colors group"
-                                        title="Remove recipient"
+                                        title="Xóa người nhận"
                                     >
                                         <Trash2 className="w-5 h-5 text-gray-400 group-hover:text-red-400" />
                                     </button>

@@ -210,27 +210,56 @@ export const seedUserTransactions = async (userId: string, email: string, databa
     scenario = 'aggressive';
   }
   
-  console.log(`🌱 [Seeding] Seeding transactions for user ${userId} using scenario: ${scenario}`);
+  console.log(`🌱 [Seeding] Seeding transactions and banks for user ${userId} using scenario: ${scenario}`);
+
+  // Create bank accounts for the user automatically in BANK_COLLECTION_ID
+  const vcbBank = await database.createDocument(
+    DATABASE_ID!,
+    BANK_COLLECTION_ID!,
+    ID.unique(),
+    {
+      userId,
+      bankId: "Vietcombank",
+      accountId: `101${Math.floor(1000000 + Math.random() * 9000000)}`,
+      accessToken: `mock_access_token_vcb_${userId}`,
+      fundingSourceUrl: `https://api-sandbox.dwolla.com/funding-sources/mock_vcb_${userId}`,
+      shareableId: encryptId(`vcb_shareable_${userId}`),
+    }
+  );
+
+  const tcbBank = await database.createDocument(
+    DATABASE_ID!,
+    BANK_COLLECTION_ID!,
+    ID.unique(),
+    {
+      userId,
+      bankId: "Techcombank",
+      accountId: `102${Math.floor(1000000 + Math.random() * 9000000)}`,
+      accessToken: `mock_access_token_tcb_${userId}`,
+      fundingSourceUrl: `https://api-sandbox.dwolla.com/funding-sources/mock_tcb_${userId}`,
+      shareableId: encryptId(`tcb_shareable_${userId}`),
+    }
+  );
+
+  console.log(`🏦 [Seeding] Created linked bank accounts for user: Vietcombank (${vcbBank.$id}), Techcombank (${tcbBank.$id})`);
   
   const transactionsToCreate = [];
   
   if (scenario === 'conservative') {
-    // 2 Payroll deposits
-    transactionsToCreate.push({ name: "Nạp tiền lương tháng 4 - Fincore Corp", amount: "25000000", senderId: "system_payroll", receiverId: userId, category: "Wallet Top-up", status: "Success" });
-    transactionsToCreate.push({ name: "Nạp tiền lương tháng 5 - Fincore Corp", amount: "25000000", senderId: "system_payroll", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+    // 2 Payroll deposits (Wallet channel)
+    transactionsToCreate.push({ name: "Nạp tiền lương tháng 4 - Fincore Corp", amount: "25000000", senderId: "system_payroll", receiverId: userId, category: "Wallet Top-up", status: "Success", senderBankId: "", receiverBankId: "", channel: "wallet" });
+    transactionsToCreate.push({ name: "Nạp tiền lương tháng 5 - Fincore Corp", amount: "25000000", senderId: "system_payroll", receiverId: userId, category: "Wallet Top-up", status: "Success", senderBankId: "", receiverBankId: "", channel: "wallet" });
 
-    // 4 Utility bills paid on time
-    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN HCMC", amount: "1250000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
-    transactionsToCreate.push({ name: "Thanh toán Nước sinh hoạt SAWACO", amount: "280000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
-    transactionsToCreate.push({ name: "Thanh toán Internet Viettel Telecom", amount: "250000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
-    transactionsToCreate.push({ name: "Thanh toán Phí quản lý chung cư Vinhomes", amount: "1100000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    // 4 Utility bills paid on time (split across banks)
+    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN HCMC", amount: "1250000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "online" });
+    transactionsToCreate.push({ name: "Thanh toán Nước sinh hoạt SAWACO", amount: "280000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: tcbBank.$id, receiverBankId: "", channel: "online" });
+    transactionsToCreate.push({ name: "Thanh toán Internet Viettel Telecom", amount: "250000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "online" });
+    transactionsToCreate.push({ name: "Thanh toán Phí quản lý chung cư Vinhomes", amount: "1100000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: tcbBank.$id, receiverBankId: "", channel: "online" });
 
     // 24 other transactions. Total spend = 10,000,000.
-    // 10% is Shopping/Dining = 1,000,000.
-    transactionsToCreate.push({ name: "Mua thực phẩm sạch WinMart+", amount: "500000", senderId: userId, receiverId: "merchant_partner", category: "Shopping", status: "Success" });
-    transactionsToCreate.push({ name: "Mua sách nhà sách Fahasa", amount: "500000", senderId: userId, receiverId: "merchant_partner", category: "Shopping", status: "Success" });
+    transactionsToCreate.push({ name: "Mua thực phẩm sạch WinMart+", amount: "500000", senderId: userId, receiverId: "merchant_partner", category: "Shopping", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "online" });
+    transactionsToCreate.push({ name: "Mua sách nhà sách Fahasa", amount: "500000", senderId: userId, receiverId: "merchant_partner", category: "Shopping", status: "Success", senderBankId: tcbBank.$id, receiverBankId: "", channel: "online" });
 
-    // Rest (9,000,000) are non-Shopping/Dining (Utilities, Personal Care, Transportation)
     const conservativePool = [
       { name: "Mua thuốc nhà thuốc Pharmacity", category: "Personal Care" },
       { name: "Đặt xe GrabBike đi làm", category: "Transportation" },
@@ -239,40 +268,54 @@ export const seedUserTransactions = async (userId: string, email: string, databa
     ];
     for (let i = 0; i < 22; i++) {
       const template = conservativePool[i % conservativePool.length];
+      const useBank = i % 3 === 0 ? vcbBank.$id : (i % 3 === 1 ? tcbBank.$id : "");
+      const baseAmt = 409000;
+      const factor = 0.75 + (i % 10) * 0.05; // deterministic average ~0.975
+      const amountStr = (Math.round((baseAmt * factor) / 1000) * 1000).toString();
+
       transactionsToCreate.push({
         name: template.name,
-        amount: "409000", // 409000 * 22 ~= 9,000,000
+        amount: amountStr,
         senderId: userId,
         receiverId: "merchant_partner",
         category: template.category,
-        status: "Success"
+        status: "Success",
+        senderBankId: useBank,
+        receiverBankId: "",
+        channel: useBank ? "online" : "wallet"
       });
     }
 
   } else if (scenario === 'aggressive') {
     // Top-ups
-    transactionsToCreate.push({ name: "Nạp tiền ví Fincore từ Vietcombank", amount: "20000000", senderId: "system_topup", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+    transactionsToCreate.push({ name: "Nạp tiền ví Fincore từ Vietcombank", amount: "20000000", senderId: userId, receiverId: userId, category: "Wallet Top-up", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "wallet" });
 
-    // Immediate cash out: 65% of topup (13,000,000) is cash-out/withdrawn right after.
-    transactionsToCreate.push({ name: "Rút tiền nhanh ATM Vietcombank", amount: "13000000", senderId: userId, receiverId: "merchant_partner", category: "Withdrawal", status: "Success" });
+    // Immediate cash out: Vietcombank withdrawal
+    transactionsToCreate.push({ name: "Rút tiền nhanh ATM Vietcombank", amount: "13000000", senderId: userId, receiverId: "merchant_partner", category: "Withdrawal", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "online" });
 
     // Utility bills paid late
-    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN HCMC (Trễ hạn phạt)", amount: "1850000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN HCMC (Trễ hạn phạt)", amount: "1850000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "online" });
 
     // 40 transactions. Total spending: 20,000,000.
-    // 65% is Shopping/Dining = 13,000,000 (13 transactions of 1,000,000).
     for (let i = 0; i < 13; i++) {
+      const useBank = i % 3 === 0 ? vcbBank.$id : (i % 3 === 1 ? tcbBank.$id : "");
+      const baseAmt = 1000000;
+      const factor = 0.65 + (i % 8) * 0.1; // average: 1.0
+      const amountStr = (Math.round((baseAmt * factor) / 1000) * 1000).toString();
+
       transactionsToCreate.push({
         name: i % 2 === 0 ? "Mua sắm bốc đồng Shopee Tech Store" : "Săn sale Lazada Flagship Store",
-        amount: "1000000",
+        amount: amountStr,
         senderId: userId,
         receiverId: "shopee_merchant",
         category: "Shopping",
-        status: "Success"
+        status: "Success",
+        senderBankId: useBank,
+        receiverBankId: "",
+        channel: useBank ? "online" : "wallet"
       });
     }
 
-    // 35% is non-Shopping/Dining = 7,000,000 (27 transactions of ~259,259 VND)
     const aggressiveNonShoppingPool = [
       { name: "Nạp thẻ game Steam Wallet VIP", category: "Entertainment" },
       { name: "Thanh toán hóa đơn Bar/Pub The Alley", category: "Entertainment" },
@@ -281,41 +324,54 @@ export const seedUserTransactions = async (userId: string, email: string, databa
     ];
     for (let i = 0; i < 27; i++) {
       const template = aggressiveNonShoppingPool[i % aggressiveNonShoppingPool.length];
+      const useBank = i % 3 === 0 ? vcbBank.$id : (i % 3 === 1 ? tcbBank.$id : "");
+      const baseAmt = 259259;
+      const factor = 0.8 + (i % 5) * 0.1; // average: 1.0
+      const amountStr = (Math.round((baseAmt * factor) / 1000) * 1000).toString();
+
       transactionsToCreate.push({
         name: template.name,
-        amount: "259259",
+        amount: amountStr,
         senderId: userId,
         receiverId: "merchant_partner",
         category: template.category,
-        status: "Success"
+        status: "Success",
+        senderBankId: useBank,
+        receiverBankId: "",
+        channel: useBank ? "online" : "wallet"
       });
     }
 
   } else {
     // Balanced
-    transactionsToCreate.push({ name: "Nạp tiền ví Fincore từ Techcombank", amount: "15000000", senderId: "system_topup", receiverId: userId, category: "Wallet Top-up", status: "Success" });
+    transactionsToCreate.push({ name: "Nạp tiền ví Fincore từ Techcombank", amount: "15000000", senderId: userId, receiverId: userId, category: "Wallet Top-up", status: "Success", senderBankId: tcbBank.$id, receiverBankId: "", channel: "wallet" });
 
-    // Immediate cash out: 20% of 15,000,000 = 3,000,000
-    transactionsToCreate.push({ name: "Rút tiền nhanh ATM Techcombank", amount: "3000000", senderId: userId, receiverId: "merchant_partner", category: "Withdrawal", status: "Success" });
+    // Immediate cash out
+    transactionsToCreate.push({ name: "Rút tiền nhanh ATM Techcombank", amount: "3000000", senderId: userId, receiverId: "merchant_partner", category: "Withdrawal", status: "Success", senderBankId: tcbBank.$id, receiverBankId: "", channel: "online" });
 
     // Utility bills
-    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN", amount: "850000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
-    transactionsToCreate.push({ name: "Thanh toán Tiền nước SAWACO", amount: "180000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success" });
+    transactionsToCreate.push({ name: "Thanh toán Điện lực EVN", amount: "850000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: vcbBank.$id, receiverBankId: "", channel: "online" });
+    transactionsToCreate.push({ name: "Thanh toán Tiền nước SAWACO", amount: "180000", senderId: userId, receiverId: "utility_provider", category: "Utilities", status: "Success", senderBankId: tcbBank.$id, receiverBankId: "", channel: "online" });
 
-    // 35 transactions. Total spending: 15,000,000.
-    // 35% is Shopping/Dining = 5,250,000 (5 transactions of 1,050,000)
     for (let i = 0; i < 5; i++) {
+      const useBank = i % 3 === 0 ? vcbBank.$id : (i % 3 === 1 ? tcbBank.$id : "");
+      const baseAmt = 1050000;
+      const factor = 0.8 + (i % 5) * 0.1; // average: 1.0
+      const amountStr = (Math.round((baseAmt * factor) / 1000) * 1000).toString();
+
       transactionsToCreate.push({
         name: "Chi tiêu thiết yếu siêu thị Lotte Mart",
-        amount: "1050000",
+        amount: amountStr,
         senderId: userId,
         receiverId: "grocery_merchant",
         category: "Shopping",
-        status: "Success"
+        status: "Success",
+        senderBankId: useBank,
+        receiverBankId: "",
+        channel: useBank ? "online" : "wallet"
       });
     }
 
-    // 65% is non-Shopping/Dining = 9,750,000 (30 transactions of 325,000)
     const balancedNonShoppingPool = [
       { name: "Mua thực phẩm chức năng Watson", category: "Personal Care" },
       { name: "Xem phim cuối tuần CGV Cinema", category: "Entertainment" },
@@ -324,13 +380,21 @@ export const seedUserTransactions = async (userId: string, email: string, databa
     ];
     for (let i = 0; i < 30; i++) {
       const template = balancedNonShoppingPool[i % balancedNonShoppingPool.length];
+      const useBank = i % 3 === 0 ? vcbBank.$id : (i % 3 === 1 ? tcbBank.$id : "");
+      const baseAmt = 325000;
+      const factor = 0.7 + (i % 7) * 0.1; // average: 1.0
+      const amountStr = (Math.round((baseAmt * factor) / 1000) * 1000).toString();
+
       transactionsToCreate.push({
         name: template.name,
-        amount: "325000",
+        amount: amountStr,
         senderId: userId,
         receiverId: "merchant_partner",
         category: template.category,
-        status: "Success"
+        status: "Success",
+        senderBankId: useBank,
+        receiverBankId: "",
+        channel: useBank ? "online" : "wallet"
       });
     }
   }
@@ -346,11 +410,11 @@ export const seedUserTransactions = async (userId: string, email: string, databa
           name: txn.name,
           amount: txn.amount,
           senderId: txn.senderId,
-          senderBankId: "",
+          senderBankId: txn.senderBankId || "",
           receiverId: txn.receiverId,
-          receiverBankId: "",
+          receiverBankId: txn.receiverBankId || "",
           email: emailLower,
-          channel: "online",
+          channel: txn.channel || "online",
           category: txn.category,
           status: txn.status
         }
@@ -396,12 +460,12 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
     // Generate unique wallet ID
     const walletId = await createWalletId();
 
-    // Xác định số dư ban đầu dựa trên kịch bản email
-    let initialBalance = 60000000;
+    // Xác định số dư ban đầu dựa trên kịch bản email (đã được chia đều)
+    let initialBalance = 13000000; // Balanced (default): 13M
     if (email.toLowerCase().includes('thantrong')) {
-      initialBalance = 70000000;
+      initialBalance = 35000000; // Conservative: 35M
     } else if (email.toLowerCase().includes('maohiem')) {
-      initialBalance = 52000000;
+      initialBalance = 2000000; // Aggressive: 2M
     }
 
     // Create user document in database
@@ -418,7 +482,7 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
     );
 
     // Bơm dữ liệu giao dịch giả lập tự động
-    await seedUserTransactions(newUserAccount.$id, email, database);
+    await seedUserTransactions(newUser.$id, email, database);
 
     // Create session
     const session = await account.createEmailPasswordSession(email, password);
@@ -428,12 +492,16 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
       return { error: true, message: 'Account created but failed to sign in. Please try signing in manually.' };
     }
 
-    (await cookies()).set("appwrite-session", session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-    });
+    try {
+      (await cookies()).set("appwrite-session", session.secret, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "strict",
+        secure: true,
+      });
+    } catch (cookieError) {
+      console.warn("⚠️ [signUp] Cookies set failed (likely running outside request context):", cookieError);
+    }
 
     return parseStringify(newUser);
   } catch (error: any) {

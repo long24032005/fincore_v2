@@ -114,7 +114,7 @@ export const executeChatbotTransfer = async ({
                 email: recipient.recipientEmail,
                 category: 'Transfer',
                 status: 'Processing',
-                channel: 'online',
+                channel: 'chatbot',
             });
 
             if (transaction) {
@@ -211,8 +211,9 @@ export const executeChatbotTransfer = async ({
                     email: recipient.recipientEmail,
                     category: 'Transfer',
                     status: 'Processing',
-                    channel: 'online',
+                    channel: 'chatbot',
                 });
+
 
                 if (transaction) {
                     await updateRecipientLastUsed(recipientId);

@@ -252,6 +252,7 @@ declare interface CategoryBadgeProps {
 declare interface TransactionTableProps {
   transactions: Transaction[];
   viewContext?: 'all' | 'wallet' | 'bank';
+  accounts?: Account[];
 }
 
 declare interface CategoryProps {

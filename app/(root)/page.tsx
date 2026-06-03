@@ -60,8 +60,8 @@ const Home = async ({ searchParams: { id, page } }: SearchParamProps) => {
         <header className="home-header">
           <HeaderBox
             type="greeting"
-            title="Hello"
-            user={`${loggedIn?.firstName || 'Guest'} ${loggedIn?.lastName || ''}`}
+            title="Xin chào"
+            user={`${loggedIn?.firstName || 'Khách'} ${loggedIn?.lastName || ''}`}
           />
 
           <TotalBalanceBox

@@ -13,9 +13,9 @@ const SavedRecipientsPage = async () => {
         <section className="flex w-full flex-row max-xl:max-h-screen max-xl:overflow-y-scroll">
             <div className="flex w-full flex-1 flex-col gap-8 px-5 sm:px-8 py-7 lg:py-12 xl:max-h-screen xl:overflow-y-scroll">
                 <header className="flex flex-col gap-2">
-                    <h1 className="text-30 font-bold text-white">Saved Recipients</h1>
+                    <h1 className="text-30 font-bold text-white">Người thụ hưởng đã lưu</h1>
                     <p className="text-16 text-gray-400">
-                        Manage your saved recipients for quick and easy transfers
+                        Quản lý danh sách người thụ hưởng đã lưu để chuyển tiền nhanh chóng và dễ dàng
                     </p>
                 </header>
 

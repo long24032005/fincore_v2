@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       console.log(`[AI Scoring API] No transactions found. Auto-seeding for user ${user.$id}...`);
       const { seedUserTransactions } = await import("@/lib/actions/user.actions");
       // Seed with the Auth User ID if available, otherwise Doc ID
-      const seedId = user.userId || user.$id;
+      const seedId = user.$id;
       await seedUserTransactions(seedId, user.email, database);
 
       // Re-fetch after seeding

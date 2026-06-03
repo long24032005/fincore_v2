@@ -145,7 +145,7 @@ export const createTransaction = async (transaction: CreateTransactionProps) => 
       receiverId: resolvedReceiverId, // ✅ RESOLVED receiver ID (User $id)
       receiverBankId: String(transaction.receiverBankId || ""),
       email: resolvedEmail,
-      channel: "online",
+      channel: String(transaction.channel || "online"), // ✅ Respect passed channel
       category: categoryString,
       status: String(transaction.status || "Processing"),  // ✅ Respect passed status
     };

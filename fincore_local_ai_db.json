@@ -303,6 +303,157 @@
           "aiAnalysis": "Chào Nam Mạo Hiểm!\n\nFincore Wallet rất vui được cung cấp một phân tích chuyên sâu về tình hình tài chính và hành vi của bạn. Chúng tôi nhận thấy bạn là một nhà đầu tư có tinh thần \"Mạo Hiểm\" rõ rệt, thể hiện qua điểm số hành vi cao, cho thấy sự sẵn lòng chấp nhận rủi ro để tìm kiếm cơ hội tăng trưởng. Bạn có một niềm đam mê cháy bỏng với công nghệ, thích khám phá những điều mới mẻ và có khát khao dấn thân vào các lĩnh vực tiềm năng.\n\nPhân tích sâu hơn cho thấy bạn có nhiều điểm mạnh đáng kể: sự yêu thích công nghệ được thể hiện qua việc cập nhật các sản phẩm hi-tech, tìm hiểu về AI hay theo học các khóa kỹ năng lập trình; tinh thần khởi nghiệp qua việc tham gia dự án startup và đầu tư vào thị trường tài sản số biến động. Bạn cũng thể hiện sự chủ động theo dõi nguồn vốn thường nhật và có một lượng tài sản dự phòng thanh khoản ở mức khá tốt, cùng với nguồn thu nhập ổn định. Tuy nhiên, chúng tôi cũng nhận thấy một số khía cạnh có thể tối ưu hóa: các khoản chi tiêu không thiết yếu phát sinh ngẫu hứng như săn sale hay các buổi tụ tập giải trí chiếm tỷ lệ đáng kể. Thêm vào đó, thói quen thanh toán các hóa đơn định kỳ chưa được duy trì đúng hạn và đôi khi có các quyết định tài chính vội vã, chưa tối ưu hóa thời điểm. Bạn cũng có thể nâng cao sự cẩn trọng trong các quyết định gia nhập sản phẩm tài chính mới và xây dựng thói quen ưu tiên trích lập quỹ tiết kiệm/đầu tư ngay sau khi nhận lương để tối ưu hóa dòng tiền.\n\nVới khả năng tiết kiệm và đầu tư hàng tháng lên đến 7.000.000 VND và dựa trên hồ sơ rủi ro \"Mạo Hiểm\" cùng các sở thích cá nhân, Fincore Wallet đề xuất một danh mục đầu tư năng động sau đây:\n\nONE (CTCP Truyền thông số 1): 21% danh mục, tương đương 1.470.000 VND. Với niềm đam mê công nghệ và sự nhạy bén với xu hướng mới của bạn, ONE là một lựa chọn hợp lý, giúp bạn tham gia vào lĩnh vực truyền thông số đang phát triển mạnh mẽ.\n\nTTN (CTCP Công nghệ & Truyền thông Việt Nam): 20% danh mục, tương đương 1.400.000 VND. Việc đầu tư vào một doanh nghiệp công nghệ và truyền thông khác sẽ củng cố vị thế của bạn trong ngành này, đồng thời khai thác tiềm năng tăng trưởng của các xu hướng công nghệ như AI mà bạn quan tâm.\n\nPNC (CTCP Văn hóa Phương Nam): 20% danh mục, tương đương 1.400.000 VND. Mã cổ phiếu này trong lĩnh vực văn hóa và giải trí phản ánh một phần các hoạt động xã hội mà bạn yêu thích, mang lại yếu tố đa dạng và cân bằng cho danh mục đầu tư mạo hiểm của bạn.\n\nHIG (CTCP Tập đoàn HIPT): 20% danh mục, tương đương 1.400.000 VND. Là một tập đoàn công nghệ uy tín, HIG sẽ tiếp tục củng cố sự hiện diện của bạn trong lĩnh vực cốt lõi mà bạn có nhiều kiến thức và niềm hứng thú.\n\nEFI (CTCP Đầu tư Tài chính Giáo dục): 20% danh mục, tương đương 1.400.000 VND. Với tinh thần không ngừng học hỏi và nâng cao kỹ năng (như việc tham gia các khóa học lập trình), đầu tư vào lĩnh vực giáo dục tài chính là một lựa chọn thông minh, giúp bạn đồng hành cùng sự phát triển của tri thức và con người.\n\nĐây là danh mục được thiết kế để tối ưu hóa tiềm năng tăng trưởng, phản ánh đúng tinh thần \"Mạo Hiểm\" và các lĩnh vực bạn hứng thú. Fincore Wallet tin rằng với sự chủ động và khả năng học hỏi của mình, bạn sẽ gặt hái được những thành công đáng kể. Hãy bắt đầu hành trình đầu tư thông minh ngay hôm nay cùng Fincore Wallet để biến niềm đam mê thành giá trị tài chính."
         }
       ]
+    },
+    "6a2008ca00296b252d6c": {
+      "riskClass": "conservative",
+      "radarData": {
+        "willingness": 94,
+        "capacity": 83,
+        "discipline": 75
+      },
+      "userInterests": {
+        "technology": 0.19046764075756073,
+        "entertainment": 0.32327625155448914,
+        "discipline": 0.4817892014980316,
+        "health": 0.3377878665924072,
+        "education": 0.3317386507987976,
+        "entrepreneurship": 0.19867539405822754,
+        "family": 0.4335649907588959
+      },
+      "userRiskScore": 0.1005778696591733,
+      "portfolioAllocation": [
+        {
+          "code": "DCBF",
+          "name": "Quỹ Đầu tư Trái phiếu DC",
+          "type": "Fund",
+          "allocationPct": 20,
+          "vndAmount": 2600000
+        },
+        {
+          "code": "VFF",
+          "name": "Quỹ Đầu tư Trái phiếu VinaCapital",
+          "type": "Fund",
+          "allocationPct": 20,
+          "vndAmount": 2600000
+        },
+        {
+          "code": "VNDBF",
+          "name": "Quỹ Đầu tư Trái phiếu VNDirect",
+          "type": "Fund",
+          "allocationPct": 20,
+          "vndAmount": 2600000
+        },
+        {
+          "code": "MBBOND",
+          "name": "Quỹ Đầu tư Trái phiếu MB",
+          "type": "Fund",
+          "allocationPct": 20,
+          "vndAmount": 2600000
+        },
+        {
+          "code": "MAFF",
+          "name": "Quỹ Đầu tư Trái phiếu Manulife",
+          "type": "Fund",
+          "allocationPct": 20,
+          "vndAmount": 2600000
+        }
+      ],
+      "aiAnalysis": "Chào anh Huy Thận Trọng,\n\nFincore Wallet rất vui được đồng hành cùng anh trong hành trình hoạch định tài chính cá nhân. Dựa trên những dữ liệu chuyên sâu và phân tích hành vi độc đáo, chúng tôi đã xây dựng một bức tranh tài chính toàn diện về anh, một nhà đầu tư thuộc nhóm Thận trọng.\n\nQua các phân tích chuyên sâu về hành vi tài chính, chúng tôi nhận thấy anh Huy là một người có kỷ luật tài chính vượt trội. Anh luôn có thói quen thanh toán các hóa đơn đúng hạn, thể hiện sự trách nhiệm và khả năng quản lý dòng tiền xuất sắc. Các dữ liệu cho thấy anh duy trì mức độ kỷ luật rất cao trong chi tiêu, với việc ưu tiên tích lũy trước và lập kế hoạch ngân sách rõ ràng. Anh gần như không có các khoản chi tiêu không thiết yếu phát sinh ngẫu hứng, và luôn duy trì thói quen tự động trích lập tiết kiệm ngay sau khi nhận lương. Nguồn thu nhập của anh rất ổn định và anh hiện có một lượng tài sản dự phòng thanh khoản rất tốt. Chúng tôi cũng nhận thấy anh Huy là người rất cẩn trọng trong các quyết định gia nhập sản phẩm tài chính mới, thể hiện sự cân nhắc kỹ lưỡng. Anh cũng thường xuyên chủ động theo dõi nguồn vốn thường nhật của mình và luôn đưa ra các lựa chọn có tính toán và cân nhắc, tránh được các quyết định tài chính vội vã, chưa tối ưu hóa thời điểm.\n\nNhững thói quen tài chính tích cực này được củng cố rõ ràng qua các hoạt động trên mạng xã hội của anh. Các bài viết như \"Kỷ luật là sức mạnh\", \"lập bảng kế hoạch ngân sách chi tiết\" hay \"chỉ mua điện thoại mới khi cái cũ hỏng hẳn, tối ưu công năng thiết bị\" cho thấy anh là người rất coi trọng sự ổn định, tiết kiệm và quản lý tài chính dài hạn. Bên cạnh đó, những chia sẻ về \"cơm nhà ấm áp cho cả gia đình\", \"dọn dẹp nhà cửa ngăn nắp\", \"tham gia lớp học yoga\" và \"đọc sách tài chính cá nhân\" thể hiện sự quan tâm sâu sắc đến sức khỏe, gia đình, phát triển bản thân và một cuộc sống bình dị, an toàn. Điều này hoàn toàn phù hợp với khẩu vị rủi ro Thận trọng của anh, ưu tiên bảo toàn vốn và tăng trưởng ổn định thay vì tìm kiếm lợi nhuận cao đi kèm rủi ro lớn.\n\nVới nguồn thu nhập hàng tháng 25.000.000 VND, chi phí sinh hoạt 12.000.000 VND, anh Huy có khả năng tích lũy và đầu tư 13.000.000 VND mỗi tháng. Để tối ưu hóa nguồn lực này theo đúng định hướng Thận trọng và các giá trị cá nhân của anh, Fincore Wallet đề xuất danh mục đầu tư tập trung vào các Quỹ Đầu tư Trái phiếu. Đây là các sản phẩm phù hợp với những nhà đầu tư ưu tiên sự ổn định, lợi nhuận đều đặn và giảm thiểu biến động của thị trường. Các quỹ trái phiếu giúp bảo toàn vốn, đồng thời mang lại mức lợi nhuận tốt hơn so với gửi tiết kiệm thông thường, rất lý tưởng cho kế hoạch tích lũy dài hạn và an toàn mà anh mong muốn.\n\nCụ thể, danh mục đầu tư đề xuất của anh Huy Thận Trọng như sau:\n- Quỹ Đầu tư Trái phiếu DC (DCBF): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu VinaCapital (VFF): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu VNDirect (VNDBF): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu MB (MBBOND): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu Manulife (MAFF): 20%, tương đương 2.600.000 VND\n\nVới sự kỷ luật và tầm nhìn dài hạn của anh, Fincore Wallet tin rằng danh mục này sẽ giúp anh đạt được các mục tiêu tài chính một cách bền vững và an toàn. Hãy để Fincore Wallet tiếp tục đồng hành cùng anh trên con đường xây dựng một tương lai tài chính vững chắc.\n\nTrân trọng,\nRobo-Advisor Fincore Wallet",
+      "updatedAt": "2026-06-03T11:07:01.035Z",
+      "walletBalance": 70000000,
+      "realIncome": 50000000,
+      "realExpenses": 12878000,
+      "realSavings": 37122000,
+      "currentAllocation": {
+        "cash": 26,
+        "bonds": 69,
+        "stocks": 5
+      },
+      "history": [
+        {
+          "timestamp": "2026-06-03T11:07:01.035Z",
+          "riskClass": "conservative",
+          "aiAnalysis": "Chào anh Huy Thận Trọng,\n\nFincore Wallet rất vui được đồng hành cùng anh trong hành trình hoạch định tài chính cá nhân. Dựa trên những dữ liệu chuyên sâu và phân tích hành vi độc đáo, chúng tôi đã xây dựng một bức tranh tài chính toàn diện về anh, một nhà đầu tư thuộc nhóm Thận trọng.\n\nQua các phân tích chuyên sâu về hành vi tài chính, chúng tôi nhận thấy anh Huy là một người có kỷ luật tài chính vượt trội. Anh luôn có thói quen thanh toán các hóa đơn đúng hạn, thể hiện sự trách nhiệm và khả năng quản lý dòng tiền xuất sắc. Các dữ liệu cho thấy anh duy trì mức độ kỷ luật rất cao trong chi tiêu, với việc ưu tiên tích lũy trước và lập kế hoạch ngân sách rõ ràng. Anh gần như không có các khoản chi tiêu không thiết yếu phát sinh ngẫu hứng, và luôn duy trì thói quen tự động trích lập tiết kiệm ngay sau khi nhận lương. Nguồn thu nhập của anh rất ổn định và anh hiện có một lượng tài sản dự phòng thanh khoản rất tốt. Chúng tôi cũng nhận thấy anh Huy là người rất cẩn trọng trong các quyết định gia nhập sản phẩm tài chính mới, thể hiện sự cân nhắc kỹ lưỡng. Anh cũng thường xuyên chủ động theo dõi nguồn vốn thường nhật của mình và luôn đưa ra các lựa chọn có tính toán và cân nhắc, tránh được các quyết định tài chính vội vã, chưa tối ưu hóa thời điểm.\n\nNhững thói quen tài chính tích cực này được củng cố rõ ràng qua các hoạt động trên mạng xã hội của anh. Các bài viết như \"Kỷ luật là sức mạnh\", \"lập bảng kế hoạch ngân sách chi tiết\" hay \"chỉ mua điện thoại mới khi cái cũ hỏng hẳn, tối ưu công năng thiết bị\" cho thấy anh là người rất coi trọng sự ổn định, tiết kiệm và quản lý tài chính dài hạn. Bên cạnh đó, những chia sẻ về \"cơm nhà ấm áp cho cả gia đình\", \"dọn dẹp nhà cửa ngăn nắp\", \"tham gia lớp học yoga\" và \"đọc sách tài chính cá nhân\" thể hiện sự quan tâm sâu sắc đến sức khỏe, gia đình, phát triển bản thân và một cuộc sống bình dị, an toàn. Điều này hoàn toàn phù hợp với khẩu vị rủi ro Thận trọng của anh, ưu tiên bảo toàn vốn và tăng trưởng ổn định thay vì tìm kiếm lợi nhuận cao đi kèm rủi ro lớn.\n\nVới nguồn thu nhập hàng tháng 25.000.000 VND, chi phí sinh hoạt 12.000.000 VND, anh Huy có khả năng tích lũy và đầu tư 13.000.000 VND mỗi tháng. Để tối ưu hóa nguồn lực này theo đúng định hướng Thận trọng và các giá trị cá nhân của anh, Fincore Wallet đề xuất danh mục đầu tư tập trung vào các Quỹ Đầu tư Trái phiếu. Đây là các sản phẩm phù hợp với những nhà đầu tư ưu tiên sự ổn định, lợi nhuận đều đặn và giảm thiểu biến động của thị trường. Các quỹ trái phiếu giúp bảo toàn vốn, đồng thời mang lại mức lợi nhuận tốt hơn so với gửi tiết kiệm thông thường, rất lý tưởng cho kế hoạch tích lũy dài hạn và an toàn mà anh mong muốn.\n\nCụ thể, danh mục đầu tư đề xuất của anh Huy Thận Trọng như sau:\n- Quỹ Đầu tư Trái phiếu DC (DCBF): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu VinaCapital (VFF): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu VNDirect (VNDBF): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu MB (MBBOND): 20%, tương đương 2.600.000 VND\n- Quỹ Đầu tư Trái phiếu Manulife (MAFF): 20%, tương đương 2.600.000 VND\n\nVới sự kỷ luật và tầm nhìn dài hạn của anh, Fincore Wallet tin rằng danh mục này sẽ giúp anh đạt được các mục tiêu tài chính một cách bền vững và an toàn. Hãy để Fincore Wallet tiếp tục đồng hành cùng anh trên con đường xây dựng một tương lai tài chính vững chắc.\n\nTrân trọng,\nRobo-Advisor Fincore Wallet"
+        }
+      ]
+    },
+    "6a2008db0011aa082d3c": {
+      "riskClass": "aggressive",
+      "radarData": {
+        "willingness": 31,
+        "capacity": 81,
+        "discipline": 10
+      },
+      "userInterests": {
+        "technology": 0.358862966299057,
+        "entertainment": 0.3284633755683899,
+        "discipline": 0.2592293620109558,
+        "health": 0.2651207149028778,
+        "education": 0.2902422845363617,
+        "entrepreneurship": 0.3561481535434723,
+        "family": 0.28056642413139343
+      },
+      "userRiskScore": 0.8975088872481137,
+      "portfolioAllocation": [
+        {
+          "code": "ONE",
+          "name": "CTCP Truyền thông số 1",
+          "type": "Stock",
+          "allocationPct": 21,
+          "vndAmount": 1470000
+        },
+        {
+          "code": "TTN",
+          "name": "CTCP Công nghệ & Truyền thông Việt Nam",
+          "type": "Stock",
+          "allocationPct": 20,
+          "vndAmount": 1400000
+        },
+        {
+          "code": "PNC",
+          "name": "CTCP Văn hóa Phương Nam",
+          "type": "Stock",
+          "allocationPct": 20,
+          "vndAmount": 1400000
+        },
+        {
+          "code": "HIG",
+          "name": "CTCP Tập đoàn HIPT",
+          "type": "Stock",
+          "allocationPct": 20,
+          "vndAmount": 1400000
+        },
+        {
+          "code": "EFI",
+          "name": "CTCP Đầu tư Tài chính Giáo dục",
+          "type": "Stock",
+          "allocationPct": 20,
+          "vndAmount": 1400000
+        }
+      ],
+      "aiAnalysis": "Chào bạn Nam Mạo Hiểm,\n\nVới vai trò là Robo-Advisor chuyên nghiệp từ Fincore Wallet, chúng tôi rất vui được hỗ trợ bạn trong hành trình tối ưu hóa tài chính cá nhân. Dựa trên phân tích sâu rộng từ dữ liệu bạn cung cấp, chúng tôi nhận thấy bạn là một cá nhân năng động, luôn tìm kiếm sự đổi mới và không ngần ngại chấp nhận rủi ro để đạt được các mục tiêu của mình. Phong cách \"Mạo hiểm\" trong đầu tư của bạn được thể hiện rõ ràng qua các hành vi chủ động khám phá công nghệ mới, tham gia các dự án khởi nghiệp tiềm năng và sẵn sàng đầu tư vào các kênh có tính biến động cao như tiền điện tử.\n\nĐi sâu vào thói quen tài chính, chúng tôi nhận thấy bạn có mức độ chủ động theo dõi nguồn vốn thường nhật rất tích cực, đây là một thói quen tốt giúp bạn nắm bắt dòng tiền của mình. Khả năng duy trì lượng tài sản dự phòng thanh khoản của bạn đang ở mức tốt, cho thấy một nền tảng tài chính ổn định. Tuy nhiên, Fincore cũng nhận thấy bạn có xu hướng đưa ra các khoản chi tiêu không thiết yếu phát sinh ngẫu hứng, đôi khi là vào những thời điểm chưa tối ưu, và việc quản lý thanh toán các hóa đơn định kỳ đôi khi chưa thực sự nhất quán. Để tối ưu hóa khả năng tích lũy, bạn có thể cân nhắc việc phân bổ tiền ngay sau khi nhận lương và duy trì tính nhất quán hơn trong các mục tiêu tiết kiệm tự động. Khi tìm hiểu các sản phẩm tài chính mới, bạn có xu hướng đưa ra quyết định nhanh chóng, điều này đòi hỏi sự chủ động trong việc tìm hiểu thông tin để đảm bảo tối ưu hóa lợi ích.\n\nVới mức thu nhập hàng tháng là 35.000.000 VND và chi phí sinh hoạt khoảng 28.000.000 VND, bạn có khả năng tiết kiệm/đầu tư lên tới 7.000.000 VND mỗi tháng. Dựa trên khẩu vị rủi ro \"Mạo hiểm\" cùng với những sở thích cá nhân nổi bật về công nghệ, khởi nghiệp, giải trí và giáo dục được phân tích từ các tương tác xã hội của bạn, Fincore đề xuất một danh mục đầu tư cân bằng giữa các lĩnh vực bạn quan tâm với tiềm năng tăng trưởng cao:\n\nDanh mục đầu tư đề xuất:\n*   ONE (CTCP Truyền thông số 1 - Cổ phiếu): 21% tương đương 1.470.000 VND. Đây là mã phù hợp với sở thích về công nghệ và giải trí của bạn, mang lại tiềm năng tăng trưởng trong lĩnh vực truyền thông số đang phát triển mạnh mẽ.\n*   TTN (CTCP Công nghệ & Truyền thông Việt Nam - Cổ phiếu): 20% tương đương 1.400.000 VND. Tương tự ONE, TTN cũng nằm trong lĩnh vực công nghệ và truyền thông, phù hợp với sự quan tâm của bạn đến đổi mới và sáng tạo.\n*   PNC (CTCP Văn hóa Phương Nam - Cổ phiếu): 20% tương đương 1.400.000 VND. Mã này phù hợp với sở thích giải trí và văn hóa của bạn, mang lại cơ hội đầu tư vào một ngành có sức hút đối với người tiêu dùng.\n*   HIG (CTCP Tập đoàn HIPT - Cổ phiếu): 20% tương đương 1.400.000 VND. Với sự quan tâm sâu sắc đến công nghệ và tinh thần khởi nghiệp của bạn, HIG là một lựa chọn lý tưởng, hứa hẹn tiềm năng từ các dự án công nghệ cao.\n*   EFI (CTCP Đầu tư Tài chính Giáo dục - Cổ phiếu): 20% tương đương 1.400.000 VND. Sự chủ động trong việc học hỏi và nâng cao kỹ năng của bạn cho thấy bạn coi trọng giáo dục. EFI là cách để bạn đầu tư vào lĩnh vực này, đồng thời tận dụng tiềm năng tăng trưởng của giáo dục tài chính.\n\nDanh mục này không chỉ tối ưu hóa tiềm năng sinh lời phù hợp với khẩu vị \"Mạo hiểm\" của bạn mà còn giúp bạn đầu tư vào các lĩnh vực mà bạn thực sự đam mê và có kiến thức nền tảng, tạo nên một hành trình tài chính đầy ý nghĩa và hiệu quả. Fincore luôn đồng hành cùng bạn trên con đường phát triển tài chính cá nhân.\n\nTrân trọng,\nRobo-Advisor Fincore Wallet",
+      "updatedAt": "2026-06-03T12:58:43.223Z",
+      "walletBalance": 5000000,
+      "realIncome": 20000000,
+      "realExpenses": 57999993,
+      "realSavings": 12000000,
+      "currentAllocation": {
+        "cash": 19,
+        "bonds": 76,
+        "stocks": 5
+      },
+      "history": [
+        {
+          "timestamp": "2026-06-03T11:11:53.244Z",
+          "riskClass": "aggressive",
+          "aiAnalysis": "Kính chào Nam Mạo Hiểm,\n\nFincore Wallet rất vui được đồng hành cùng bạn trên hành trình quản lý và phát triển tài chính cá nhân. Dựa trên những thông tin và thói quen độc đáo được phân tích kỹ lưỡng, chúng tôi đã chuẩn bị một bản đánh giá tài chính cá nhân sâu sắc cùng lời khuyên phân bổ tài sản được cá nhân hóa riêng cho bạn.\n\nĐánh giá tài chính cá nhân của bạn:\nNam Mạo Hiểm, với tinh thần \"Mạo Hiểm\" được thể hiện rõ ràng qua các hoạt động của bạn, từ việc đầu tư vào thị trường tiền ảo đầy biến động với mong muốn \"nhân đôi tài khoản\", đến việc sẵn sàng \"dấn thân mạo hiểm\" vào các dự án startup mới. Khẩu vị rủi ro này của bạn là một tài sản quý giá, cho phép bạn tìm kiếm những cơ hội sinh lời cao hơn, phù hợp với sự năng động và khao khát thử thách của tuổi trẻ.\n\nChúng tôi nhận thấy bạn là một người rất quan tâm đến công nghệ, từ việc đầu tư vào card đồ họa hi-tech đến việc theo dõi sát sao các xu hướng AI mới. Tinh thần học hỏi không ngừng và mong muốn nâng cao kỹ năng (khóa học code web) cũng là điểm mạnh nổi bật. Bạn cũng là một người chủ động theo dõi nguồn vốn thường nhật với tần suất cao, cho thấy sự quan tâm đến tình hình tài chính của mình. Lượng tài sản dự phòng thanh khoản của bạn hiện đang ở mức khá tốt, đây là một nền tảng vững chắc.\n\nTuy nhiên, có một vài khía cạnh chúng tôi tin rằng bạn có thể tối ưu hóa để quản lý tài chính hiệu quả hơn. Chúng tôi nhận thấy việc quản lý các khoản chi định kỳ như hóa đơn điện, nước, internet của bạn đôi khi còn chưa được tối ưu về thời gian. Bên cạnh đó, qua các hoạt động trên mạng xã hội, chúng tôi nhận thấy bạn có xu hướng đưa ra các quyết định mua sắm ngẫu hứng, đôi khi chưa cân nhắc kỹ lưỡng, đặc biệt là vào những dịp săn sale, và một phần đáng kể các giao dịch của bạn diễn ra vào thời gian muộn trong ngày. Điều này cho thấy các khoản chi tiêu không thiết yếu phát sinh ngẫu hứng có thể cần được quản lý chặt chẽ hơn. Đặc biệt, hiện tại bạn chưa có thói quen trích lập tiết kiệm hoặc đầu tư ngay sau khi nhận lương, và mức độ hoàn thành các mục tiêu tiết kiệm tự động còn có thể được cải thiện. Sự cẩn trọng trong các quyết định gia nhập sản phẩm tài chính mới cũng là điểm bạn có thể nâng cao để đảm bảo an toàn cho tài sản. Đôi khi bạn cũng có các quyết định tài chính vội vã, chưa tối ưu hóa thời điểm, thể hiện qua các giao dịch phát sinh trong những tình huống cần cân nhắc.\n\nLời khuyên phân bổ tài sản Fincore Wallet:\nVới thu nhập hàng tháng 35.000.000 VND và chi phí 28.000.000 VND, bạn có khả năng tiết kiệm/đầu tư hàng tháng là 7.000.000 VND. Dựa trên khẩu vị rủi ro \"Mạo Hiểm\" và sở thích cá nhân sâu sắc của bạn, Fincore Wallet đề xuất danh mục đầu tư tập trung vào các lĩnh vực tiềm năng, gắn liền với công nghệ, truyền thông, giáo dục và khởi nghiệp:\n\nDanh mục đầu tư đề xuất với tổng số tiền 7.000.000 VND:\n\n1.  ONE (CTCP Truyền thông số 1 - Cổ phiếu): 21% tương đương 1.455.000 VND\n    *   Fincore tin rằng mã ONE rất phù hợp với Nam Mạo Hiểm bởi sự quan tâm của bạn đến công nghệ và truyền thông. Đây là ngành có tốc độ tăng trưởng nhanh, đặc biệt trong bối cảnh bạn thường xuyên cập nhật về AI và các xu hướng công nghệ. Việc đầu tư vào truyền thông số giúp bạn đón đầu các làn sóng đổi mới, phản ánh tinh thần \"hi-tech đáng tiền\" mà bạn chia sẻ.\n\n2.  TTN (CTCP Công nghệ & Truyền thông Việt Nam - Cổ phiếu): 20% tương đương 1.386.000 VND\n    *   Tương tự như ONE, mã TTN nằm trong lĩnh vực công nghệ và truyền thông, trực tiếp phản ánh niềm đam mê của bạn đối với \"ChatGPT và AI Agent\". Đây là khoản đầu tư cho phép bạn đồng hành cùng sự phát triển của các công nghệ cốt lõi tại Việt Nam, phù hợp với mong muốn dấn thân vào các lĩnh vực tiên phong.\n\n3.  PNC (CTCP Văn hóa Phương Nam - Cổ phiếu): 20% tương đương 1.386.000 VND\n    *   Mặc dù không trực tiếp liên quan đến công nghệ, PNC đại diện cho lĩnh vực văn hóa và giải trí, một phần sở thích cá nhân của bạn thể hiện qua việc \"chill bar pub với hội bạn\" hay cập nhật đời sống. Với tiềm năng phát triển của ngành giải trí và sự năng động của giới trẻ, đây là một kênh đầu tư bổ sung, giúp đa dạng hóa danh mục của bạn trong các lĩnh vực có yếu tố tăng trưởng.\n\n4.  HIG (CTCP Tập đoàn HIPT - Cổ phiếu): 20% tương đương 1.386.000 VND\n    *   HIG là một tập đoàn công nghệ, hoàn toàn phù hợp với niềm yêu thích \"đồ công nghệ hi-tech\" và sự quan tâm của bạn đến sự phát triển của công nghệ. Đây là một mã cổ phiếu hứa hẹn, cho phép bạn tham gia vào sự lớn mạnh của các doanh nghiệp công nghệ hàng đầu, đồng điệu với khao khát \"liều ăn nhiều\" và dấn thân vào những thứ mới mẻ.\n\n5.  EFI (CTCP Đầu tư Tài chính Giáo dục - Cổ phiếu): 20% tương đương 1.386.000 VND\n    *   EFI là sự lựa chọn lý tưởng, phản ánh tinh thần \"tự học là chính\" và việc bạn \"đăng ký khóa học nâng cao kỹ năng code web\". Đầu tư vào giáo dục là đầu tư vào tương lai, đặc biệt là giáo dục tài chính và công nghệ. Đây là một cách để bạn ủng hộ và hưởng lợi từ sự phát triển của tri thức và kỹ năng, một lĩnh vực mà bạn luôn coi trọng.\n\nLời khuyên từ Fincore Wallet:\nChúng tôi khuyến khích bạn áp dụng thói quen trích lập một phần thu nhập để tiết kiệm/đầu tư ngay sau khi nhận lương. Việc này sẽ giúp bạn quản lý dòng tiền hiệu quả hơn và đạt được các mục tiêu tài chính một cách bền vững. Đồng thời, hãy cân nhắc kỹ lưỡng hơn các quyết định mua sắm ngẫu hứng và tăng cường sự cẩn trọng khi tham gia vào các sản phẩm tài chính mới. Fincore Wallet luôn sẵn sàng hỗ trợ bạn điều chỉnh kế hoạch để tối ưu hóa lợi nhuận và quản lý rủi ro hiệu quả.\n\nChúc Nam Mạo Hiểm luôn vững vàng trên con đường chinh phục các mục tiêu tài chính của mình!\n\nTrân trọng,\nRobo-Advisor Fincore Wallet"
+        },
+        {
+          "timestamp": "2026-06-03T12:58:43.223Z",
+          "riskClass": "aggressive",
+          "aiAnalysis": "Chào bạn Nam Mạo Hiểm,\n\nVới vai trò là Robo-Advisor chuyên nghiệp từ Fincore Wallet, chúng tôi rất vui được hỗ trợ bạn trong hành trình tối ưu hóa tài chính cá nhân. Dựa trên phân tích sâu rộng từ dữ liệu bạn cung cấp, chúng tôi nhận thấy bạn là một cá nhân năng động, luôn tìm kiếm sự đổi mới và không ngần ngại chấp nhận rủi ro để đạt được các mục tiêu của mình. Phong cách \"Mạo hiểm\" trong đầu tư của bạn được thể hiện rõ ràng qua các hành vi chủ động khám phá công nghệ mới, tham gia các dự án khởi nghiệp tiềm năng và sẵn sàng đầu tư vào các kênh có tính biến động cao như tiền điện tử.\n\nĐi sâu vào thói quen tài chính, chúng tôi nhận thấy bạn có mức độ chủ động theo dõi nguồn vốn thường nhật rất tích cực, đây là một thói quen tốt giúp bạn nắm bắt dòng tiền của mình. Khả năng duy trì lượng tài sản dự phòng thanh khoản của bạn đang ở mức tốt, cho thấy một nền tảng tài chính ổn định. Tuy nhiên, Fincore cũng nhận thấy bạn có xu hướng đưa ra các khoản chi tiêu không thiết yếu phát sinh ngẫu hứng, đôi khi là vào những thời điểm chưa tối ưu, và việc quản lý thanh toán các hóa đơn định kỳ đôi khi chưa thực sự nhất quán. Để tối ưu hóa khả năng tích lũy, bạn có thể cân nhắc việc phân bổ tiền ngay sau khi nhận lương và duy trì tính nhất quán hơn trong các mục tiêu tiết kiệm tự động. Khi tìm hiểu các sản phẩm tài chính mới, bạn có xu hướng đưa ra quyết định nhanh chóng, điều này đòi hỏi sự chủ động trong việc tìm hiểu thông tin để đảm bảo tối ưu hóa lợi ích.\n\nVới mức thu nhập hàng tháng là 35.000.000 VND và chi phí sinh hoạt khoảng 28.000.000 VND, bạn có khả năng tiết kiệm/đầu tư lên tới 7.000.000 VND mỗi tháng. Dựa trên khẩu vị rủi ro \"Mạo hiểm\" cùng với những sở thích cá nhân nổi bật về công nghệ, khởi nghiệp, giải trí và giáo dục được phân tích từ các tương tác xã hội của bạn, Fincore đề xuất một danh mục đầu tư cân bằng giữa các lĩnh vực bạn quan tâm với tiềm năng tăng trưởng cao:\n\nDanh mục đầu tư đề xuất:\n*   ONE (CTCP Truyền thông số 1 - Cổ phiếu): 21% tương đương 1.470.000 VND. Đây là mã phù hợp với sở thích về công nghệ và giải trí của bạn, mang lại tiềm năng tăng trưởng trong lĩnh vực truyền thông số đang phát triển mạnh mẽ.\n*   TTN (CTCP Công nghệ & Truyền thông Việt Nam - Cổ phiếu): 20% tương đương 1.400.000 VND. Tương tự ONE, TTN cũng nằm trong lĩnh vực công nghệ và truyền thông, phù hợp với sự quan tâm của bạn đến đổi mới và sáng tạo.\n*   PNC (CTCP Văn hóa Phương Nam - Cổ phiếu): 20% tương đương 1.400.000 VND. Mã này phù hợp với sở thích giải trí và văn hóa của bạn, mang lại cơ hội đầu tư vào một ngành có sức hút đối với người tiêu dùng.\n*   HIG (CTCP Tập đoàn HIPT - Cổ phiếu): 20% tương đương 1.400.000 VND. Với sự quan tâm sâu sắc đến công nghệ và tinh thần khởi nghiệp của bạn, HIG là một lựa chọn lý tưởng, hứa hẹn tiềm năng từ các dự án công nghệ cao.\n*   EFI (CTCP Đầu tư Tài chính Giáo dục - Cổ phiếu): 20% tương đương 1.400.000 VND. Sự chủ động trong việc học hỏi và nâng cao kỹ năng của bạn cho thấy bạn coi trọng giáo dục. EFI là cách để bạn đầu tư vào lĩnh vực này, đồng thời tận dụng tiềm năng tăng trưởng của giáo dục tài chính.\n\nDanh mục này không chỉ tối ưu hóa tiềm năng sinh lời phù hợp với khẩu vị \"Mạo hiểm\" của bạn mà còn giúp bạn đầu tư vào các lĩnh vực mà bạn thực sự đam mê và có kiến thức nền tảng, tạo nên một hành trình tài chính đầy ý nghĩa và hiệu quả. Fincore luôn đồng hành cùng bạn trên con đường phát triển tài chính cá nhân.\n\nTrân trọng,\nRobo-Advisor Fincore Wallet"
+        }
+      ]
     }
   },
   "automations": {
@@ -379,6 +530,200 @@
           {
             "timestamp": "2026-05-26T16:26:01.568Z",
             "status": "success",
+            "amount": 2000000
+          }
+        ]
+      }
+    ],
+    "6a1d569a002e262f3623": [
+      {
+        "id": "auto_1780480778717",
+        "userId": "6a1d569a002e262f3623",
+        "actionType": "invest",
+        "amount": 2000000,
+        "destinationFund": "VESAF",
+        "cronExpression": "0 0 25 * *",
+        "isActive": true,
+        "lastRun": null
+      },
+      {
+        "id": "auto_1780480780910",
+        "userId": "6a1d569a002e262f3623",
+        "actionType": "invest",
+        "amount": 2000000,
+        "destinationFund": "VESAF",
+        "cronExpression": "0 0 25 * *",
+        "isActive": true,
+        "lastRun": null
+      },
+      {
+        "id": "auto_1780481652070",
+        "userId": "6a1d569a002e262f3623",
+        "actionType": "invest",
+        "amount": 2000000,
+        "destinationFund": "VESAF",
+        "cronExpression": "0 0 25 * *",
+        "isActive": true,
+        "lastRun": null
+      },
+      {
+        "id": "auto_1780481727550",
+        "userId": "6a1d569a002e262f3623",
+        "actionType": "invest",
+        "amount": 2000000,
+        "destinationFund": "VESAF",
+        "cronExpression": "0 0 25 * *",
+        "isActive": true,
+        "lastRun": null
+      },
+      {
+        "id": "auto_1780482831387",
+        "userId": "6a1d569a002e262f3623",
+        "actionType": "invest",
+        "amount": 2000000,
+        "destinationFund": "VESAF",
+        "cronExpression": "0 0 25 * *",
+        "isActive": true,
+        "lastRun": null
+      }
+    ],
+    "6a2008ca00296b252d6c": [
+      {
+        "id": "auto_tcbf_6a2008ca00296b252d6c",
+        "actionType": "Transfer",
+        "amount": 1000000,
+        "destinationFund": "TCBF",
+        "cronExpression": "0 0 * * 1",
+        "isActive": true,
+        "lastRun": "2026-06-03T11:06:25.187Z",
+        "executionHistory": [
+          {
+            "timestamp": "2026-03-11T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-03-18T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-03-25T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-04-01T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-04-08T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-04-15T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-04-22T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-04-29T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-05-06T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-05-13T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-05-20T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          },
+          {
+            "timestamp": "2026-05-27T11:06:25.187Z",
+            "status": "success",
+            "amount": 1000000
+          }
+        ]
+      }
+    ],
+    "6a2008db0011aa082d3c": [
+      {
+        "id": "auto_vesaf_6a2008db0011aa082d3c",
+        "actionType": "Transfer",
+        "amount": 2000000,
+        "destinationFund": "VESAF",
+        "cronExpression": "0 0 * * 1",
+        "isActive": true,
+        "lastRun": "2026-06-03T11:10:50.530Z",
+        "executionHistory": [
+          {
+            "timestamp": "2026-03-25T11:10:50.530Z",
+            "status": "failed",
+            "failureReason": "Insufficient balance",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-04-01T11:10:50.530Z",
+            "status": "success",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-04-08T11:10:50.530Z",
+            "status": "failed",
+            "failureReason": "Insufficient balance",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-04-15T11:10:50.530Z",
+            "status": "failed",
+            "failureReason": "Insufficient balance",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-04-22T11:10:50.530Z",
+            "status": "success",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-04-29T11:10:50.530Z",
+            "status": "failed",
+            "failureReason": "Insufficient balance",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-05-06T11:10:50.530Z",
+            "status": "success",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-05-13T11:10:50.530Z",
+            "status": "failed",
+            "failureReason": "Insufficient balance",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-05-20T11:10:50.530Z",
+            "status": "success",
+            "amount": 2000000
+          },
+          {
+            "timestamp": "2026-05-27T11:10:50.530Z",
+            "status": "failed",
+            "failureReason": "Insufficient balance",
             "amount": 2000000
           }
         ]
@@ -597,6 +942,388 @@
         },
         {
           "transactionId": "6a1edf58000f04734867",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        }
+      ]
+    },
+    "6a2008ca00296b252d6c": {
+      "onboardingTimeSeconds": 51,
+      "balanceCheckCount30d": 2,
+      "transactionDeviceStatus": [
+        {
+          "transactionId": "6a2008cc003533f5c5cd",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cd0014f2658fab",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cd0033a344ae21",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ce0011cb948350",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ce002d0b567483",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cf00034a998f58",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cf001987148082",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cf0031dcc34c80",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d0000a1a1f1198",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d00021906fb2e6",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d100006e454bb0",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d1001c8df0c533",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d2000c89dc5875",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d2002a6fbf4c2c",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d3002a6ec2e1c7",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d4000cf22ba0de",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d40022d0c53f0a",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d5000d68c6037c",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d50021abc8a695",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d5003aab414987",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d60019764dcaed",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d600364c9fd3a2",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d700130ecd1c58",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d700386a4d64e9",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d800201dc7f702",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d8003b27a68e95",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d90017127ecedb",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008d9002d2cc9d23d",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cb003ae0ea67f8",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008cc00186f047364",
+          "batteryLevel": 0.85,
+          "isCharging": true
+        }
+      ]
+    },
+    "6a2008db0011aa082d3c": {
+      "onboardingTimeSeconds": 15,
+      "balanceCheckCount30d": 12,
+      "transactionDeviceStatus": [
+        {
+          "transactionId": "6a2008dd0002f3218f4e",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008dd00204b466817",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008de003072745725",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008df000876173298",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008df001e4d93fa7d",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008df0032f80c38fb",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e0000948a37410",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e0001f6993751e",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e0003d4da2cb37",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e1001c48c21738",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e100378448a38b",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e20016f4114801",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e20036009468ed",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e30014e74b0ef9",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e30030d72443f8",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e4000c4a7d83ac",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e40023d942f0ca",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e4003b0559aff7",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e5001240232c75",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e5002858ced895",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e6000351124e68",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e600215bf27630",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e700039fcbfcbf",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e7001f599eff3a",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e7003c97fe536f",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008e8001c358f8e6b",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008e900331be57fdb",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ea0009a5367af0",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008ea00213a2d7e40",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ea0035c9fb9c83",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008eb000d082552bf",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008eb00251c0f6133",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ec0004326fd0b7",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ec00206eb19c0c",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008ec003b4fc58af9",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ed001afe348d64",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008ed00397dbe4405",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008ee00179f57e5f6",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008f0001a410acd06",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008f000307754f820",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008f1000e2038f863",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008f1002bf1cf7a2b",
+          "batteryLevel": 0.6,
+          "isCharging": true
+        },
+        {
+          "transactionId": "6a2008f2000815b8cd5f",
+          "batteryLevel": 0.12,
+          "isCharging": false
+        },
+        {
+          "transactionId": "6a2008dd0002f3218f4e",
           "batteryLevel": 0.6,
           "isCharging": true
         }

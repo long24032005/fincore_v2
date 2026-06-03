@@ -82,7 +82,7 @@ const AuthForm = ({ type }: { type: string }) => {
         }
 
         if (!result) {
-          const errorMsg = 'Sign up failed. Please try again.';
+          const errorMsg = 'Đăng ký thất bại. Vui lòng thử lại.';
           toast.error(errorMsg);
           setError(errorMsg);
           setIsLoading(false);
@@ -90,7 +90,7 @@ const AuthForm = ({ type }: { type: string }) => {
         }
 
         setUser(result);
-        toast.success('Account created successfully! Now link your bank account.');
+        toast.success('Tạo tài khoản thành công! Bây giờ hãy liên kết tài khoản ngân hàng của bạn.');
       }
 
       if (type === 'sign-in') {
@@ -100,17 +100,17 @@ const AuthForm = ({ type }: { type: string }) => {
         })
 
         if (response) {
-          toast.success('Welcome back!');
+          toast.success('Chào mừng trở lại!');
           router.push('/')
         } else {
-          const errorMsg = 'Invalid email or password.';
+          const errorMsg = 'Email hoặc mật khẩu không chính xác.';
           toast.error(errorMsg);
           setError(errorMsg);
         }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      const errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+      const errorMessage = error.message || 'Đã xảy ra lỗi ngoài ý muốn. Vui lòng thử lại.';
       toast.error(errorMessage);
       setError(errorMessage);
     } finally {
@@ -139,15 +139,15 @@ const AuthForm = ({ type }: { type: string }) => {
         <div className="flex flex-col gap-1 md:gap-3">
           <h1 className="text-24 lg:text-36 font-semibold text-white">
             {user
-              ? 'Link Account'
+              ? 'Liên kết Tài khoản'
               : type === 'sign-in'
-                ? 'Sign In'
-                : 'Sign Up'
+                ? 'Đăng nhập'
+                : 'Đăng ký'
             }
             <p className="text-16 font-normal text-gray-300">
               {user
-                ? 'Link your account to get started'
-                : 'Please enter your details'
+                ? 'Liên kết tài khoản của bạn để bắt đầu sử dụng'
+                : 'Vui lòng điền thông tin chi tiết của bạn'
               }
             </p>
           </h1>
@@ -203,19 +203,19 @@ const AuthForm = ({ type }: { type: string }) => {
                 </>
               )}
 
-              <CustomInput control={form.control} name='email' label="Email" placeholder='Enter your email' />
+              <CustomInput control={form.control} name='email' label="Email" placeholder='Nhập địa chỉ email của bạn' />
 
-              <CustomInput control={form.control} name='password' label="Password" placeholder='Enter your password' />
+              <CustomInput control={form.control} name='password' label="Mật khẩu" placeholder='Nhập mật khẩu của bạn' />
 
               <div className="flex flex-col gap-4">
                 <Button type="submit" disabled={isLoading} className="form-btn">
                   {isLoading ? (
                     <>
                       <Loader2 size={20} className="animate-spin" /> &nbsp;
-                      {type === 'sign-up' ? 'Creating account...' : 'Signing in...'}
+                      {type === 'sign-up' ? 'Đang tạo tài khoản...' : 'Đang đăng nhập...'}
                     </>
                   ) : type === 'sign-in'
-                    ? 'Sign In' : 'Sign Up'}
+                    ? 'Đăng nhập' : 'Đăng ký'}
                 </Button>
               </div>
             </form>
@@ -224,11 +224,11 @@ const AuthForm = ({ type }: { type: string }) => {
           <footer className="flex justify-center gap-1">
             <p className="text-14 font-normal text-gray-600">
               {type === 'sign-in'
-                ? "Don't have an account?"
-                : "Already have an account?"}
+                ? "Chưa có tài khoản?"
+                : "Đã có tài khoản?"}
             </p>
             <Link href={type === 'sign-in' ? '/sign-up' : '/sign-in'} className="form-link">
-              {type === 'sign-in' ? 'Sign up' : 'Sign in'}
+              {type === 'sign-in' ? 'Đăng ký ngay' : 'Đăng nhập'}
             </Link>
           </footer>
         </>

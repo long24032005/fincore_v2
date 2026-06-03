@@ -42,7 +42,7 @@ const Sidebar = ({ user }: SiderbarProps) => {
                 'hover:bg-gray-25': !isActive
               })}
             >
-              {item.label === 'QR Transfer' ? (
+              {item.route === '/qr-transfer' ? (
                 <div className="relative size-6 flex items-center justify-center">
                   <QrCode
                     className={cn(
@@ -52,7 +52,7 @@ const Sidebar = ({ user }: SiderbarProps) => {
                     strokeWidth={2}
                   />
                 </div>
-              ) : item.label === 'Saved Recipients' ? (
+              ) : item.route === '/saved-recipients' ? (
                 <div className="relative size-6 flex items-center justify-center">
                   <Users
                     className={cn(

@@ -59,9 +59,9 @@ const QRTransferClient = ({ user, senderBanks = [] }: QRTransferClientProps) => 
         <div className="flex flex-col gap-6">
             {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-32 font-bold text-white">QR Transfer</h1>
+                <h1 className="text-32 font-bold text-white">Chuyển khoản QR</h1>
                 <p className="text-16 text-gray-400">
-                    Instant money transfer using QR code - Fast, Easy, Secure
+                    Chuyển tiền nhanh bằng mã QR - Nhanh chóng, Dễ dàng, Bảo mật
                 </p>
             </div>
 
@@ -79,19 +79,19 @@ const QRTransferClient = ({ user, senderBanks = [] }: QRTransferClientProps) => 
 
                         <div className="text-center">
                             <h3 className="text-24 font-bold text-white mb-2">
-                                Show My QR Code
+                                Mã QR của tôi
                             </h3>
                             <p className="text-14 text-gray-400">
-                                Let others scan your QR code to receive money instantly
+                                Cho phép người khác quét mã QR của bạn để nhận tiền ngay lập tức
                             </p>
                         </div>
 
                         <div className="flex items-center gap-2 mt-4">
                             <span className="text-12 text-emerald-400 font-medium px-3 py-1 bg-emerald-500/10 rounded-full">
-                                Receive Money
+                                Nhận tiền
                             </span>
                             <span className="text-12 text-emerald-400 font-medium px-3 py-1 bg-emerald-500/10 rounded-full">
-                                FREE
+                                MIỄN PHÍ
                             </span>
                         </div>
                     </div>
@@ -109,19 +109,19 @@ const QRTransferClient = ({ user, senderBanks = [] }: QRTransferClientProps) => 
 
                         <div className="text-center">
                             <h3 className="text-24 font-bold text-white mb-2">
-                                Scan QR to Pay
+                                Quét mã QR để gửi tiền
                             </h3>
                             <p className="text-14 text-gray-400">
-                                Scan someone's QR code to send money instantly
+                                Quét mã QR của người khác để gửi tiền ngay lập tức
                             </p>
                         </div>
 
                         <div className="flex items-center gap-2 mt-4">
                             <span className="text-12 text-blue-400 font-medium px-3 py-1 bg-blue-500/10 rounded-full">
-                                Send Money
+                                Gửi tiền
                             </span>
                             <span className="text-12 text-blue-400 font-medium px-3 py-1 bg-blue-500/10 rounded-full">
-                                Instant
+                                Tức thời
                             </span>
                         </div>
                     </div>
@@ -132,20 +132,20 @@ const QRTransferClient = ({ user, senderBanks = [] }: QRTransferClientProps) => 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                 <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
                     <div className="text-emerald-400 text-24 mb-2">⚡</div>
-                    <h4 className="text-14 font-semibold text-white mb-1">Lightning Fast</h4>
-                    <p className="text-12 text-gray-400">Send money instantly with wallet transfers</p>
+                    <h4 className="text-14 font-semibold text-white mb-1">Siêu nhanh</h4>
+                    <p className="text-12 text-gray-400">Gửi tiền ngay lập tức bằng giao dịch ví</p>
                 </div>
 
                 <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
                     <div className="text-emerald-400 text-24 mb-2">🔐</div>
-                    <h4 className="text-14 font-semibold text-white mb-1">Fort Knox Secure</h4>
-                    <p className="text-12 text-gray-400">Military-grade encryption protects every transaction</p>
+                    <h4 className="text-14 font-semibold text-white mb-1">Bảo mật tối đa</h4>
+                    <p className="text-12 text-gray-400">Mã hóa cấp cao bảo vệ mọi giao dịch của bạn</p>
                 </div>
 
                 <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
                     <div className="text-emerald-400 text-24 mb-2">💎</div>
-                    <h4 className="text-14 font-semibold text-white mb-1">Wallet Transfers = FREE</h4>
-                    <p className="text-12 text-gray-400">Zero fees when you pay from your Finecore Wallet</p>
+                    <h4 className="text-14 font-semibold text-white mb-1">Chuyển ví = MIỄN PHÍ</h4>
+                    <p className="text-12 text-gray-400">Không tốn phí khi chuyển khoản từ Ví Finecore</p>
                 </div>
             </div>
         </div>

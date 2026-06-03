@@ -75,13 +75,13 @@ const RecentTransactions = ({
   const viewOptions = [
     {
       id: 'all',
-      name: 'All Transactions',
+      name: 'Tất cả giao dịch',
       icon: LayoutGrid,
       type: 'all' as const,
     },
     {
       id: 'wallet',
-      name: 'Finecore Wallet',
+      name: 'Ví Finecore',
       icon: Wallet,
       type: 'wallet' as const,
     },
@@ -100,7 +100,7 @@ const RecentTransactions = ({
   return (
     <section className="recent-transactions">
       <header className="mb-6">
-        <h2 className="recent-transactions-label">Recent transactions</h2>
+        <h2 className="recent-transactions-label">Giao dịch gần đây</h2>
       </header>
 
       {/* Custom Dropdown Selector */}
@@ -117,10 +117,10 @@ const RecentTransactions = ({
               <p className="text-14 font-semibold text-white">{selectedOption.name}</p>
               <p className="text-12 text-gray-400">
                 {selectedOption.type === 'all'
-                  ? 'View all your transactions'
+                  ? 'Xem tất cả giao dịch của bạn'
                   : selectedOption.type === 'wallet'
-                    ? 'E-wallet transactions'
-                    : 'Bank account'}
+                    ? 'Giao dịch ví điện tử'
+                    : 'Tài khoản ngân hàng'}
               </p>
             </div>
           </div>
@@ -188,7 +188,7 @@ const RecentTransactions = ({
       {/* Content based on selection */}
       {selectedOption.type === 'bank' && selectedOption.account && (
         <div className="glass-panel !rounded-xl p-4 overflow-hidden">
-          <TransactionsTable transactions={currentTransactions} viewContext="bank" />
+          <TransactionsTable transactions={currentTransactions} viewContext="bank" accounts={accounts} />
         </div>
       )}
 
@@ -199,12 +199,12 @@ const RecentTransactions = ({
               <Wallet className="w-8 h-8 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-20 font-bold text-white">Finecore Wallet</h3>
-              <p className="text-14 text-gray-400">Instant transfers • Zero fees</p>
+              <h3 className="text-20 font-bold text-white">Ví Finecore</h3>
+              <p className="text-14 text-gray-400">Chuyển tiền tức thời • Miễn phí giao dịch</p>
             </div>
           </div>
           <div className="glass-panel !rounded-xl p-4 overflow-hidden">
-            <TransactionsTable transactions={currentTransactions} viewContext="wallet" />
+            <TransactionsTable transactions={currentTransactions} viewContext="wallet" accounts={accounts} />
           </div>
         </div>
       )}
@@ -213,9 +213,9 @@ const RecentTransactions = ({
         <div className="glass-panel !rounded-xl p-4 overflow-hidden">
           <div className="flex items-center gap-3 mb-4 px-2">
             <LayoutGrid className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-16 font-semibold text-white">All Transactions</h3>
+            <h3 className="text-16 font-semibold text-white">Tất cả giao dịch</h3>
           </div>
-          <TransactionsTable transactions={currentTransactions} viewContext="all" />
+          <TransactionsTable transactions={currentTransactions} viewContext="all" accounts={accounts} />
         </div>
       )}
 

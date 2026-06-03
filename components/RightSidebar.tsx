@@ -52,7 +52,7 @@ const RightSidebar = ({ user, transactions, banks }: RightSidebarProps) => {
 
       <section className="banks glass-panel !rounded-2xl">
         <div className="flex w-full justify-between items-center">
-          <h2 className="header-2">My Banks</h2>
+          <h2 className="header-2">Ngân hàng của tôi</h2>
           <PlaidLink user={user} variant="add-bank" />
         </div>
 
@@ -93,14 +93,14 @@ const RightSidebar = ({ user, transactions, banks }: RightSidebarProps) => {
             )}
 
             <div className="mt-5 flex w-full flex-col gap-1">
-              <p className="text-12 font-medium text-gray-400">Card ID</p>
+              <p className="text-12 font-medium text-gray-400">Mã thẻ</p>
               <Copy title={banks[activeCardIndex]?.shareableId} />
             </div>
           </div>
         )}
 
         <div className="mt-10 flex flex-1 flex-col gap-6">
-          <h2 className="header-2">Top categories</h2>
+          <h2 className="header-2">Danh mục hàng đầu</h2>
 
           <div className='space-y-5'>
             {categories.map((category, index) => (

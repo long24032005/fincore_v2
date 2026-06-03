@@ -40,8 +40,8 @@ const TransactionHistory = async ({ searchParams: { id } }: SearchParamProps) =>
       {/* Header */}
       <div className="transactions-header">
         <HeaderBox
-          title="Analytics Dashboard"
-          subtext="Insights into your spending patterns and financial activity."
+          title="Bảng điều khiển Phân tích"
+          subtext="Thông tin chi tiết về thói quen chi tiêu và hoạt động tài chính của bạn."
         />
       </div>
 
@@ -50,13 +50,13 @@ const TransactionHistory = async ({ searchParams: { id } }: SearchParamProps) =>
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Total Spent Card */}
           <div className="glass-panel p-6">
-            <p className="text-14 font-medium text-gray-400 mb-2">Total Spent</p>
+            <p className="text-14 font-medium text-gray-400 mb-2">Tổng chi tiêu</p>
             <p className="text-30 font-bold text-white">{formatAmount(totalExpenses)}</p>
           </div>
 
           {/* Transaction Count Card */}
           <div className="glass-panel p-6">
-            <p className="text-14 font-medium text-gray-400 mb-2">Total Transactions</p>
+            <p className="text-14 font-medium text-gray-400 mb-2">Tổng số giao dịch</p>
             <p className="text-30 font-bold text-white">{transactionCount}</p>
           </div>
         </section>
@@ -65,8 +65,8 @@ const TransactionHistory = async ({ searchParams: { id } }: SearchParamProps) =>
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Merchants Horizontal Bar Chart */}
           <div className="glass-panel p-6">
-            <h3 className="text-18 font-semibold text-white mb-4">Top Merchants</h3>
-            <p className="text-12 text-gray-400 mb-4">Your highest spending vendors</p>
+            <h3 className="text-18 font-semibold text-white mb-4">Đơn vị chi tiêu nhiều nhất</h3>
+            <p className="text-12 text-gray-400 mb-4">Các cửa hàng/thương hiệu bạn chi tiêu nhiều nhất</p>
             <div className="h-[400px]">
               <TopMerchantsChart transactions={allTransactions} />
             </div>
@@ -74,8 +74,8 @@ const TransactionHistory = async ({ searchParams: { id } }: SearchParamProps) =>
 
           {/* Category Distribution Doughnut Chart */}
           <div className="glass-panel p-6">
-            <h3 className="text-18 font-semibold text-white mb-4">Spending by Category</h3>
-            <p className="text-12 text-gray-400 mb-4">Transaction distribution</p>
+            <h3 className="text-18 font-semibold text-white mb-4">Chi tiêu theo danh mục</h3>
+            <p className="text-12 text-gray-400 mb-4">Phân bổ chi tiết các giao dịch</p>
             <div className="h-[400px]">
               <CategoryDoughnutChart categories={categories} />
             </div>
@@ -92,7 +92,7 @@ const TransactionHistory = async ({ searchParams: { id } }: SearchParamProps) =>
             </p>
           </div>
           <div className="transactions-account-balance">
-            <p className="text-14">Current balance</p>
+            <p className="text-14">Số dư hiện tại</p>
             <p className="text-24 text-center font-bold">{formatAmount(account?.data.currentBalance)}</p>
           </div>
         </section>

@@ -19,8 +19,8 @@ const MyBanks = async () => {
     <section className='flex'>
       <div className="my-banks">
         <HeaderBox
-          title="My Accounts"
-          subtext="Manage your Finecore Wallet and linked bank accounts"
+          title="Tài khoản của tôi"
+          subtext="Quản lý Ví Finecore và các tài khoản ngân hàng liên kết của bạn"
         />
 
         <div className="space-y-10">
@@ -28,19 +28,19 @@ const MyBanks = async () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h2 className="text-20 font-bold text-white">
-                Finecore Wallet
+                Ví Finecore
               </h2>
               <div className="flex-1 h-px bg-gradient-to-r from-teal-500/50 to-transparent" />
             </div>
 
             <p className="text-14 text-gray-400">
-              Instant transfers • No fees • Always available
+              Chuyển khoản tức thời • Không thu phí • Luôn khả dụng
             </p>
 
             <div className="flex flex-wrap gap-6">
               <WalletCard
                 balance={walletBalance}
-                userName={loggedIn?.firstName || 'User'}
+                userName={loggedIn?.firstName || 'Khách'}
                 walletId={walletId}
                 showWalletId={true}
               />
@@ -51,13 +51,13 @@ const MyBanks = async () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h2 className="text-20 font-bold text-white">
-                Linked Banks
+                Ngân hàng liên kết
               </h2>
               <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/50 to-transparent" />
             </div>
 
             <p className="text-14 text-gray-400">
-              {accounts?.data?.length || 0} {accounts?.data?.length === 1 ? 'account' : 'accounts'} connected via Plaid
+              Đã liên kết {accounts?.data?.length || 0} tài khoản ngân hàng
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -78,10 +78,10 @@ const MyBanks = async () => {
                 </div>
                 <div className="text-center">
                   <h3 className="text-16 font-semibold text-white mb-2">
-                    No bank accounts linked
+                    Chưa liên kết tài khoản ngân hàng nào
                   </h3>
                   <p className="text-14 text-gray-400 max-w-sm">
-                    Connect your bank account to start sending and receiving money
+                    Kết nối tài khoản ngân hàng của bạn để bắt đầu gửi và nhận tiền
                   </p>
                 </div>
               </div>

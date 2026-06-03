@@ -440,8 +440,18 @@ export const getWalletTransactions = async (userId: string) => {
         // Sort by real $createdAt to establish a sequence
         mergedDocs.sort((a: any, b: any) => new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime());
 
-        // Apply virtualization (spreading dates 1.5 days apart)
+        // Apply virtualization (spreading dates 1.5 days apart) - ONLY for seeded/historical data
+        // Real transactions (chatbot channel or very recent) keep their actual $createdAt
+        const ONE_HOUR_MS = 60 * 60 * 1000;
+        const now = Date.now();
         const virtualizedDocs = mergedDocs.map((txn: any, idx: number) => {
+            // Skip virtualization for real chatbot transactions or transactions created in last hour
+            const isRealTransaction = txn.channel === 'chatbot' || 
+                                      (now - new Date(txn.$createdAt).getTime()) < ONE_HOUR_MS;
+            if (isRealTransaction) {
+                return txn; // Keep real $createdAt as-is
+            }
+            
             const realDate = new Date(txn.$createdAt);
             const offsetDays = (mergedDocs.length - idx) * 1.5;
             const virtualDate = new Date(realDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);

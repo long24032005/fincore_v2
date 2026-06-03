@@ -50,15 +50,15 @@ const functionDeclarations = [
   },
   {
     name: "execute_transfer",
-    description: "Chuẩn bị thực hiện chuyển khoản tiền từ ví Fincore sang ví khác hoặc ngân hàng khác. Yêu cầu nhập số tiền và định danh người nhận.",
+    description: "Chuẩn bị thực hiện chuyển khoản tiền từ ví Fincore sang ví khác hoặc ngân hàng khác. Yêu cầu nhập số tiền và Wallet ID của người nhận.",
     parameters: {
       type: "OBJECT",
       properties: {
         amount: { type: "NUMBER", description: "Số tiền chuyển khoản (VND)" },
-        recipientEmailOrWalletId: { type: "STRING", description: "Email hoặc Wallet ID của người nhận" },
+        recipientWalletId: { type: "STRING", description: "Wallet ID của người nhận" },
         description: { type: "STRING", description: "Nội dung chuyển khoản" }
       },
-      required: ["amount", "recipientEmailOrWalletId"]
+      required: ["amount", "recipientWalletId"]
     }
   },
   {
@@ -174,12 +174,14 @@ RULES:
 - Do NOT mention any technical variable names or code structures (like "XGBoost", "FastAPI", "K-Means", "SHAP", "NLP", etc.). Translate all terms into natural Vietnamese (e.g. Autopilot -> tích lũy tự động, risk appetite -> khẩu vị rủi ro, features -> đặc trưng hành vi, etc.).
 - Use VND currency formatting (e.g., 50.000.000 ₫).
 - If a tool returns a "pending_confirmation" payload, output a brief summary message explaining that you've prepared the transaction, and the system will stop to ask for their confirmation card.
+- For transfer requests, if the user specifies a recipient by name/nickname (e.g. "lana ngo"), you MUST first call "get_recipients" to retrieve their saved recipients. If a unique matching recipient is found, extract their "id" field (which acts as their Wallet ID) and call "execute_transfer" with that ID as "recipientWalletId". Do NOT ask the user for email/wallet ID directly if you haven't called "get_recipients" yet.
+- RETRY / CONTEXT AWARENESS (CRITICAL): If the user says anything like "thử lại", "chuyển lại đi", "retry", "làm lại", "thử lại coi", "gửi lại", "send again", you MUST scan the conversation history to find the most recent transfer attempt (look for messages containing amount + recipient info), then immediately re-attempt that EXACT same action (same recipient name/nickname, same amount in VND) WITHOUT asking the user to repeat any details. Call get_recipients first if needed to resolve the recipient, then call execute_transfer directly. This is a top-priority rule.
 `;
 
         const contents: any[] = [];
         
-        // Convert conversationHistory to Gemini Content format
-        for (const msg of conversationHistory.slice(-10)) {
+        // Convert conversationHistory to Gemini Content format (last 20 messages for context)
+        for (const msg of conversationHistory.slice(-20)) {
             if (msg.role === 'user') {
                 contents.push({ role: 'user', parts: [{ text: msg.content }] });
             } else {
@@ -256,7 +258,7 @@ RULES:
                         toolResult = context.recentTransactions;
                     } else if (toolName === 'execute_transfer') {
                         const amount = Number(toolArgs.amount);
-                        const recipientId = toolArgs.recipientEmailOrWalletId;
+                        const recipientId = toolArgs.recipientWalletId;
                         const desc = toolArgs.description || "Chuyển tiền qua Fincore Chatbot Autopilot";
                         
                         pendingConfirmation = {

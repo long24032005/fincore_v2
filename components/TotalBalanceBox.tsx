@@ -24,14 +24,14 @@ const TotalBalanceBox = ({
   const accountOptions = [
     {
       id: 'total',
-      name: 'Total Balance',
+      name: 'Tổng số dư',
       balance: walletBalance + totalCurrentBalance,
       type: 'total',
       icon: PieChart
     },
     {
       id: 'wallet',
-      name: 'Finecore Wallet',
+      name: 'Ví Finecore',
       balance: walletBalance,
       type: 'wallet',
       icon: Wallet
@@ -50,7 +50,7 @@ const TotalBalanceBox = ({
   // Get selected account data
   const currentAccount = accountOptions.find(acc => acc.id === selectedAccount);
   const displayBalance = currentAccount?.balance || 0;
-  const displayName = currentAccount?.name || 'Total Balance';
+  const displayName = currentAccount?.name || 'Tổng số dư';
   const accountType = currentAccount?.type || 'total';
   const IconComponent = currentAccount?.icon || PieChart;
 
@@ -67,7 +67,7 @@ const TotalBalanceBox = ({
 
             {/* Title */}
             <div>
-              <p className="text-14 font-medium text-gray-400">Account</p>
+              <p className="text-14 font-medium text-gray-400">Tài khoản</p>
               <h3 className="text-16 font-semibold text-white">{displayName}</h3>
             </div>
           </div>
@@ -108,7 +108,7 @@ const TotalBalanceBox = ({
         {/* Balance Display */}
         <div className="flex flex-col gap-2">
           <p className="text-14 font-medium text-gray-400">
-            Current Balance
+            Số dư hiện tại
           </p>
 
           <div className="flex items-baseline gap-3">
@@ -118,12 +118,12 @@ const TotalBalanceBox = ({
 
             {accountType === 'wallet' && (
               <span className="text-12 text-emerald-400 font-medium px-2 py-1 bg-emerald-500/10 rounded-md">
-                Instant
+                Ví
               </span>
             )}
             {accountType === 'total' && (
               <span className="text-12 text-blue-400 font-medium px-2 py-1 bg-blue-500/10 rounded-md">
-                All Accounts
+                Tất cả tài khoản
               </span>
             )}
           </div>
@@ -133,7 +133,7 @@ const TotalBalanceBox = ({
         <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-14 text-gray-400">Linked Banks</span>
+            <span className="text-14 text-gray-400">Ngân hàng liên kết</span>
           </div>
           <span className="text-14 font-semibold text-white">{totalBanks}</span>
         </div>
