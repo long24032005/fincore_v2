@@ -8,6 +8,8 @@ import ChatInput from './ChatInput';
 import { getChatbotContext } from '@/lib/actions/chatbot-context.actions';
 import { parseUserIntent, generateChatbotResponse, evaluateProactiveTriggers, runAgenticChatbot } from '@/lib/actions/chatbot-ai.actions';
 import { executeChatbotTransfer } from '@/lib/actions/chatbot-transfer.actions';
+import { updateUserBalance } from '@/lib/actions/wallet.actions';
+import { createTransaction } from '@/lib/actions/transaction.actions';
 import { validateTransferAmount, checkBalance, detectZeroAmountInText } from '@/lib/chatbot-validation';
 import { formatAmount } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -339,7 +341,6 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                   const { type, payload } = actionData;
                   
                   if (type === 'transfer') {
-                      const { executeChatbotTransfer } = await import('@/lib/actions/chatbot-transfer.actions');
                       
                       const foundRecipient = context?.savedRecipients.find(r => 
                           r.id === payload.recipientId ||
@@ -369,8 +370,6 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                           toast.error('Chuyển tiền thất bại');
                       }
                   } else if (type === 'bill_payment') {
-                      const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                      const { createTransaction } = await import('@/lib/actions/transaction.actions');
                       
                       await updateUserBalance({
                           userId: user.$id,
@@ -394,8 +393,6 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                       addAssistantMessage(`✅ Đã thanh toán thành công hóa đơn ${payload.provider} số tiền ${formatAmount(payload.amount)}!`);
                       toast.success('Thanh toán thành công!');
                   } else if (type === 'portfolio_investment') {
-                      const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                      const { createTransaction } = await import('@/lib/actions/transaction.actions');
                       
                       await updateUserBalance({
                           userId: user.$id,
@@ -489,8 +486,6 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                 
                 if (type === 'pay_bill') {
                     setIsLoading(true);
-                    const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                    const { createTransaction } = await import('@/lib/actions/transaction.actions');
                     
                     await updateUserBalance({
                         userId: user.$id,
