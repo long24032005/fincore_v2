@@ -51,8 +51,9 @@ class RiskAppetiteFeatureInput(BaseModel):
 
 # Khởi tạo mô hình và scaler
 model = XGBClassifier()
-MODEL_PATH = "risk_appetite_model.xgb"
-SCALER_PATH = "scaler.joblib"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "risk_appetite_model.xgb")
+SCALER_PATH = os.path.join(BASE_DIR, "scaler.joblib")
 
 if os.path.exists(MODEL_PATH):
     model.load_model(MODEL_PATH)

@@ -159,13 +159,15 @@ def train_model():
     print(classification_report(y_test, y_pred))
     
     # 5. Lưu mô hình và scaler
-    model.save_model("risk_appetite_model.xgb")
+    import os
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model.save_model(os.path.join(base_dir, "risk_appetite_model.xgb"))
     print("Model saved successfully as 'risk_appetite_model.xgb'.")
     
     # Lưu MinMaxScaler để Next.js backend hoặc predict sử dụng sau này nếu cần
     # (Để đơn giản, trong main.py chúng ta cũng có thể scale độc lập hoặc load scaler)
     import joblib
-    joblib.dump(scaler, "scaler.joblib")
+    joblib.dump(scaler, os.path.join(base_dir, "scaler.joblib"))
     print("Scaler saved successfully as 'scaler.joblib'.")
 
 if __name__ == "__main__":
