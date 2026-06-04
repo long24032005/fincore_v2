@@ -6,7 +6,8 @@ import { ArrowLeft, Check, CheckCircle2, Home, Share2, Download } from 'lucide-r
 import html2canvas from 'html2canvas';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { transferBalance } from '@/lib/actions/wallet.actions';
+import { transferBalance, updateUserBalance } from '@/lib/actions/wallet.actions';
+import { getAccounts } from '@/lib/actions/bank.actions';
 import { getAvailableBalance } from '@/lib/actions/bankBalance.actions';
 import { getBank, getBankByAccountId, getBankByAppwriteItemId, getUserInfo } from '@/lib/actions/user.actions';
 import { createTransfer } from '@/lib/actions/dwolla.actions';
@@ -181,7 +182,6 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
 
                     // Find recipient's bank account FIRST
                     let receiverBankDetails;
-                    const { getAccounts } = await import('@/lib/actions/bank.actions');
 
                     if (recipientData.destinationBankId) {
                         console.log('📍 QR specifies destination bank:', recipientData.destinationBankId);
@@ -345,7 +345,6 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         await saveRecipientIfNeeded();
 
                         // Credit recipient's wallet
-                        const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
                         await updateUserBalance({
                             userId: recipientData.userId,
                             amount: transferAmount,
@@ -389,7 +388,6 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
 
                     // Find recipient's bank account
                     let receiverBankDetails;
-                    const { getAccounts } = await import('@/lib/actions/bank.actions');
 
                     if (recipientData.destinationBankId) {
                         console.log('📍 QR specifies destination bank:', recipientData.destinationBankId);

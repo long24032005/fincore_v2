@@ -516,8 +516,6 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                     setIsLoading(false);
                 } else if (type === 'invest_fund') {
                     setIsLoading(true);
-                    const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                    const { createTransaction } = await import('@/lib/actions/transaction.actions');
                     
                     await updateUserBalance({
                         userId: user.$id,

@@ -1,9 +1,10 @@
 "use server";
 
-import { getUserBalance } from "./wallet.actions";
+import { getUserBalance, getWalletTransactions } from "./wallet.actions";
 import { getAvailableBalance } from "./bankBalance.actions";
 import { getSavedRecipients } from "./savedRecipient.actions";
-import { getAccounts } from "./bank.actions";
+import { getAccounts, getAccount } from "./bank.actions";
+import { getUserInfo, seedUserTransactions } from "./user.actions";
 import { parseStringify } from "../utils";
 import { Query } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
@@ -93,20 +94,17 @@ export const getChatbotContext = async (userId: string): Promise<ChatbotContext 
         // 4. Get recent transactions (last 10) - MATCH WITH HOME PAGE FOR DATA CONSISTENCY
         const allBankTransactions = await Promise.all(
             bankAccounts.map(async (acc: any) => {
-                const { getAccount } = await import('./bank.actions');
                 const accountData = await getAccount({ appwriteItemId: acc.id });
                 return accountData?.transactions || [];
             })
         );
 
         // Fetch wallet transactions
-        const { getWalletTransactions } = await import('./wallet.actions');
         let walletTransactionsData = await getWalletTransactions(userId);
         
         // Auto-seed if user has zero transactions
         if (allBankTransactions.flat().length === 0 && (walletTransactionsData?.documents || []).length === 0) {
             console.log(`🌱 [Chatbot Context] No transactions found. Auto-seeding for user ${userId}...`);
-            const { getUserInfo, seedUserTransactions } = await import("./user.actions");
             const userInfo = await getUserInfo({ userId });
             if (userInfo) {
                 await seedUserTransactions(userId, userInfo.email, database);
