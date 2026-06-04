@@ -96,9 +96,7 @@ export async function GET() {
               }
             }
           }
-        }
-      },
-      "/banks/link": {
+        },
         post: {
           summary: "Link a new mock bank account",
           description: "Bypasses Plaid to link a custom bank account to the user locally.",
@@ -172,13 +170,24 @@ export async function GET() {
           }
         }
       },
-      "/alternative-data/investment-advice": {
+      "/external/social-posts": {
         get: {
-          summary: "Get AI investment fund recommendations",
-          description: "Returns dynamic fund/stock/bond allocations (DCDS, VESAF, VEOF, SSISCA, TCBF, VLBF, SSIBF, FPT, HPG, VNM, VIB212003) matching user risk profile.",
+          summary: "Get Facebook Graph API posts data",
+          description: "Simulates connection to Facebook Graph API v19.0 to fetch public posts of user for sentiment and interest analysis.",
           responses: {
             "200": {
-              description: "Fund recommendations list"
+              description: "Successful retrieval of social posts data"
+            }
+          }
+        }
+      },
+      "/external/utility-bills": {
+        get: {
+          summary: "Get NGSP Utility billing data",
+          description: "Connects to National Payment Portal to fetch EVN HCMC and SAWACO customer billing records for risk analysis.",
+          responses: {
+            "200": {
+              description: "Successful retrieval of utility bills data"
             }
           }
         }

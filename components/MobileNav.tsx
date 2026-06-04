@@ -65,7 +65,7 @@ const MobileNav = ({ user }: MobileNavProps) => {
                           width={20}
                           height={20}
                           className={cn(
-                            'brightness-[3] invert-0',
+                            'brightness-[3] invert-0 grayscale',
                             { 'brightness-[5]': isActive }
                           )}
                         />

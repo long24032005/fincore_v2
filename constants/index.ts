@@ -10,11 +10,6 @@ export const sidebarLinks = [
     label: "Tài khoản của tôi",
   },
   {
-    imgURL: "/icons/transaction.svg",
-    route: "/transaction-history",
-    label: "Bảng điều khiển",
-  },
-  {
     imgURL: "/icons/money-send.svg",
     route: "/payment-transfer",
     label: "Chuyển tiền",
@@ -32,12 +27,12 @@ export const sidebarLinks = [
   {
     imgURL: "/icons/monitor.svg",
     route: "/ai-insights",
-    label: "Phân tích AI",
+    label: "Đầu tư",
   },
   {
-    imgURL: "/icons/connect-bank.svg",
-    route: "/api-docs",
-    label: "Tài liệu API",
+    imgURL: "/icons/transaction.svg",
+    route: "/autopilot",
+    label: "Tự động hóa",
   },
 ];
 

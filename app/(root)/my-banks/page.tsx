@@ -20,7 +20,7 @@ const MyBanks = async () => {
       <div className="my-banks">
         <HeaderBox
           title="Tài khoản của tôi"
-          subtext="Quản lý Ví Finecore và các tài khoản ngân hàng liên kết của bạn"
+          subtext="Quản lý Ví fincore và các tài khoản ngân hàng liên kết của bạn"
         />
 
         <div className="space-y-10">
@@ -28,7 +28,7 @@ const MyBanks = async () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h2 className="text-20 font-bold text-white">
-                Ví Finecore
+                Ví fincore
               </h2>
               <div className="flex-1 h-px bg-gradient-to-r from-teal-500/50 to-transparent" />
             </div>

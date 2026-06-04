@@ -20,7 +20,7 @@ declare type ChatActionButton = {
     id: string;
     label: string;
     value: string;
-    type: 'source' | 'destination' | 'confirm' | 'cancel' | 'recipient' | 'proactive_action';
+    type: 'source' | 'destination' | 'confirm' | 'cancel' | 'recipient' | 'proactive_action' | 'confirm_agent_transaction' | 'cancel_agent_transaction';
     variant?: 'primary' | 'secondary' | 'danger';
 };
 

@@ -1,0 +1,298 @@
+================================================================================
+  FINCORE WALLET — ĐỀ XUẤT ĐẦU TƯ INCUBATOR
+  OUTLINE BÁO CÁO (Tối đa 10 trang)
+  Theo yêu cầu: Proprietary AI Methodologies · Custom Infrastructure · Scaling Roadmap
+================================================================================
+
+
+────────────────────────────────────────────────────────────────────────────────
+TRANG BÌA  [0.5 trang]
+────────────────────────────────────────────────────────────────────────────────
+
+  - Tên sản phẩm: Fincore Wallet
+  - Tagline: "Ví điện tử AI đầu tiên tại Việt Nam phân tích hành vi tài chính
+    từ dữ liệu thay thế để cá nhân hóa đầu tư"
+  - Tên nhóm / thành viên
+  - Ngày nộp
+
+
+────────────────────────────────────────────────────────────────────────────────
+PHẦN MỞ ĐẦU — Tóm tắt điều hành (Executive Summary)  [0.5 trang]
+────────────────────────────────────────────────────────────────────────────────
+
+  Trả lời ngắn gọn 4 câu hỏi mà bất kỳ nhà đầu tư nào cũng hỏi đầu tiên:
+
+  1. Vấn đề là gì?
+     → Các hệ thống tài chính toàn cầu (Plaid, Stripe) không tương thích VND.
+       Người dùng Việt Nam thiếu công cụ đầu tư cá nhân hóa theo hành vi thực tế.
+
+  2. Giải pháp là gì?
+     → Fincore Wallet: ví điện tử VND-native tích hợp AI phân tích 15 đặc trưng
+       hành vi từ dữ liệu thay thế, tự động đề xuất danh mục đầu tư phù hợp.
+
+  3. Tại sao đội ngũ này?
+     → [1-2 câu về thế mạnh kỹ thuật của nhóm]
+
+  4. Đang cần gì từ incubator?
+     → [Funding / mentorship / network — điền cụ thể]
+
+
+────────────────────────────────────────────────────────────────────────────────
+PHẦN 1 — PHƯƠNG PHÁP AI ĐỘC QUYỀN  [3 trang — Trang 2–4]
+(Proprietary AI Methodologies)
+* Phủ tiêu chí chấm điểm: Data Moat 30% + Agentic AI 20%
+────────────────────────────────────────────────────────────────────────────────
+
+1.1  Nguồn dữ liệu thay thế (Alternative Data Sources)
+     - Tại sao dữ liệu thay thế? Ngân hàng truyền thống chỉ nhìn lịch sử tín dụng.
+       Fincore đọc được tâm lý và hành vi thực của người dùng.
+     - Nguồn 1: Mạng xã hội — tích hợp Facebook Graph API v19.0 (OAuth 2.0)
+       → Thu thập bài đăng công khai, phân tích cảm xúc & chủ đề quan tâm
+     - Nguồn 2: Hóa đơn tiện ích — kết nối EVN / SAWACO
+       → Lịch sử đóng tiền điện, nước (đúng hạn / trễ hạn / chưa đóng)
+     - Nguồn 3: Lịch sử giao dịch ví nội bộ (Appwrite DB)
+       → Thói quen chi tiêu, thời điểm giao dịch, danh mục mua sắm
+
+1.2  Feature Engineering — 15 Đặc trưng Hành vi Tài chính
+     [Đây là phần cốt lõi — nên có bảng tóm tắt]
+
+     Nhóm Kỷ luật Tài chính:
+       • bill_on_time_ratio        — Tỷ lệ đóng hóa đơn đúng hạn
+       • spend_discipline          — Tỷ lệ chi tiêu thiết yếu / tổng chi
+       • save_after_payday_ratio   — Tiết kiệm ngay sau khi nhận lương
+       • auto_save_completion_rate — Tỷ lệ hoàn thành lệnh tự động Autopilot
+
+     Nhóm Hành vi Bốc đồng:
+       • impulse_purchase_index    — Mua sắm ngoài giờ hành chính / sale đêm
+       • late_night_spend_ratio    — Chi tiêu khung giờ 23h–5h sáng
+       • immediate_cash_out_rate   — Rút tiền ngay sau khi nạp ví
+
+     Nhóm Năng lực Tài chính:
+       • income_regularity_index   — Độ đều đặn của nguồn thu nhập
+       • liquidity_buffer_ratio    — Số dư ví / chi tiêu trung bình hàng ngày
+       • balance_volatility        — Biến động số dư (độ lệch chuẩn)
+
+     Nhóm Hành vi Số hóa:
+       • social_sentiment          — Chỉ số tâm lý tích cực từ MXH
+       • onboarding_attention_score — Thời gian đọc điều khoản rủi ro
+       • balance_check_frequency   — Tần suất kiểm tra số dư / ngày
+       • p2p_network_density       — Số đối tác giao dịch ngang hàng
+       • low_battery_transaction   — Giao dịch khi pin yếu (quyết định vội)
+
+1.3  Mô hình Chấm điểm Khẩu vị Rủi ro (Risk Appetite Scoring)
+     - Phương pháp tiếp cận: Học máy lai (Hybrid Semi-supervised Learning)
+     - Giai đoạn Huấn luyện Ngoại tuyến (Offline Training & Auto-Labeling):
+       • Sử dụng K-Means (K=3) phân cụm tập dữ liệu hành vi lịch sử
+       • Định vị tâm cụm (centroids) bằng chỉ số Safety Score (Kỷ luật + Đúng hạn - Bốc đồng)
+       • Gán nhãn tự động (Thận trọng / Cân bằng / Mạo hiểm) cho toàn bộ tập dữ liệu lịch sử
+     - Giai đoạn Dự đoán Trực tuyến (Online Real-time Inference):
+       • Mô hình XGBoost Classifier được huấn luyện dựa trên tập dữ liệu đã được gán nhãn bởi K-Means
+       • XGBoost dự đoán trực tiếp nhóm khẩu vị rủi ro của khách hàng mới dựa trên 15 đặc trưng thời gian thực
+       • Xuất ra phân phối xác suất P(Risk) để tính điểm rủi ro liên tục
+     - Công thức điểm rủi ro liên tục (Expected Risk Score):
+         E(Risk) = P(Thận trọng)×0.1 + P(Cân bằng)×0.5 + P(Mạo hiểm)×0.9
+     - Radar Chart 3 trục: Ý chí rủi ro · Năng lực tài chính · Kỷ luật hành vi
+     - [Nên vẽ sơ đồ pipeline: Alt-data → Feature Extraction → Offline K-Means → Online XGBoost → Expected Score]
+
+1.4  Thuật toán Khớp nối Đầu tư Cá nhân hóa (Portfolio Matching)
+     - Input: Điểm rủi ro + Vector sở thích 7 chiều (từ NLP phân tích MXH)
+       → technology, entertainment, discipline, health, education,
+          entrepreneurship, family
+     - Cơ sở dữ liệu: Danh mục sản phẩm đầu tư đa dạng (quỹ mở, cổ phiếu, trái phiếu nội địa Việt Nam)
+       mỗi mã có "DNA vector" 7 chiều tương ứng
+     - Cosine Similarity giữa user interest vector và product DNA vector
+     - Double-score: final_score = interest_score × risk_score
+     - Output: Top 5 sản phẩm + tỷ lệ phân bổ % động theo finalScore
+
+
+1.5  Trợ lý AI Chủ động (Agentic AI — Gemini ReAct Agent)
+     - Kiến trúc: Gemini 2.5 Flash + Function Calling + ReAct Loop (tối đa 5 vòng)
+     - 13 công cụ (tools): kiểm tra số dư, chuyển tiền, xem lịch sử, quản lý
+       Autopilot, tra cứu điểm đầu tư, thanh toán hóa đơn...
+     - Ví dụ minh họa multi-step:
+         Người dùng: "Chuyển 500 nghìn cho Linda"
+         Agent:  → Tìm Linda trong danh bạ → Tìm thấy linda@email.com
+                 → Kiểm tra số dư: 13.000.000 ₫ — đủ điều kiện
+                 → "Xác nhận chuyển 500.000 ₫ cho Linda không?"
+                 → [Đồng ý] → Thực hiện giao dịch → Thành công ✅
+     - Safety gates: mọi giao dịch phải qua xác nhận tường minh
+
+
+────────────────────────────────────────────────────────────────────────────────
+PHẦN 2 — KIẾN TRÚC HẠ TẦNG TÙY CHỈNH  [3 trang — Trang 5–7]
+(Custom Infrastructure Architecture)
+* Phủ tiêu chí chấm điểm: Localized Technical Infrastructure 30%
+────────────────────────────────────────────────────────────────────────────────
+
+2.1  Vấn đề với Hạ tầng Tài chính Toàn cầu
+     - Plaid: Chỉ hỗ trợ USD, không có ngân hàng Việt Nam
+     - Dwolla: Không xử lý VND natively, không phù hợp quy định SBV
+     - Stripe: KYC không tương thích thị trường VN
+     → Fincore tự xây dựng hoàn toàn custom OpenAPI server thay thế
+
+2.2  Fincore Custom OpenAPI Server (VND-Native)
+     - Chuẩn: OpenAPI Specification 3.0.3
+     - Có Swagger UI tương tác tại /api-docs (BGK có thể test trực tiếp)
+     - Danh sách endpoints:
+
+          [NHÓM XÁC THỰC]
+          POST  /api/v1/auth/signup    — Đăng ký tài khoản người dùng và khởi tạo số dư ví
+          POST  /api/v1/auth/signin    — Đăng nhập tài khoản
+
+          [NHÓM NGÂN HÀNG NỘI ĐỊA]
+          GET   /api/v1/banks          — Danh sách ngân hàng Việt Nam đã liên kết
+          POST  /api/v1/banks          — Liên kết tài khoản ngân hàng nội địa trực tiếp
+
+          [NHÓM GIAO DỊCH VND]
+          POST  /api/v1/transfers      — Chuyển tiền Wallet↔Wallet / Wallet↔Bank
+
+          [NHÓM AI & DỮ LIỆU THAY THẾ]
+          GET   /api/v1/alternative-data/risk-appetite    — Pipeline phân tích rủi ro & danh mục đầu tư AI
+
+          [NHÓM AUTOPILOT]
+          GET/POST/PATCH/DELETE  /api/v1/automations      — Quản lý lệnh tự động tích lũy định kỳ
+
+          [NHÓM KẾT NỐI NGOÀI]
+          GET   /api/v1/external/social-posts    — Kết nối mạng xã hội (Facebook Graph API v19.0)
+          GET   /api/v1/external/utility-bills   — Kết nối hóa đơn tiện ích (EVN/SAWACO/Viettel)
+
+          [TÀI LIỆU Spec]
+          GET   /api/v1/openapi.json   — OpenAPI Spec (tài liệu kỹ thuật máy đọc)
+
+2.3  Nội địa hóa VND & Xử lý Giao dịch
+     - Định dạng tiền tệ: vi-VN locale, hiển thị "50.000.000 ₫"
+     - Loại giao dịch:
+          • Wallet → Wallet: tức thì (24/7), không phí
+          • Wallet ↔ Ngân hàng: tức thì (24/7) qua kết nối OpenAPI trực tiếp, không phí
+          • Chuyển tiền QR Code
+     - Giới hạn an toàn: 50M ₫/giao dịch · 100M ₫/ngày · 20 giao dịch/ngày
+
+2.4  Sơ đồ Kiến trúc Tổng thể
+     [VẼ DIAGRAM — bắt buộc, trình bày 1/3 trang]
+
+         ┌─────────────────────────────────────────────────────────┐
+         │             FRONTEND — Next.js 14 (App Router)          │
+         │   Sidebar · ChatbotBubble · AI Insights · Swagger UI    │
+         └──────────────────────┬──────────────────────────────────┘
+                                │ Server Actions / fetch
+         ┌──────────────────────▼──────────────────────────────────┐
+         │           FINCORE CUSTOM OpenAPI SERVER (/api/v1)       │
+         │   auth · banks · transfers · automations · alt-data     │
+         └──────┬─────────────────────┬───────────────────────────-┘
+                │                     │
+     ┌──────────▼──────┐    ┌─────────▼──────────────────┐
+     │  Appwrite DB    │    │  FastAPI ML Server          │
+     │  (Auth, Txns,   │    │  XGBoost predict()          │
+     │   Users, Banks) │    │  NLP analyze-interests()    │
+     └──────┬──────────┘    └─────────┬──────────────────-┘
+            │                         │
+     ┌──────▼──────────────────────────▼──────────────────┐
+     │  External Connectors                                │
+     │  Facebook Graph API v19.0  ·  EVN/SAWACO Utility   │
+     └─────────────────────────────────────────────────────┘
+                  ↕ Gemini API (8 keys, auto-rotation)
+
+2.5  Bảo mật & Khả năng Mở rộng
+     - API Key Rotation: 8 Gemini API keys xoay vòng tự động → 99.9% AI uptime
+     - Appwrite: tự host được → tuân thủ GDPR và chủ quyền dữ liệu (data sovereignty)
+     - Kiến trúc module: FastAPI ML server tách biệt → nâng cấp model không ảnh hưởng
+       frontend
+     - Stateless API design: dễ scale horizontal khi tăng lượng người dùng
+
+
+────────────────────────────────────────────────────────────────────────────────
+PHẦN 3 — LỘ TRÌNH TĂNG TRƯỞNG THƯƠNG MẠI  [2.5 trang — Trang 8–10]
+(Commercial Scaling Roadmap for Incubators)
+* Phủ tiêu chí chấm điểm: Incubation Readiness 20%
+────────────────────────────────────────────────────────────────────────────────
+
+3.1  Cơ hội Thị trường
+     - TAM: Thị trường fintech Việt Nam 2024 ước ~18 tỷ USD, tăng trưởng 25%/năm (tìm nguồn sau)
+     - 70M+ người dùng smartphone, tỷ lệ tiếp cận các sản phẩm đầu tư cá nhân còn rất thấp (tìm nguồn sau)
+     - Không có sản phẩm nào trên thị trường VN kết hợp đồng thời:
+       alt-data scoring + AI portfolio + agentic chatbot + Autopilot đầu tư
+
+3.2  Mô hình Kinh doanh
+     - Dòng doanh thu 1: Phí dịch vụ xử lý thanh toán Merchant (1.2% - 1.5% trên mỗi giao dịch thanh toán cửa hàng/TMĐT)
+     - Dòng doanh thu 2: Hoa hồng phân phối quỹ mở (0.5–1%/năm AUM)
+     - Dòng doanh thu 3: B2B API Licensing — bán risk-scoring API cho ngân hàng,
+       công ty bảo hiểm muốn tích hợp mô hình alt-data của Fincore
+     - Dòng doanh thu 4: Gói Premium — AI Insights đầy đủ, báo cáo tài chính cá nhân
+
+     Ước tính sơ bộ Năm 1:
+       10.000 MAU × 2.000.000 ₫ chi tiêu/tháng × 1.25% phí merchant = 250.000.000 ₫/tháng
+
+3.3  Lợi thế Cạnh tranh Bền vững (Moat)
+
+     ┌─────────────────────────┬─────────────┬──────────┬──────────┐
+     │ Tiêu chí                │   Fincore   │   MoMo   │  VNPay   │
+     ├─────────────────────────┼─────────────┼──────────┼──────────┤
+     │ Alt-data scoring AI     │ ✅ Độc quyền │ ❌ Không  │ ❌ Không  │
+     │ Agentic chatbot thực tế │ ✅ ReAct/Gemini│ ❌ Chat │ ❌ Không  │
+     │ Danh mục đầu tư AI      │ ✅ 150 mã    │ ❌ Tĩnh   │ ❌ Không  │
+     │ OpenAPI VND tự xây      │ ✅ Custom     │ Một phần │ Một phần │
+     │ Autopilot đầu tư        │ ✅ Cron-based │ ❌ Không  │ ❌ Không  │
+     └─────────────────────────┴─────────────┴──────────┴──────────┘
+
+     Hiệu ứng Flywheel:
+       Càng nhiều người dùng → càng nhiều dữ liệu hành vi
+       → Mô hình AI chính xác hơn → Đề xuất tốt hơn → Giữ chân người dùng
+
+3.4  Lộ trình 12 Tháng
+
+     Tháng 1–3:   Hoàn thiện MVP, tuyển 500 beta users (sinh viên đại học)
+                   Ký MOU với 1–2 quỹ mở (VCBF / Dragon Capital)
+
+     Tháng 3–6:   Tích hợp live fund — người dùng đầu tư thật qua Fincore
+                   Ra mắt tính năng Autopilot nâng cao + thông báo push thông minh
+
+     Tháng 6–12:  Pilot B2B — bán risk-scoring API cho 1 ngân hàng TMCP nhỏ
+                   Mục tiêu: 5.000 MAU, ARR đầu tiên
+
+     Tháng 12+:   Raise Series A / tham gia UII Incubator hoặc Dr. Ho's Incubator
+                   Mục tiêu scale: 100.000 MAU, mở rộng sang thị trường Đông Nam Á
+
+3.5  Kế hoạch Sử dụng Vốn (Use of Funds)
+     [Điền số tiền cụ thể tùy theo yêu cầu pitch]
+
+     40% — Kỹ thuật: đưa ML model lên production, audit bảo mật, DevOps
+     25% — Tăng trưởng người dùng: marketing, referral program
+     20% — Pháp lý & Tuân thủ: xin cấp phép NHNN, tư vấn SBV compliance
+     15% — Vận hành: server infrastructure, hỗ trợ khách hàng
+
+3.6  Khả năng Phòng thủ Kỹ thuật (Technical Defensibility)
+     - Dữ liệu hành vi được thu thập qua consent của người dùng → GDPR-compliant
+     - Giới hạn giao dịch tích hợp sẵn (50M/100M ₫) → sẵn sàng cho quy định SBV
+     - Kiến trúc self-hosted Appwrite → không phụ thuộc cloud vendor nước ngoài
+     - Multi-key AI rotation → không bị gián đoạn khi 1 key quota hết
+
+
+────────────────────────────────────────────────────────────────────────────────
+TỔNG KẾT SỐ TRANG
+────────────────────────────────────────────────────────────────────────────────
+
+  Trang bìa + Executive Summary       →  0.5 trang
+  Phần 1: AI Methodologies            →  3.0 trang   (Data Moat 30% + Agent 20%)
+  Phần 2: Custom Infrastructure       →  3.0 trang   (Localized Infra 30%)
+  Phần 3: Commercial Scaling Roadmap  →  2.5 trang   (Incubation Readiness 20%)
+  Appendix / Screenshots (tùy chọn)   →  1.0 trang
+  ─────────────────────────────────────────────────
+  TỔNG                                →  ~10 trang ✅
+
+
+────────────────────────────────────────────────────────────────────────────────
+CHECKLIST TRƯỚC KHI NỘP
+────────────────────────────────────────────────────────────────────────────────
+
+  [ ] Có sơ đồ pipeline: Alt-data → XGBoost → Gemini (Phần 1)
+  [ ] Có bảng 15 features với giải thích ý nghĩa tài chính
+  [ ] Có ví dụ hội thoại agentic multi-step thực tế (Phần 1)
+  [ ] Có diagram kiến trúc tổng thể (Phần 2)
+  [ ] Có danh sách đầy đủ API endpoints (Phần 2)
+  [ ] Có bảng so sánh cạnh tranh với MoMo/VNPay (Phần 3)
+  [ ] Có lộ trình 12 tháng cụ thể với milestone rõ ràng (Phần 3)
+  [ ] Có unit economics dù sơ bộ (Phần 3)
+  [ ] Không quá 10 trang
+  [ ] Ngôn ngữ: Tiếng Anh (nếu BGK là quốc tế) hoặc Tiếng Việt (nếu pitch nội bộ)
+
+================================================================================

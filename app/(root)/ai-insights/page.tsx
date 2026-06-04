@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import rawProducts from '@/constants/products.json';
 import { formatAmount } from '@/lib/utils';
 import { ToggleLeft, ToggleRight, Trash2, ShieldAlert, Sparkles, RefreshCw, Layers, CheckCircle2, Bot, PieChart, TrendingUp } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -91,6 +92,11 @@ interface AIData {
     riskClass: string;
     aiAnalysis: string;
   }>;
+  radarData?: {
+    willingness: number;
+    capacity: number;
+    discipline: number;
+  };
 }
 
 // Helper functions for drawing SVG gauge arcs
@@ -112,15 +118,33 @@ const describeArc = (x: number, y: number, radius: number, startAngle: number, e
   ].join(" ");
 };
 
-const allProducts = [
-  { code: "VESAF", name: "Quỹ cổ phiếu Tăng trưởng VinaCapital", type: "Quỹ Cổ phiếu", partner: "VinaCapital", desc: "Tập trung vào các cổ phiếu vừa và nhỏ tăng trưởng đột phá vượt trội.", color: "border-rose-500/20 bg-rose-500/5 text-rose-400" },
-  { code: "DCDS", name: "Quỹ cổ phiếu Năng động Dragon Capital", type: "Quỹ Hỗn hợp", partner: "Dragon Capital", desc: "Tối ưu hóa lợi nhuận dài hạn từ danh mục cổ phiếu & trái phiếu chọn lọc.", color: "border-orange-500/20 bg-orange-500/5 text-orange-400" },
-  { code: "VEOF", name: "Quỹ cổ phiếu Triển vọng VinaCapital", type: "Quỹ Cổ phiếu", partner: "VinaCapital", desc: "Đầu tư các doanh nghiệp hàng đầu có lợi thế cạnh tranh lớn và thanh khoản cao.", color: "border-red-500/20 bg-red-500/5 text-red-400" },
-  { code: "SSISCA", name: "Quỹ cổ phiếu Bền vững SSI", type: "Quỹ Cổ phiếu", partner: "SSI AM", desc: "Đầu tư doanh nghiệp có năng lực cạnh tranh bền vững và quản trị tốt.", color: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400" },
-  { code: "TCBF", name: "Quỹ trái phiếu Techcom Bonds", type: "Quỹ Trái phiếu", partner: "Techcom Securities", desc: "Quỹ đầu tư trái phiếu doanh nghiệp quy mô lớn, lợi nhuận bền vững ổn định.", color: "border-cyan-500/20 bg-cyan-500/5 text-cyan-400" },
-  { code: "VLBF", name: "Quỹ trái phiếu Bảo thịnh VinaCapital", type: "Quỹ Trái phiếu", partner: "VinaCapital", desc: "Đầu tư các tài sản có thu nhập cố định và trái phiếu chất lượng tín dụng cao.", color: "border-blue-500/20 bg-blue-500/5 text-blue-400" },
-  { code: "SSIBF", name: "Quỹ trái phiếu SSI Bond Fund", type: "Quỹ Trái phiếu", partner: "SSI AM", desc: "Tối ưu hóa lợi nhuận ngắn và trung hạn từ danh mục công cụ nợ an toàn.", color: "border-indigo-500/20 bg-indigo-500/5 text-indigo-400" },
+// Color palette cycling for product cards
+const TYPE_COLOR_MAP: Record<string, string> = {
+  Fund: "border-rose-500/20 bg-rose-500/5 text-rose-400",
+  Stock: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400",
+  Bond: "border-blue-500/20 bg-blue-500/5 text-blue-400",
+};
+const FALLBACK_COLORS = [
+  "border-orange-500/20 bg-orange-500/5 text-orange-400",
+  "border-purple-500/20 bg-purple-500/5 text-purple-400",
+  "border-cyan-500/20 bg-cyan-500/5 text-cyan-400",
+  "border-indigo-500/20 bg-indigo-500/5 text-indigo-400",
+  "border-yellow-500/20 bg-yellow-500/5 text-yellow-400",
 ];
+const TYPE_LABEL_MAP: Record<string, string> = {
+  Fund: "Quỹ Mở",
+  Stock: "Cổ phiếu",
+  Bond: "Trái phiếu",
+};
+
+const allProducts = rawProducts.map((p: any, idx: number) => ({
+  code: p.code,
+  name: p.name,
+  type: TYPE_LABEL_MAP[p.type] || p.type,
+  partner: p.code.length <= 4 ? "Thị trường VN" : "Quỹ mở",
+  desc: "",
+  color: TYPE_COLOR_MAP[p.type] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length],
+}));
 
 export default function AiInsights() {
   const [aiData, setAiData] = useState<AIData | null>(null);
@@ -135,6 +159,7 @@ export default function AiInsights() {
   const [selectedFundForInvest, setSelectedFundForInvest] = useState("");
   const [investAmount, setInvestAmount] = useState(1000000);
   const [investSchedule, setInvestSchedule] = useState("0 0 1 * *");
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
 
   const fetchAIData = async () => {
     try {
@@ -683,11 +708,11 @@ export default function AiInsights() {
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-success-400" />
               <h1 className="text-28 font-extrabold tracking-tight bg-gradient-to-r from-success-400 to-green-500 bg-clip-text text-transparent">
-                Fincore AI Wealth Insights
+                Đầu tư cá nhân hóa
               </h1>
             </div>
             <p className="text-14 text-gray-400">
-              Trợ lý phân tích dữ liệu hành vi & Tự động hóa tích lũy quỹ mở (VND)
+              Tối ưu hóa danh mục tài sản dựa trên phân tích hành vi và tích lũy tự động (VND)
             </p>
           </div>
         </header>
@@ -754,10 +779,10 @@ export default function AiInsights() {
                   <div className="md:col-span-9 flex-1 flex flex-col items-center justify-center py-10 space-y-4 text-center bg-gray-950/20 border border-gray-850 rounded-xl p-5 h-[400px]">
                     <Sparkles className="h-8 w-8 text-success-400 animate-pulse" />
                     <p className="text-14 text-gray-400 max-w-lg leading-relaxed">
-                      Trợ lý Gemini cần truy cập thông tin rủi ro hành vi XGBoost và DNA sản phẩm mở rộng để đưa ra danh mục đầu tư cá nhân hóa và giải pháp tối ưu.
+                      Sử dụng mô hình AI tân tiến để phân tích khẩu vị rủi ro và đề xuất phân bổ danh mục cá nhân hóa.
                     </p>
                     <button
-                      onClick={handleActivateAnalysis}
+                      onClick={() => setIsConsentModalOpen(true)}
                       disabled={loadingAnalysis}
                       className="px-6 py-2.5 bg-success-500 hover:bg-success-600 active:scale-95 disabled:opacity-50 disabled:scale-100 text-black font-extrabold text-13 rounded-xl transition-all shadow-md shadow-success-500/20 flex items-center gap-2"
                     >
@@ -820,8 +845,19 @@ export default function AiInsights() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-2">
                   <div className="md:col-span-9 flex flex-col space-y-3">
-                    <div className="text-14 text-gray-300 leading-relaxed bg-gray-950/40 border border-gray-850 rounded-xl p-5 h-[340px] overflow-y-auto custom-scrollbar font-mono whitespace-pre-wrap">
-                      {aiAnalysisText}
+                    <div className="flex flex-col space-y-1.5">
+                      <div className="flex flex-col space-y-1">
+                        <span className="text-14 font-extrabold text-success-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="h-4 w-4 text-success-400" />
+                          Phân tích đầu tư AI
+                        </span>
+                        <span className="text-11 text-gray-500 italic">
+                          * Kết quả do AI đề xuất có thể có sai sót, chỉ mang tính chất tham khảo
+                        </span>
+                      </div>
+                      <div className="text-14 text-gray-300 leading-relaxed bg-gray-950/40 border border-gray-850 rounded-xl p-5 h-[340px] overflow-y-auto custom-scrollbar font-mono whitespace-pre-wrap">
+                        {aiAnalysisText}
+                      </div>
                     </div>
                     <div className="flex justify-start">
                       <button
@@ -1015,72 +1051,6 @@ export default function AiInsights() {
               </div>
             )}
 
-            {/* ROW 5: AI AUTOPILOT CONTROL PANEL (FULL WIDTH) */}
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/40 backdrop-blur-md p-6 space-y-4">
-              <div className="flex justify-between items-center border-b border-gray-850 pb-2">
-                <h3 className="text-15 font-bold text-white flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-success-400 animate-pulse" />
-                  AI Autopilot Control Panel
-                </h3>
-                <span className="text-12 text-gray-400">
-                  Lệnh tự động tích lũy đang chạy: {automations.length}
-                </span>
-              </div>
-
-              {loadingAutos ? (
-                <div className="flex justify-center items-center py-6">
-                  <div className="h-5 w-5 border-2 border-success-500/20 border-t-success-500 rounded-full animate-spin"></div>
-                </div>
-              ) : automations.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-gray-850 p-8 text-center space-y-2">
-                  <p className="text-14 text-gray-500">Chưa có lệnh tích lũy tự động nào được thiết lập.</p>
-                  <p className="text-12 text-gray-600">Bạn có thể yêu cầu Chatbot cài đặt tự động bằng ngôn ngữ tự nhiên.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {automations.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-850 bg-gray-950/30 transition-all hover:bg-gray-950/60">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-14 font-extrabold text-white">
-                            {item.actionType === 'invest' ? 'Đầu tư' : 'Rút tiền'} {formatAmount(item.amount)}
-                          </span>
-                          <span className="rounded bg-success-500/10 px-1.5 py-0.5 text-10 font-medium text-success-400 border border-success-500/20">
-                            {item.destinationFund}
-                          </span>
-                        </div>
-                        <p className="text-11 text-gray-500">
-                          Chu kỳ: {item.cronExpression === '0 0 25 * *' ? 'Hàng tháng vào ngày 25' : 'Hàng ngày lúc 00:00'}
-                        </p>
-                        <p className="text-10 text-gray-500">
-                          Chạy lần cuối: {item.lastRun ? new Date(item.lastRun).toLocaleDateString("vi-VN") : "Chưa chạy lần nào"}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => handleToggleAuto(item.id, item.isActive)}
-                          className="text-gray-400 hover:text-success-400 transition-colors"
-                        >
-                          {item.isActive ? (
-                            <ToggleRight className="h-8 w-8 text-success-400" />
-                          ) : (
-                            <ToggleLeft className="h-8 w-8 text-gray-500" />
-                          )}
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteAuto(item.id)}
-                          className="text-gray-500 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
           </div>
         )}
@@ -1149,6 +1119,47 @@ export default function AiInsights() {
                 className="flex-1 py-2.5 bg-success-500 hover:bg-success-600 text-black font-bold text-14 rounded-xl transition-all"
               >
                 Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xác nhận đồng ý cung cấp thông tin */}
+      {isConsentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-gray-900 border border-gray-850 rounded-2xl p-6 w-full max-w-md space-y-5 shadow-2xl relative">
+            <div>
+              <h3 className="text-18 font-extrabold text-white flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-success-400" />
+                Cung cấp thông tin phân tích
+              </h3>
+              <p className="text-13 text-gray-300 mt-3 leading-relaxed">
+                Để thực hiện phân tích khẩu vị rủi ro và đưa ra danh mục đầu tư cá nhân hóa phù hợp nhất, Fincore cần quyền sử dụng dữ liệu hành vi tài chính ẩn danh, lịch sử giao dịch và một số dữ liệu thiết bị/hoạt động của bạn.
+              </p>
+              <p className="text-12 text-gray-400 mt-2 italic">
+                * Dữ liệu này chỉ được sử dụng cho thuật toán AI và hoàn toàn bảo mật theo chính sách quyền riêng tư Fincore.
+              </p>
+            </div>
+
+            {/* Nút thao tác */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsConsentModalOpen(false)}
+                className="flex-1 py-2.5 bg-gray-850 hover:bg-gray-800 text-white font-bold text-13 rounded-xl transition-all"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsConsentModalOpen(false);
+                  handleActivateAnalysis();
+                }}
+                className="flex-1 py-2.5 bg-success-500 hover:bg-success-600 text-black font-bold text-13 rounded-xl transition-all"
+              >
+                Đồng ý
               </button>
             </div>
           </div>

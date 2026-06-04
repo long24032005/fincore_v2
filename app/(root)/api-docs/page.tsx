@@ -49,7 +49,7 @@ const ENDPOINTS: Endpoint[] = [
   },
   {
     method: 'POST',
-    path: '/api/v1/banks/link',
+    path: '/api/v1/banks',
     summary: 'Liên kết tài khoản ngân hàng nội địa',
     description: 'Liên kết trực tiếp tài khoản ngân hàng Việt Nam (Vietcombank, Techcombank, BIDV...) vào database local sandbox.',
     defaultPayload: JSON.stringify({
@@ -71,16 +71,25 @@ const ENDPOINTS: Endpoint[] = [
   },
   {
     method: 'GET',
-    path: '/api/v1/alternative-data/risk-appetite',
-    summary: 'Phân tích Khẩu vị Rủi ro AI',
-    description: 'Gọi các API đối tác ngoài (EVN, Facebook) để lấy dữ liệu thô, gửi qua Gemini để trích xuất 15 đặc trưng hành vi và đưa vào mô hình XGBoost tại ML Server (FastAPI port 8000) để nhận diện khẩu vị rủi ro (0-100) và vẽ đóng góp đặc trưng (SHAP).'
+    path: '/api/v1/external/social-posts',
+    summary: 'Lấy dữ liệu mạng xã hội (Facebook Graph API)',
+    description: 'Kết nối Facebook Graph API v19.0 qua OAuth 2.0 để thu thập bài đăng công khai của người dùng. Dữ liệu được dùng để phân tích tâm lý tài chính và phân loại sở thích 7 chiều phục vụ mô hình gợi ý đầu tư.'
   },
   {
     method: 'GET',
-    path: '/api/v1/alternative-data/investment-advice',
-    summary: 'Gợi ý Đầu tư từ AI',
-    description: 'Trả về phân bổ danh mục đầu tư khuyến nghị vào các quỹ mở và cổ phiếu/trái phiếu (DCDS, VESAF, VEOF, SSISCA, TCBF, VLBF, SSIBF, FPT, HPG, VNM, VIB212003) dựa trên hồ sơ rủi ro của người dùng.'
+    path: '/api/v1/external/utility-bills',
+    summary: 'Lấy lịch sử hóa đơn tiện ích (NGSP Gateway)',
+    description: 'Kết nối Cổng Dịch vụ Thanh toán Quốc gia (NGSP) để truy vấn lịch sử hóa đơn điện (EVN HCMC), nước (SAWACO) và internet (Viettel) của người dùng. Dữ liệu thanh toán đúng/trễ hạn là tín hiệu quan trọng trong mô hình đánh giá rủi ro tài chính.'
   },
+  {
+    method: 'GET',
+    path: '/api/v1/alternative-data/risk-appetite',
+    summary: 'Phân tích Khẩu vị Rủi ro AI',
+    description: 'Pipeline phân tích hành vi tài chính toàn diện: thu thập dữ liệu thay thế từ mạng xã hội và tiện ích, trích xuất 15 đặc trưng hành vi, chạy mô hình phân loại để xác định khẩu vị rủi ro (Thận trọng / Cân bằng / Mạo hiểm), và sinh lời tư vấn danh mục đầu tư cá nhân hóa bằng tiếng Việt qua Gemini AI.'
+  },
+
+
+
   {
     method: 'GET',
     path: '/api/v1/automations',
@@ -117,6 +126,29 @@ const ENDPOINTS: Endpoint[] = [
     defaultPayload: JSON.stringify({
       id: 'auto_id_here'
     }, null, 2)
+  }
+];
+
+const GROUPS = [
+  {
+    name: '1. Khởi tạo & Định danh (Onboarding)',
+    indices: [0, 1]
+  },
+  {
+    name: '2. Kết nối & Giao dịch (Core Banking)',
+    indices: [2, 3, 4]
+  },
+  {
+    name: '3. Tích hợp Dữ liệu thay thế (Connectors)',
+    indices: [5, 6]
+  },
+  {
+    name: '4. Phân tích AI & Gợi ý Đầu tư (AI Advisor)',
+    indices: [7]
+  },
+  {
+    name: '5. Đầu tư tự động (Autopilot Automation)',
+    indices: [8, 9, 10, 11]
   }
 ];
 
@@ -270,28 +302,40 @@ export default function ApiDocs() {
         {/* API Explorer layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Endpoint List Selector */}
-          <div className="lg:col-span-4 space-y-3">
+          <div className="lg:col-span-4 space-y-4">
             <h3 className="text-14 font-semibold text-gray-400 uppercase tracking-wider px-2">Danh sách API</h3>
-            <div className="space-y-1.5">
-              {ENDPOINTS.map((endpoint, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveTab(idx)}
-                  className={`w-full text-left rounded-xl p-3 border transition-all duration-200 flex items-start gap-3 ${activeTab === idx ? 'bg-success-500/10 border-success-500/30 shadow-lg' : 'bg-gray-900 border-gray-850 hover:bg-gray-850'}`}
-                >
-                  <span className={`inline-block text-10 font-bold px-2 py-0.5 rounded ${
-                    endpoint.method === 'GET' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' :
-                    endpoint.method === 'POST' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
-                    endpoint.method === 'PATCH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' :
-                    'bg-red-500/20 text-red-400 border border-red-500/20'
-                  }`}>
-                    {endpoint.method}
-                  </span>
-                  <div className="space-y-0.5 min-w-0">
-                    <div className="text-13 font-semibold text-white truncate">{endpoint.path}</div>
-                    <div className="text-11 text-gray-400 truncate">{endpoint.summary}</div>
+            <div className="space-y-5">
+              {GROUPS.map((group, groupIdx) => (
+                <div key={groupIdx} className="space-y-2">
+                  <h4 className="text-11 font-bold text-success-400 uppercase tracking-wider px-2 border-l-2 border-success-500 pl-2">
+                    {group.name}
+                  </h4>
+                  <div className="space-y-1.5">
+                    {group.indices.map((idx) => {
+                      const endpoint = ENDPOINTS[idx];
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveTab(idx)}
+                          className={`w-full text-left rounded-xl p-3 border transition-all duration-200 flex items-start gap-3 ${activeTab === idx ? 'bg-success-500/10 border-success-500/30 shadow-lg' : 'bg-gray-900 border-gray-850 hover:bg-gray-850'}`}
+                        >
+                          <span className={`inline-block text-10 font-bold px-2 py-0.5 rounded ${
+                            endpoint.method === 'GET' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' :
+                            endpoint.method === 'POST' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
+                            endpoint.method === 'PATCH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' :
+                            'bg-red-500/20 text-red-400 border border-red-500/20'
+                          }`}>
+                            {endpoint.method}
+                          </span>
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="text-13 font-semibold text-white truncate">{endpoint.path}</div>
+                            <div className="text-11 text-gray-400 truncate">{endpoint.summary}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>

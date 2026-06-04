@@ -305,7 +305,7 @@ declare interface CreateTransactionProps {
   email?: string; // Optional - auto-resolved from receiverId by backend
   category?: string | string[]; // Plaid sends array, we convert to string
   status?: 'Processing' | 'Success' | 'Failed'; // Transaction status
-  channel?: 'online' | 'wallet' | 'qr' | 'bank'; // Payment channel
+  channel?: 'online' | 'wallet' | 'qr' | 'bank' | 'chatbot'; // Payment channel
 }
 
 declare interface getTransactionsByBankIdProps {

@@ -34,12 +34,12 @@ import { Textarea } from "./ui/textarea";
 
 // ✅ Schema with conditional senderBank validation
 const formSchema = z.object({
-  name: z.string().min(4, "Transfer note is too short"),
-  amount: z.string().min(1, "Amount is required"),
+  name: z.string().min(4, "Nội dung chuyển tiền quá ngắn (tối thiểu 4 ký tự)"),
+  amount: z.string().min(1, "Vui lòng nhập số tiền"),
   senderBank: z.string().optional(), // ✅ Optional - only required if source === 'bank'
-  sharableId: z.string().min(8, "Please enter a valid Receiver ID"),
+  sharableId: z.string().min(8, "Vui lòng nhập ID người nhận hợp lệ"),
   source: z.enum(["wallet", "bank"], {
-    required_error: "Please select a transfer source",
+    required_error: "Vui lòng chọn nguồn chuyển tiền",
   }),
 }).refine((data) => {
   // If source is 'bank', senderBank must be provided and valid
@@ -48,7 +48,7 @@ const formSchema = z.object({
   }
   return true; // Wallet transfers don't need senderBank
 }, {
-  message: "Please select a bank account for bank transfers",
+  message: "Vui lòng chọn tài khoản ngân hàng để chuyển tiền",
   path: ["senderBank"],
 });
 
@@ -174,12 +174,12 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
   const handleShare = async () => {
     if (!successData) return;
 
-    const shareText = `Finecore Transfer Receipt\nAmount: $${successData.amount}\nTo: ${successData.to}\nRef ID: ${successData.id}\nTime: ${successData.time}`;
+    const shareText = `Biên lai chuyển tiền fincore\nSố tiền: $${successData.amount}\nĐến: ${successData.to}\nMã giao dịch: ${successData.id}\nThời gian: ${successData.time}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Finecore Receipt',
+          title: 'Biên lai fincore',
           text: shareText,
         });
       } catch (err) {
@@ -188,9 +188,9 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
     } else {
       try {
         await navigator.clipboard.writeText(shareText);
-        toast.success('Receipt details copied to clipboard!');
+        toast.success('Đã sao chép thông tin biên lai vào clipboard!');
       } catch (err) {
-        toast.error('Failed to copy to clipboard');
+        toast.error('Không thể sao chép vào clipboard');
       }
     }
   };
@@ -208,13 +208,13 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
       const image = canvas.toDataURL("image/png");
       const link = document.createElement('a');
       link.href = image;
-      link.download = `finecore-receipt-${successData.id.slice(-8)}.png`;
+      link.download = `fincore-bienlai-${successData.id.slice(-8)}.png`;
       link.click();
 
-      toast.success('Receipt saved successfully!');
+      toast.success('Đã lưu biên lai thành công!');
     } catch (err) {
       console.error('Save failed:', err);
-      toast.error('Failed to save receipt image');
+      toast.error('Không thể lưu ảnh biên lai');
     }
   };
 
@@ -233,7 +233,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
     // ✅ NEW: Validate nickname is not empty
     if (!recipientNickname || recipientNickname.trim() === '') {
       console.error('❌ Nickname is required when saving recipient');
-      toast.error('Please enter a nickname for the recipient');
+      toast.error('Vui lòng nhập biệt danh cho người nhận');
       return;
     }
 
@@ -295,7 +295,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
       }
     } catch (error) {
       console.error('❌ Auto-save failed:', error);
-      toast.error('Failed to save recipient');
+      toast.error('Không thể lưu người nhận');
     }
   };
 
@@ -309,7 +309,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
       console.log('🔍 Sanitized receiverId:', receiverIdRaw);
 
       if (!receiverIdRaw || receiverIdRaw.trim() === '') {
-        alert("❌ Invalid Receiver ID. Please enter a valid identifier.");
+        alert("❌ ID người nhận không hợp lệ. Vui lòng nhập đúng định danh.");
         setIsLoading(false);
         return;
       }
@@ -345,7 +345,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
       if (data.source === "wallet") {
         // For wallet transfers, we don't need senderBank - the backend uses getLoggedInUser
         if (!receiverBank && !receiverWalletUser) {
-          alert("❌ Invalid Receiver ID. Please verify the Wallet ID or Bank Shareable ID.");
+          alert("❌ ID người nhận không hợp lệ. Vui lòng kiểm tra lại Wallet ID hoặc Bank Shareable ID.");
           setIsLoading(false);
           return;
         }
@@ -378,10 +378,10 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             setSuccessData({
               amount: parseFloat(data.amount).toFixed(2),
               to: `${receiverWalletUser!.firstName} ${receiverWalletUser!.lastName}`,
-              toBank: 'Finecore Wallet',
+              toBank: 'Ví fincore',
               toId: receiverWalletUser!.walletId,
-              from: 'Wallet Balance',
-              fromDetail: 'Finecore Wallet',
+              from: 'Số dư Ví',
+              fromDetail: 'Ví fincore',
               fromId: currentUser?.walletId || 'N/A',
               senderName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`,
               id: result.transactionId || 'N/A',
@@ -389,7 +389,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             });
             // Don't navigate away - success modal will show
           } else {
-            alert(`❌ Transfer Failed!\n\n${result?.message || "Unknown error"}`);
+            alert(`❌ Chuyển tiền thất bại!\n\n${result?.message || "Lỗi không xác định"}`);
           }
         } else {
           // Wallet → Bank Account
@@ -414,7 +414,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             const result = await walletToBank({
               destinationBankId: bankAccountId,
               amount: parseFloat(data.amount),
-              description: data.name || "Wallet Withdrawal",
+              description: data.name || "Rút tiền từ Ví",
             });
 
             if (result && result.success) {
@@ -425,10 +425,10 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
               setSuccessData({
                 amount: parseFloat(data.amount).toFixed(2),
                 to: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
-                toBank: receiverBankDetails?.name || 'Bank Account',
+                toBank: receiverBankDetails?.name || 'Tài khoản ngân hàng',
                 toId: receiverBankDetails?.shareableId || 'N/A',
-                from: 'Wallet Balance',
-                fromDetail: 'Finecore Wallet',
+                from: 'Số dư Ví',
+                fromDetail: 'Ví fincore',
                 fromId: senderUser?.walletId || 'N/A',
                 senderName: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
                 id: result.transactionId || 'N/A',
@@ -436,7 +436,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
               });
               // Don't navigate away - success modal will show
             } else {
-              alert(`❌ Withdrawal Failed!\n\n${result?.message || "Unknown error"}`);
+              alert(`❌ Rút tiền thất bại!\n\n${result?.message || "Lỗi không xác định"}`);
             }
           } else {
             // 💰 WALLET → ANOTHER USER'S BANK (External Transfer)
@@ -468,11 +468,11 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
 
               setSuccessData({
                 amount: parseFloat(data.amount).toFixed(2),
-                to: `${receiverUser?.firstName || 'Recipient'} ${receiverUser?.lastName || ''}`,
-                toBank: receiverBank?.name || 'Bank Account',
+                to: `${receiverUser?.firstName || 'Người nhận'} ${receiverUser?.lastName || ''}`,
+                toBank: receiverBank?.name || 'Tài khoản ngân hàng',
                 toId: receiverBank?.shareableId || 'N/A',
-                from: 'Wallet Balance',
-                fromDetail: 'Finecore Wallet',
+                from: 'Số dư Ví',
+                fromDetail: 'Ví fincore',
                 fromId: currentUser?.walletId || 'N/A',
                 senderName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`,
                 id: result.transactionId || 'N/A',
@@ -480,7 +480,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
               });
               // Don't navigate away - success modal will show
             } else {
-              alert(`❌ Transfer Failed!\n\n${result?.message || "Unknown error"}`);
+              alert(`❌ Chuyển tiền thất bại!\n\n${result?.message || "Lỗi không xác định"}`);
             }
           }
         }
@@ -489,7 +489,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
         // HANDLE BANK TRANSFERS (senderBank required)
         // ═══════════════════════════════════════════════════════════════════
         if (!data.senderBank) {
-          alert("❌ Please select a source bank for bank transfers.");
+          alert("❌ Vui lòng chọn ngân hàng nguồn để thực hiện chuyển khoản.");
           setIsLoading(false);
           return;
         }
@@ -497,13 +497,13 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
         const senderBank = await getBankByAppwriteItemId(data.senderBank);
 
         if (!senderBank) {
-          alert("❌ Invalid source bank. Please select a valid bank account.");
+          alert("❌ Ngân hàng không hợp lệ. Vui lòng chọn lại tài khoản ngân hàng.");
           setIsLoading(false);
           return;
         }
 
         if (!receiverBank && !receiverWalletUser) {
-          alert("❌ Invalid Receiver ID. Please verify the Wallet ID or Bank Shareable ID.");
+          alert("❌ ID người nhận không hợp lệ. Vui lòng kiểm tra lại Wallet ID hoặc Bank Shareable ID.");
           setIsLoading(false);
           return;
         }
@@ -514,12 +514,12 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
 
         if (transferAmount > balanceInfo.available) {
           alert(
-            `❌ Insufficient Available Balance!\n\n` +
-            `Actual Balance: $${balanceInfo.actual.toFixed(2)}\n` +
-            `Pending Transfers: -$${balanceInfo.pending.toFixed(2)}\n` +
-            `Available: $${balanceInfo.available.toFixed(2)}\n\n` +
-            `You are trying to transfer: $${transferAmount.toFixed(2)}\n\n` +
-            `Please wait for pending transfers to complete or choose a lower amount.`
+            `❌ Số dư khả dụng không đủ!\n\n` +
+            `Số dư thực: $${balanceInfo.actual.toFixed(2)}\n` +
+            `Giao dịch đang chờ: -$${balanceInfo.pending.toFixed(2)}\n` +
+            `Khả dụng: $${balanceInfo.available.toFixed(2)}\n\n` +
+            `Bạn đang muốn chuyển: $${transferAmount.toFixed(2)}\n\n` +
+            `Vui lòng chờ các giao dịch đang chờ hoàn tất hoặc nhập số tiền nhỏ hơn.`
           );
           setIsLoading(false);
           return;
@@ -535,7 +535,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             senderBankId: senderBank.$id,
             receiverWalletId: receiverIdRaw, // ✅ Sanitized String (Wallet ID)
             amount: transferAmount,
-            description: data.name || "Bank to Wallet Transfer",
+            description: data.name || "Nạp tiền từ ngân hàng vào Ví",
           });
 
           if (result.success) {
@@ -551,10 +551,10 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             setSuccessData({
               amount: transferAmount.toFixed(2),
               to: `${receiverWalletUser!.firstName} ${receiverWalletUser!.lastName}`,
-              toBank: 'Finecore Wallet',
+              toBank: 'Ví fincore',
               toId: receiverWalletUser!.walletId,
-              from: senderBankDetails?.name || 'Bank Account',
-              fromDetail: senderBankDetails?.subtype || 'Checking',
+              from: senderBankDetails?.name || 'Tài khoản ngân hàng',
+              fromDetail: senderBankDetails?.subtype || 'Tài khoản thanh toán',
               fromId: senderBankDetails?.shareableId || 'N/A',
               senderName: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
               id: result.transactionId || 'N/A',
@@ -562,7 +562,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             });
             // Don't navigate away - success modal will show
           } else {
-            alert(`❌ Transfer Failed!\n\n${result.message}`);
+            alert(`❌ Chuyển tiền thất bại!\n\n${result.message}`);
           }
         } else {
           // 🏦➡️🏦 BANK → BANK (Dwolla flow)
@@ -607,11 +607,11 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
 
               setSuccessData({
                 amount: transferAmount.toFixed(2),
-                to: `${receiverUser?.firstName || 'Recipient'} ${receiverUser?.lastName || ''}`,
-                toBank: receiverBank?.name || 'Bank Account',
+                to: `${receiverUser?.firstName || 'Người nhận'} ${receiverUser?.lastName || ''}`,
+                toBank: receiverBank?.name || 'Tài khoản ngân hàng',
                 toId: receiverBank?.shareableId || 'N/A',
-                from: senderBankDetails?.name || 'Bank Account',
-                fromDetail: senderBankDetails?.subtype || 'Checking',
+                from: senderBankDetails?.name || 'Tài khoản ngân hàng',
+                fromDetail: senderBankDetails?.subtype || 'Tài khoản thanh toán',
                 fromId: senderBankDetails?.shareableId || 'N/A',
                 senderName: `${senderUser?.firstName || ''} ${senderUser?.lastName || ''}`,
                 id: newTransaction.$id || 'N/A',
@@ -624,7 +624,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
       }
     } catch (error: any) {
       console.error("Transfer failed:", error);
-      alert(`❌ Transfer Failed!\n\n${error.message || "Unknown error occurred"}`);
+      alert(`❌ Chuyển tiền thất bại!\n\n${error.message || "Đã xảy ra lỗi không xác định"}`);
     }
 
     setIsLoading(false);
@@ -646,11 +646,11 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
               <div className="size-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4 ring-2 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                 <CheckCircle2 className="w-8 h-8 text-emerald-400" />
               </div>
-              <h2 className="text-20 font-bold text-white mb-1">Transfer Successful!</h2>
-              <p className="text-14 text-gray-400">Transaction completed</p>
+              <h2 className="text-20 font-bold text-white mb-1">Chuyển tiền thành công!</h2>
+              <p className="text-14 text-gray-400">Giao dịch đã hoàn tất</p>
 
               <div className="mt-6 text-center">
-                <p className="text-14 text-gray-400 mb-1">Total Amount</p>
+                <p className="text-14 text-gray-400 mb-1">Tổng số tiền</p>
                 <p className="text-36 font-bold text-white tracking-tight">
                   ${successData.amount}
                 </p>
@@ -660,19 +660,19 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             {/* Receipt Details */}
             <div className="p-6 space-y-4">
               <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
-                <span className="text-14 text-gray-400">To</span>
+                <span className="text-14 text-gray-400">Đến</span>
                 <div className="text-right flex flex-col items-end">
                   <p className="text-14 font-semibold text-white">{successData.to}</p>
                   <p className="text-12 text-emerald-400 font-medium">{successData.toBank}</p>
                   {successData.toId && (
                     <p className="text-12 text-gray-500 font-mono mt-0.5">
-                      {successData.toBank === 'Finecore Wallet' ? successData.toId : `Account • ${successData.toId}`}
+                      {successData.toBank === 'Ví fincore' ? successData.toId : `Tài khoản • ${successData.toId}`}
                     </p>
                   )}
                 </div>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
-                <span className="text-14 text-gray-400">From</span>
+                <span className="text-14 text-gray-400">Từ</span>
                 <div className="text-right flex flex-col items-end">
                   <p className="text-14 font-semibold text-white">{successData.senderName}</p>
                   <p className="text-12 text-emerald-400 font-medium">{successData.from}</p>
@@ -684,11 +684,11 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                 </div>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
-                <span className="text-14 text-gray-400">Time</span>
+                <span className="text-14 text-gray-400">Thời gian</span>
                 <span className="text-14 text-gray-300">{successData.time}</span>
               </div>
               <div className="flex justify-between items-center py-3">
-                <span className="text-14 text-gray-400">Ref ID</span>
+                <span className="text-14 text-gray-400">Mã giao dịch</span>
                 <span className="text-12 font-mono text-gray-500 uppercase tracking-wider">{successData.id.slice(-8)}</span>
               </div>
             </div>
@@ -702,19 +702,19 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                 }}
                 className="col-span-2 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
               >
-                Done
+                Hoàn tất
               </button>
               <button
                 onClick={handleShare}
                 className="flex items-center justify-center gap-2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl transition-colors border border-gray-700"
               >
-                <Share2 className="w-4 h-4" /> Share
+                <Share2 className="w-4 h-4" /> Chia sẻ
               </button>
               <button
                 onClick={handleSave}
                 className="flex items-center justify-center gap-2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl transition-colors border border-gray-700"
               >
-                <Download className="w-4 h-4" /> Save
+                <Download className="w-4 h-4" /> Lưu
               </button>
             </div>
           </div>
@@ -733,8 +733,8 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                 <ArrowRight className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">Transfer Method</h3>
-                <p className="text-sm text-gray-400">Choose how you want to send money</p>
+                <h3 className="text-lg font-semibold text-white">Phương thức chuyển tiền</h3>
+                <p className="text-sm text-gray-400">Chọn cách bạn muốn gửi tiền</p>
               </div>
             </div>
 
@@ -758,8 +758,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                   </div>
                   <div className="text-center">
                     <p className={`font-semibold ${transferSource === "wallet" ? "text-white" : "text-gray-300"
-                      }`}>Wallet Balance</p>
-                    <p className="text-xs text-emerald-400 font-medium mt-1">Instant • FREE</p>
+                      }`}>Số dư Ví</p>
                   </div>
                 </div>
                 {transferSource === "wallet" && (
@@ -786,8 +785,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                   </div>
                   <div className="text-center">
                     <p className={`font-semibold ${transferSource === "bank" ? "text-white" : "text-gray-300"
-                      }`}>Bank Account</p>
-                    <p className="text-xs text-gray-400 font-medium mt-1">1-3 days • $0.25</p>
+                      }`}>Tài khoản ngân hàng</p>
                   </div>
                 </div>
                 {transferSource === "bank" && (
@@ -807,8 +805,8 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                   <Building2 className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Source Bank Account</h3>
-                  <p className="text-sm text-gray-400">Select which bank to transfer from</p>
+                  <h3 className="text-lg font-semibold text-white">Tài khoản ngân hàng nguồn</h3>
+                  <p className="text-sm text-gray-400">Chọn ngân hàng để chuyển tiền từ đó</p>
                 </div>
               </div>
 
@@ -845,10 +843,10 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    Recipient Details
-                    <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Required</span>
+                    Thông tin người nhận
+                    <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Bắt buộc</span>
                   </h3>
-                  <p className="text-sm text-gray-400">Enter the receiver's unique identifier</p>
+                  <p className="text-sm text-gray-400">Nhập định danh duy nhất của người nhận</p>
                 </div>
               </div>
 
@@ -859,12 +857,12 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                   <FormItem>
                     <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
                       <Hash className="w-4 h-4 text-emerald-400" />
-                      Receiver's Wallet ID / Account ID
+                      Wallet ID / Mã tài khoản người nhận
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
-                          placeholder="Enter the unique Wallet ID or Bank Shareable ID"
+                          placeholder="Nhập Wallet ID hoặc Bank Shareable ID"
                           className="bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 h-12 pl-4 pr-4 rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
                           {...field}
                         />
@@ -876,7 +874,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                       </div>
                     </FormControl>
                     <FormDescription className="text-gray-500 text-xs mt-2">
-                      💡 Recipient details will appear automatically as you type
+                      💡 Thông tin người nhận sẽ hiển thị tự động khi bạn nhập
                     </FormDescription>
                     <FormMessage className="text-red-400 text-sm" />
 
@@ -893,11 +891,11 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                             <div className="flex items-center gap-2 mt-1">
                               {recipientInfo.accountType === 'wallet' ? (
                                 <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                                  💰 Wallet Account
+                                  💰 Tài khoản Ví
                                 </span>
                               ) : (
                                 <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
-                                  🏦 {recipientInfo.bankDetails?.name || 'Bank Account'}
+                                  🏦 {recipientInfo.bankDetails?.name || 'Tài khoản ngân hàng'}
                                 </span>
                               )}
                             </div>
@@ -909,7 +907,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                     {/* Not Found State */}
                     {!recipientInfo && !isLookingUpRecipient && field.value && field.value.length >= 8 && (
                       <div className="mt-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-                        <p className="text-yellow-400 text-14">⚠️ Recipient not found. Please check the ID and try again.</p>
+                        <p className="text-yellow-400 text-14">⚠️ Không tìm thấy người nhận. Vui lòng kiểm tra lại ID.</p>
                       </div>
                     )}
                   </FormItem>
@@ -927,8 +925,8 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                 <DollarSign className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">Payment Details</h3>
-                <p className="text-sm text-gray-400">Enter the amount and optional note</p>
+                <h3 className="text-lg font-semibold text-white">Chi tiết thanh toán</h3>
+                <p className="text-sm text-gray-400">Nhập số tiền và nội dung giao dịch</p>
               </div>
             </div>
 
@@ -941,7 +939,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                   <FormItem>
                     <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
                       <DollarSign className="w-4 h-4 text-purple-400" />
-                      Amount
+                      Số tiền
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
@@ -969,12 +967,12 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                   <FormItem>
                     <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
                       <FileText className="w-4 h-4 text-purple-400" />
-                      Transfer Note
-                      <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+                      Nội dung chuyển tiền
+                      <span className="text-xs text-gray-500 font-normal">(Tuỳ chọn)</span>
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="What's this transfer for? e.g., Rent, Dinner, Gift..."
+                        placeholder="Nội dung giao dịch này là gì? vd: Tiền thuê nhà, Ăn tối, Quà tặng..."
                         className="bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 rounded-xl focus:border-purple-500 focus:ring-purple-500/20 min-h-[80px] resize-none"
                         {...field}
                       />
@@ -1001,10 +999,10 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
               </div>
               <div className="flex-1">
                 <p className="text-white font-medium group-hover:text-emerald-400 transition-colors">
-                  💾 Save this person to my contacts automatically
+                  💾 Lưu người này vào danh bạ của tôi
                 </p>
                 <p className="text-gray-500 text-sm mt-1">
-                  Quick access for next time - no need to enter their ID again
+                  Truy cập nhanh lần sau - không cần nhập lại ID
                 </p>
               </div>
             </label>
@@ -1013,21 +1011,21 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             {shouldSaveRecipient && (
               <div className="mt-4 pl-9 animate-in fade-in slide-in-from-top-2 duration-200">
                 <label className="text-14 font-medium text-gray-300 mb-2 block">
-                  Recipient Nickname
-                  <span className="text-gray-500 font-normal ml-1">(for your reference)</span>
+                  Biệt danh người nhận
+                  <span className="text-gray-500 font-normal ml-1">(để bạn dễ nhớ)</span>
                 </label>
                 <input
                   type="text"
                   value={recipientNickname}
                   onChange={(e) => setRecipientNickname(e.target.value)}
-                  placeholder={recipientInfo?.fullName || "e.g., Mom, Coffee Shop, Roommate..."}
+                  placeholder={recipientInfo?.fullName || "vd: Mẹ, Quán cà phê, Bạn cùng phòng..."}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
                 {!recipientNickname.trim() && (
-                  <p className="text-red-400 text-12 mt-2">⚠️ Nickname cannot be empty</p>
+                  <p className="text-red-400 text-12 mt-2">⚠️ Biệt danh không được để trống</p>
                 )}
                 <p className="text-12 text-gray-500 mt-2">
-                  💡 This name is just for you - it doesn't have to match their real name
+                  💡 Tên này chỉ hiển thị với bạn - không cần trùng với tên thật của họ
                 </p>
               </div>
             )}
@@ -1044,24 +1042,17 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 size={20} className="animate-spin" />
-                Processing...
+                Đang xử lý...
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 <ArrowRight size={20} />
-                Transfer Funds
+                Chuyển tiền
               </span>
             )}
           </Button>
 
-          {/* Fee Notice */}
-          <p className="text-center text-gray-500 text-sm">
-            {transferSource === "wallet" ? (
-              <span className="text-emerald-400">✓ Instant transfer • No fees</span>
-            ) : (
-              <span>Bank transfer • 1-3 business days • $0.25 fee</span>
-            )}
-          </p>
+
         </form>
       </Form>
     </>

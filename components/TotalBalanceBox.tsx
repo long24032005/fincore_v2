@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Wallet, Building2, PieChart } from 'lucide-react';
+import { Wallet, Building2, PieChart, Eye, EyeOff } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import DoughnutChart from './DoughnutChart';
+import { incrementBalanceCheckCount } from '@/lib/actions/local-ai-db';
 import {
   Select,
   SelectContent,
@@ -19,6 +20,20 @@ const TotalBalanceBox = ({
   user
 }: TotalBalanceBoxProps) => {
   const walletBalance = user?.balance || 0;
+  const [showBalance, setShowBalance] = useState(false);
+
+  const handleToggleShowBalance = async () => {
+    const nextShowState = !showBalance;
+    setShowBalance(nextShowState);
+    
+    if (nextShowState && user?.$id) {
+      try {
+        await incrementBalanceCheckCount(user.$id);
+      } catch (err) {
+        console.error('Failed to increment balance check frequency:', err);
+      }
+    }
+  };
 
   // Create account options: Total + Finecore Wallet + all linked banks
   const accountOptions = [
@@ -112,8 +127,23 @@ const TotalBalanceBox = ({
           </p>
 
           <div className="flex items-baseline gap-3">
-            <div className="total-balance-amount">
-              <AnimatedCounter amount={displayBalance} />
+            <div className="total-balance-amount flex items-center gap-3">
+              {showBalance ? (
+                <AnimatedCounter amount={displayBalance} />
+              ) : (
+                <span className="text-white font-extrabold tracking-widest text-[24px]">••••••</span>
+              )}
+              <button 
+                onClick={handleToggleShowBalance}
+                className="text-gray-400 hover:text-white transition-colors p-1"
+                title={showBalance ? "Ẩn số dư" : "Hiện số dư"}
+              >
+                {showBalance ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
             </div>
 
             {accountType === 'wallet' && (

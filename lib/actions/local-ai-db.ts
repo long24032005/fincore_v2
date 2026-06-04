@@ -1,3 +1,5 @@
+"use server";
+
 import fs from "fs";
 import path from "path";
 
@@ -284,3 +286,23 @@ export const seedUserDeviceActivity = async (userId: string, scenario: 'conserva
   };
   writeDb(db);
 };
+
+// 11. Tăng tần suất kiểm tra số dư của người dùng
+export const incrementBalanceCheckCount = async (userId: string) => {
+  const db = readDb();
+  if (!db.deviceActivityLogs) {
+    db.deviceActivityLogs = {};
+  }
+  if (!db.deviceActivityLogs[userId]) {
+    db.deviceActivityLogs[userId] = {
+      onboardingTimeSeconds: 30,
+      balanceCheckCount30d: 5,
+      transactionDeviceStatus: []
+    };
+  }
+  db.deviceActivityLogs[userId].balanceCheckCount30d = (db.deviceActivityLogs[userId].balanceCheckCount30d || 0) + 1;
+  writeDb(db);
+  console.log(`[AI Scoring DB] Incremented balance check count for user ${userId} to: ${db.deviceActivityLogs[userId].balanceCheckCount30d}`);
+  return db.deviceActivityLogs[userId];
+};
+

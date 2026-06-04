@@ -28,7 +28,7 @@ export const getChatbotContext = async (userId: string): Promise<ChatbotContext 
             USER_COLLECTION_ID!,
             userId
         );
-        const authUserId = userDoc.userId || userId;
+        const authUserId = (userDoc as any).userId || userId;
         console.log('👤 [Chatbot Context] Resolved authUserId:', authUserId);
 
         // 1. Get wallet balance

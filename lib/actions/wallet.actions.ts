@@ -735,7 +735,7 @@ export const walletToBank = async ({
 
         return parseStringify({
             success: true,
-            message: `Yêu cầu rút ${formatAmount(amount)} đã được khởi tạo! Tiền sẽ được chuyển về tài khoản ngân hàng trong 1-3 ngày làm việc.`,
+            message: `Yêu cầu rút ${formatAmount(amount)} đã hoàn tất thành công!`,
             transactionId: newTransaction.$id,
             newWalletBalance: newWalletBalance,
         });

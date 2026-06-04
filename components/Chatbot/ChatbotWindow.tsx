@@ -24,6 +24,9 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
     const [context, setContext] = useState<ChatbotContext | null>(null);
     const [pendingTransfer, setPendingTransfer] = useState<TransferRequest | null>(null);
     const [pendingEntities, setPendingEntities] = useState<any>(null); // BUG FIX #4: Store entities during disambiguation
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [pin, setPin] = useState('');
+    const [pendingButton, setPendingButton] = useState<ChatActionButton | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Load context when window opens
@@ -303,171 +306,177 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
              sourceButtons
          );
      };
- 
-     const handleButtonClick = async (button: ChatActionButton) => {
-         if (button.type === 'source' && pendingTransfer) {
-             // User selected source - now show confirmation
-             const updatedTransfer = { ...pendingTransfer, source: button.value };
-             setPendingTransfer(updatedTransfer);
- 
-             const isFree = button.value === 'wallet' && updatedTransfer.destination === 'wallet';
-             const fee = isFree ? 'Miễn phí' : '5.000 ₫';
-             const arrival = isFree ? 'Tức thì' : '1-3 ngày';
- 
-             const confirmButtons: ChatActionButton[] = [
-                 {
-                     id: 'confirm-transfer',
-                     label: '✅ Xác nhận & Gửi',
-                     value: 'confirm',
-                     type: 'confirm',
-                     variant: 'primary',
-                 },
-                 {
-                     id: 'cancel-transfer',
-                     label: '❌ Hủy',
-                     value: 'cancel',
-                     type: 'cancel',
-                     variant: 'danger',
-                 },
-             ];
- 
-             addAssistantMessage(
-                 `Xác nhận giao dịch chuyển tiền:\n\n` +
-                 `💵 Số tiền: ${formatAmount(updatedTransfer.amount)}\n` +
-                 `👤 Người nhận: ${updatedTransfer.recipientNickname}\n` +
-                 `📍 Nguồn chuyển: ${button.label}\n` +
-                 `💸 Phí giao dịch: ${fee}\n` +
-                 `⏱️ Thời gian xử lý: ${arrival}\n\n` +
-                 `Xác nhận để thực hiện:`,
-                 confirmButtons
-             );
-        } else if (button.type === 'confirm' && button.value === 'list_recipients') {
-            // Show recipients list
-            await handleListRecipients();
-        } else if (button.type === 'confirm' && pendingTransfer) {
-            // Execute transfer
-            setIsLoading(true);
-            const result = await executeChatbotTransfer({
-                userId: user.$id,
-                transferRequest: pendingTransfer,
-            });
 
-            if (result.success) {
-                addAssistantMessage(result.message);
-                toast.success('Transfer completed!');
-
-                // Reload context
-                const newContext = await getChatbotContext(user.$id);
-                if (newContext) {
-                    setContext({ ...newContext, userName: user.firstName });
-                }
-            } else {
-                addAssistantMessage(`❌ ${result.message}`);
-                toast.error('Transfer failed');
-            }
-
-            setPendingTransfer(null);
-            setIsLoading(false);
-         } else if (button.type === 'confirm_agent_transaction') {
+     const executeVerifiedAction = async (button: ChatActionButton) => {
+         if (button.type === 'confirm' && pendingTransfer) {
+             // Execute transfer
              setIsLoading(true);
-             try {
-                 const actionData = JSON.parse(button.value);
-                 const { type, payload } = actionData;
-                 
-                 if (type === 'transfer') {
-                     const { executeChatbotTransfer } = await import('@/lib/actions/chatbot-transfer.actions');
-                     
-                     const foundRecipient = context?.savedRecipients.find(r => 
-                         r.id === payload.recipientId ||
-                         r.email.toLowerCase() === payload.recipientId.toLowerCase() ||
-                         r.nickname.toLowerCase() === payload.recipientId.toLowerCase()
-                     );
+             const result = await executeChatbotTransfer({
+                 userId: user.$id,
+                 transferRequest: pendingTransfer,
+             });
 
-                     const transferReq = {
-                         recipientId: foundRecipient?.id || payload.recipientId,
-                         recipientNickname: foundRecipient?.nickname || payload.recipientId,
-                         amount: payload.amount,
-                         source: 'wallet',
-                         destination: foundRecipient?.transferType === 'wallet' ? 'wallet' as const : 'bank' as const,
-                         destinationBankId: foundRecipient?.recipientBankId || ""
-                     };
-
-                     const result = await executeChatbotTransfer({
-                         userId: user.$id,
-                         transferRequest: transferReq
-                     });
-
-                     if (result.success) {
-                         addAssistantMessage(`✅ Đã chuyển thành công ${formatAmount(payload.amount)} cho ${transferReq.recipientNickname}!`);
-                         toast.success('Chuyển tiền thành công!');
-                     } else {
-                         addAssistantMessage(`❌ Chuyển tiền ${formatAmount(payload.amount)} cho ${transferReq.recipientNickname} thất bại: ${result.message}\n\nBạn có thể nói "chuyển lại" để tôi thử lại ngay.`);
-                         toast.error('Chuyển tiền thất bại');
-                     }
-                 } else if (type === 'bill_payment') {
-                     const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                     const { createTransaction } = await import('@/lib/actions/transaction.actions');
-                     
-                     await updateUserBalance({
-                         userId: user.$id,
-                         amount: payload.amount,
-                         operation: 'subtract'
-                     });
-                     
-                     await createTransaction({
-                         name: `Thanh toán hóa đơn: ${payload.provider}`,
-                         amount: payload.amount.toString(),
-                         senderId: user.$id,
-                         senderBankId: '',
-                         receiverId: 'utility_provider',
-                         receiverBankId: '',
-                         email: 'billing@evn.com.vn',
-                         category: 'Payment',
-                         status: 'Success',
-                         channel: 'online'
-                     });
-
-                     addAssistantMessage(`✅ Đã thanh toán thành công hóa đơn ${payload.provider} số tiền ${formatAmount(payload.amount)}!`);
-                     toast.success('Thanh toán thành công!');
-                 } else if (type === 'portfolio_investment') {
-                     const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
-                     const { createTransaction } = await import('@/lib/actions/transaction.actions');
-                     
-                     await updateUserBalance({
-                         userId: user.$id,
-                         amount: payload.amount,
-                         operation: 'subtract'
-                     });
-                     
-                     await createTransaction({
-                         name: `Đầu tư danh mục AI đề xuất`,
-                         amount: payload.amount.toString(),
-                         senderId: user.$id,
-                         senderBankId: '',
-                         receiverId: 'portfolio_fund',
-                         receiverBankId: '',
-                         email: 'invest@fincore.vn',
-                         category: 'Transfer',
-                         status: 'Success',
-                         channel: 'online'
-                     });
-
-                     addAssistantMessage(`✅ Đã đầu tư thành công số tiền ${formatAmount(payload.amount)} vào cả danh mục AI khuyến nghị!`);
-                     toast.success('Đầu tư danh mục thành công!');
-                 }
+             if (result.success) {
+                 addAssistantMessage(result.message);
+                 toast.success('Giao dịch chuyển khoản thành công!');
 
                  // Reload context
                  const newContext = await getChatbotContext(user.$id);
                  if (newContext) {
                      setContext({ ...newContext, userName: user.firstName });
                  }
-             } catch (err: any) {
-                 console.error("Confirm transaction error:", err);
-                 addAssistantMessage(`❌ Lỗi thực thi giao dịch: ${err.message}`);
-                 toast.error('Lỗi thực thi giao dịch');
-             } finally {
-                 setIsLoading(false);
+             } else {
+                 addAssistantMessage(`❌ ${result.message}`);
+                 toast.error('Giao dịch thất bại');
              }
+
+             setPendingTransfer(null);
+             setIsLoading(false);
+         } else if (button.type === 'confirm_agent_transaction') {
+              setIsLoading(true);
+              try {
+                  const actionData = JSON.parse(button.value);
+                  const { type, payload } = actionData;
+                  
+                  if (type === 'transfer') {
+                      const { executeChatbotTransfer } = await import('@/lib/actions/chatbot-transfer.actions');
+                      
+                      const foundRecipient = context?.savedRecipients.find(r => 
+                          r.id === payload.recipientId ||
+                          r.email.toLowerCase() === payload.recipientId.toLowerCase() ||
+                          r.nickname.toLowerCase() === payload.recipientId.toLowerCase()
+                      );
+
+                      const transferReq = {
+                          recipientId: foundRecipient?.id || payload.recipientId,
+                          recipientNickname: foundRecipient?.nickname || payload.recipientId,
+                          amount: payload.amount,
+                          source: 'wallet',
+                          destination: foundRecipient?.transferType === 'wallet' ? 'wallet' as const : 'bank' as const,
+                          destinationBankId: foundRecipient?.recipientBankId || ""
+                      };
+
+                      const result = await executeChatbotTransfer({
+                          userId: user.$id,
+                          transferRequest: transferReq
+                      });
+
+                      if (result.success) {
+                          addAssistantMessage(`✅ Đã chuyển thành công ${formatAmount(payload.amount)} cho ${transferReq.recipientNickname}!`);
+                          toast.success('Chuyển tiền thành công!');
+                      } else {
+                          addAssistantMessage(`❌ Chuyển tiền ${formatAmount(payload.amount)} cho ${transferReq.recipientNickname} thất bại: ${result.message}\n\nBạn có thể nói "chuyển lại" để tôi thử lại ngay.`);
+                          toast.error('Chuyển tiền thất bại');
+                      }
+                  } else if (type === 'bill_payment') {
+                      const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
+                      const { createTransaction } = await import('@/lib/actions/transaction.actions');
+                      
+                      await updateUserBalance({
+                          userId: user.$id,
+                          amount: payload.amount,
+                          operation: 'subtract'
+                      });
+                      
+                      await createTransaction({
+                          name: `Thanh toán hóa đơn: ${payload.provider}`,
+                          amount: payload.amount.toString(),
+                          senderId: user.$id,
+                          senderBankId: '',
+                          receiverId: 'utility_provider',
+                          receiverBankId: '',
+                          email: 'billing@evn.com.vn',
+                          category: 'Payment',
+                          status: 'Success',
+                          channel: 'online'
+                      });
+
+                      addAssistantMessage(`✅ Đã thanh toán thành công hóa đơn ${payload.provider} số tiền ${formatAmount(payload.amount)}!`);
+                      toast.success('Thanh toán thành công!');
+                  } else if (type === 'portfolio_investment') {
+                      const { updateUserBalance } = await import('@/lib/actions/wallet.actions');
+                      const { createTransaction } = await import('@/lib/actions/transaction.actions');
+                      
+                      await updateUserBalance({
+                          userId: user.$id,
+                          amount: payload.amount,
+                          operation: 'subtract'
+                      });
+                      
+                      await createTransaction({
+                          name: `Đầu tư danh mục AI đề xuất`,
+                          amount: payload.amount.toString(),
+                          senderId: user.$id,
+                          senderBankId: '',
+                          receiverId: 'portfolio_fund',
+                          receiverBankId: '',
+                          email: 'invest@fincore.vn',
+                          category: 'Transfer',
+                          status: 'Success',
+                          channel: 'online'
+                      });
+
+                      addAssistantMessage(`✅ Đã đầu tư thành công số tiền ${formatAmount(payload.amount)} vào cả danh mục AI khuyến nghị!`);
+                      toast.success('Đầu tư danh mục thành công!');
+                  }
+
+                  // Reload context
+                  const newContext = await getChatbotContext(user.$id);
+                  if (newContext) {
+                      setContext({ ...newContext, userName: user.firstName });
+                  }
+              } catch (err: any) {
+                  console.error("Confirm transaction error:", err);
+                  addAssistantMessage(`❌ Lỗi thực thi giao dịch: ${err.message}`);
+                  toast.error('Lỗi thực thi giao dịch');
+              } finally {
+                  setIsLoading(false);
+              }
+         }
+     };
+ 
+      const handleButtonClick = async (button: ChatActionButton) => {
+          if (button.type === 'source' && pendingTransfer) {
+              // User selected source - now show confirmation
+              const updatedTransfer = { ...pendingTransfer, source: button.value };
+              setPendingTransfer(updatedTransfer);
+  
+              const confirmButtons: ChatActionButton[] = [
+                  {
+                      id: 'confirm-transfer',
+                      label: '✅ Xác nhận & Gửi',
+                      value: 'confirm',
+                      type: 'confirm',
+                      variant: 'primary',
+                  },
+                  {
+                      id: 'cancel-transfer',
+                      label: '❌ Hủy',
+                      value: 'cancel',
+                      type: 'cancel',
+                      variant: 'danger',
+                  },
+              ];
+  
+              addAssistantMessage(
+                  `Xác nhận giao dịch chuyển tiền:\n\n` +
+                  `💵 Số tiền: ${formatAmount(updatedTransfer.amount)}\n` +
+                  `👤 Người nhận: ${updatedTransfer.recipientNickname}\n` +
+                  `📍 Nguồn chuyển: ${button.label}\n\n` +
+                  `Xác nhận để thực hiện:`,
+                  confirmButtons
+              );
+         } else if (button.type === 'confirm' && button.value === 'list_recipients') {
+             // Show recipients list
+             await handleListRecipients();
+         } else if (
+             (button.type === 'confirm' && pendingTransfer) ||
+             (button.type === 'confirm_agent_transaction')
+         ) {
+             // Intercept and ask for secure PIN verification
+             setPendingButton(button);
+             setShowPinModal(true);
+             setPin('');
          } else if (button.type === 'cancel_agent_transaction') {
              addAssistantMessage('Giao dịch đã được hủy bỏ. Bạn cần tôi trợ giúp việc gì khác không?');
           } else if (button.type === 'cancel') {
@@ -633,6 +642,20 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
         }
     };
 
+    const handlePinSubmit = () => {
+        if (pin === '123456') {
+            if (pendingButton) {
+                executeVerifiedAction(pendingButton);
+            }
+            setShowPinModal(false);
+            setPin('');
+            setPendingButton(null);
+        } else {
+            toast.error('Mã PIN không chính xác. Vui lòng nhập lại!');
+            setPin('');
+        }
+    };
+
     const addAssistantMessage = (content: string, buttons?: ChatActionButton[]) => {
         const message: ChatMessage = {
             id: Date.now().toString(),
@@ -675,7 +698,7 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 bg-gray-900">
+                <div className="flex-1 overflow-y-auto p-4 bg-gray-900 relative">
                     {messages.map((message) => (
                         <ChatMessageComponent
                             key={message.id}
@@ -698,6 +721,75 @@ const ChatbotWindow = ({ user, isOpen, onClose }: ChatbotWindowProps) => {
                     disabled={isLoading}
                     placeholder="Ask me anything..."
                 />
+
+                {/* PIN Verification Modal Overlay */}
+                {showPinModal && (
+                    <div className="absolute inset-0 bg-gray-950/95 flex flex-col items-center justify-center p-6 z-50">
+                        <div className="w-full max-w-xs text-center">
+                            <Bot className="w-12 h-12 text-blue-500 mx-auto mb-3 animate-pulse" />
+                            <h4 className="text-16 font-bold text-white mb-1">Xác nhận giao dịch</h4>
+                            <p className="text-12 text-gray-400 mb-6">Vui lòng nhập mã PIN giao dịch để tiếp tục<br/>(Mặc định: 123456)</p>
+                            
+                            {/* PIN Display Dots */}
+                            <div className="flex justify-center gap-4 mb-6">
+                                {[...Array(6)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={`size-3 rounded-full border-2 transition-all duration-150 ${
+                                            i < pin.length
+                                                ? 'bg-blue-500 border-blue-500 scale-110 shadow-[0_0_8px_#3b82f6]'
+                                                : 'border-gray-600'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Keyboard Pad */}
+                            <div className="grid grid-cols-3 gap-2 mb-6">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                                    <button
+                                        key={num}
+                                        onClick={() => pin.length < 6 && setPin(prev => prev + num)}
+                                        className="h-10 rounded-lg bg-gray-800 text-white font-bold text-16 hover:bg-gray-700 active:scale-95 transition-all duration-75"
+                                    >
+                                        {num}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setPin(prev => prev.slice(0, -1))}
+                                    className="h-10 rounded-lg bg-gray-800 text-gray-400 font-bold text-16 hover:bg-gray-700 active:scale-95 transition-all duration-75"
+                                >
+                                    ⌫
+                                </button>
+                                <button
+                                    onClick={() => pin.length < 6 && setPin(prev => prev + '0')}
+                                    className="h-10 rounded-lg bg-gray-800 text-white font-bold text-16 hover:bg-gray-700 active:scale-95 transition-all duration-75"
+                                >
+                                    0
+                                </button>
+                                <button
+                                    onClick={handlePinSubmit}
+                                    disabled={pin.length !== 6}
+                                    className="h-10 rounded-lg bg-blue-600 text-white font-bold text-14 hover:bg-blue-500 disabled:bg-blue-800/50 disabled:text-gray-500 active:scale-95 transition-all duration-75"
+                                >
+                                    ✓
+                                </button>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    setShowPinModal(false);
+                                    setPin('');
+                                    setPendingButton(null);
+                                    addAssistantMessage('Giao dịch đã bị hủy bỏ do chưa xác thực mã PIN.');
+                                }}
+                                className="text-12 text-gray-500 hover:text-gray-400 transition"
+                            >
+                                Hủy giao dịch
+                            </button>
+                        </div>
+                    </div>
+                )}
             </motion.div>
         </AnimatePresence>
     );

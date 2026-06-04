@@ -149,7 +149,19 @@ export async function GET(req: NextRequest) {
         fetch(`${origin}/api/v1/external/utility-bills`, { headers: { cookie: cookieHeader } })
       ]);
 
-      if (socialRes.ok) socialData = await socialRes.json();
+      if (socialRes.ok) {
+        const rawSocial = await socialRes.json();
+        // Support both Facebook Graph API schema (data[].message) and legacy schema (posts[].content)
+        const postsArray = rawSocial.data || rawSocial.posts || [];
+        socialData = {
+          ...rawSocial,
+          posts: postsArray.map((p: any) => ({
+            ...p,
+            // Normalize: Graph API uses 'message', legacy uses 'content'
+            content: p.message ?? p.content ?? "",
+          }))
+        };
+      }
       if (utilityRes.ok) utilityData = await utilityRes.json();
     } catch (fetchErr) {
       console.warn("⚠️ Failed to fetch external mock APIs, using direct local mock generation. Error:", fetchErr);
@@ -160,7 +172,7 @@ export async function GET(req: NextRequest) {
     const isConservative = fullNameLower.includes("thantrong");
 
     // Direct local mock generation if fetch failed or returned empty
-    if (!socialData.posts || socialData.posts.length === 0) {
+    if (!socialData.posts || socialData.posts.filter((p: any) => p.content).length === 0) {
       if (isAggressive) {
         socialData.posts = [
           { id: "p1", content: "Mới săn sale Shopee đêm qua hết 5 triệu, ví xẹp lép rồi cứu với! 😭", created_at: "2026-05-23T23:45:00Z" },
@@ -624,15 +636,15 @@ export async function GET(req: NextRequest) {
     });
 
     // Sắp xếp giảm dần theo finalScore và chọn Top 5
-    scoredProducts.sort((a, b) => b.finalScore - a.finalScore);
+    scoredProducts.sort((a: any, b: any) => b.finalScore - a.finalScore);
     const topRecommendations = scoredProducts.slice(0, 5);
 
     // Tính tỷ lệ phân bổ ngân sách động dựa trên finalScore tương đối của Top 5
-    const totalFinalScore = topRecommendations.reduce((sum, item) => sum + item.finalScore, 0);
+    const totalFinalScore = topRecommendations.reduce((sum: number, item: any) => sum + item.finalScore, 0);
     const monthlySavings = mlResult.risk_class === 'conservative' ? 13000000 : mlResult.risk_class === 'aggressive' ? 7000000 : 12000000;
 
     let targetAllocationPrompt = "";
-    const allocationDetails = topRecommendations.map((prod) => {
+    const allocationDetails = topRecommendations.map((prod: any) => {
       const allocationPct = totalFinalScore > 0 ? Math.round((prod.finalScore / totalFinalScore) * 100) : 20;
       const vndAmount = Math.round(monthlySavings * (allocationPct / 100));
       

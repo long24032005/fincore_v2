@@ -91,14 +91,18 @@ const functionDeclarations = [
   },
   {
     name: "create_autopilot_rule",
-    description: "Tạo một lệnh đầu tư tự động Autopilot mới.",
+    description: "Tạo một lệnh tự động hóa tài chính (Autopilot) mới.",
     parameters: {
       type: "OBJECT",
       properties: {
-        actionType: { type: "STRING", enum: ["invest"], description: "Loại tự động hóa (invest)" },
-        amount: { type: "NUMBER", description: "Số tiền đầu tư tự động mỗi chu kỳ (VND)" },
-        destinationFund: { type: "STRING", description: "Quỹ nhận đầu tư (ví dụ: VESAF, TCBF, DCDS)" },
-        cronExpression: { type: "STRING", description: "Chu kỳ Cron định kỳ (ví dụ: '0 0 25 * *' cho hàng tháng ngày 25, hoặc '0 0 * * *' cho hàng ngày)" }
+        actionType: { 
+          type: "STRING", 
+          enum: ["invest", "deposit", "transfer", "low_balance_shield", "expense_limit_guardian", "smart_cash_sweep"], 
+          description: "Loại tự động hóa: 'invest' (đầu tư định kỳ vào quỹ), 'deposit' (nạp tiền tự động từ ngân hàng vào ví), 'transfer' (chuyển tiền tự động định kỳ cho ai đó), 'low_balance_shield' (tự động nạp tiền từ ngân hàng liên kết khi số dư ví dưới ngưỡng), 'expense_limit_guardian' (hạn mức cảnh báo/giới hạn chi tiêu tháng), hoặc 'smart_cash_sweep' (quét tiền nhàn rỗi cuối tháng vào quỹ)" 
+        },
+        amount: { type: "NUMBER", description: "Số tiền giao dịch định kỳ, số tiền nạp, số tiền hạn mức chi tiêu, số tiền tối thiểu để lại ví, hoặc số tiền nạp hộ tùy hành động (VND)" },
+        destinationFund: { type: "STRING", description: "Mục tiêu liên quan (Ví dụ: tên quỹ 'VESAF'/'TCBF'/'DCDS', tên ngân hàng 'Vietcombank', tên/ID người nhận chuyển khoản, hoặc 'wallet' tùy loại hành động)" },
+        cronExpression: { type: "STRING", description: "Chu kỳ Cron định kỳ (ví dụ: '0 0 1 * *' cho hàng tháng ngày 1, hoặc '0 0 * * *' cho hàng ngày)" }
       },
       required: ["actionType", "amount", "destinationFund", "cronExpression"]
     }
@@ -175,6 +179,40 @@ RULES:
 - Use VND currency formatting (e.g., 50.000.000 ₫).
 - If a tool returns a "pending_confirmation" payload, output a brief summary message explaining that you've prepared the transaction, and the system will stop to ask for their confirmation card.
 - For transfer requests, if the user specifies a recipient by name/nickname (e.g. "lana ngo"), you MUST first call "get_recipients" to retrieve their saved recipients. If a unique matching recipient is found, extract their "id" field (which acts as their Wallet ID) and call "execute_transfer" with that ID as "recipientWalletId". Do NOT ask the user for email/wallet ID directly if you haven't called "get_recipients" yet.
+- When filtering recipients from "get_recipients", perform strict matching. Do not match names that are only visually or phonetically similar but different (e.g., "Thận" or "Thận Trọng" is NOT a match for "Tuấn"). Only match if the name/nickname actually contains or equals the query.
+- INVESTMENT & STOCK ADVICE (CRITICAL): When the user asks for investment advice or what stocks/funds they should invest in (e.g., "tôi nên đầu tư vào cổ phiếu nào", "đầu tư gì"), you MUST call "get_investment_advice" to fetch their personalized portfolio allocation. You are fully authorized and expected to suggest the specific individual stocks (such as FPT, HPG, VNM) and mutual funds (such as DCDS, VESAF, TCBF) returned by the tool. Do NOT say you cannot recommend specific stocks; instead, present the specific stock/fund allocation recommendations matching their risk profile.
+- MULTI-PURPOSE AUTOPILOT / FINANCIAL AUTOMATION (CRITICAL):
+  The user can set up various autopilot / automatic rules. You must parse their intent and map to "create_autopilot_rule" tool:
+  1. **'deposit' (Nạp tiền tự động)**:
+     - Intent example: "Cứ mỗi đầu tháng nạp 5tr từ Vietcombank vào ví cho tôi nhé"
+     - actionType: "deposit"
+     - amount: 5000000 (the amount to top up)
+     - destinationFund: "Vietcombank" (the bank name)
+     - cronExpression: "0 0 1 * *" (runs on the 1st of every month)
+  2. **'transfer' (Chuyển khoản tự động định kỳ)**:
+     - Intent example: "Mỗi tháng ngày 10 tự động chuyển 2tr cho Tuấn"
+     - actionType: "transfer"
+     - amount: 2000000 (transfer amount)
+     - destinationFund: recipient name or resolved Wallet ID (e.g., "Tuấn")
+     - cronExpression: "0 0 10 * *" (runs on the 10th of every month)
+  3. **'low_balance_shield' (Nạp tiền tự động khi số dư thấp)**:
+     - Intent example: "Nếu ví của tôi xuống dưới 100k, tự động nạp thêm 500k từ Vietcombank nhé"
+     - actionType: "low_balance_shield"
+     - amount: 500000 (top-up amount)
+     - destinationFund: "Vietcombank (Ngưỡng 100k)" (record the bank name and threshold)
+     - cronExpression: "0 0 * * *" (runs daily check)
+  4. **'expense_limit_guardian' (Hạn chế chi tiêu / cảnh báo)**:
+     - Intent example: "Nếu tôi chi tiêu quá 10tr trong tháng này thì cảnh báo/khóa lại"
+     - actionType: "expense_limit_guardian"
+     - amount: 10000000 (monthly limit threshold)
+     - destinationFund: "wallet"
+     - cronExpression: "0 0 1 * *" (runs monthly check)
+  5. **'smart_cash_sweep' (Tối ưu hóa tiền nhàn rỗi)**:
+     - Intent example: "Cuối tháng nếu ví còn dư trên 3 triệu, hãy chuyển hết phần dư đó vào quỹ VESAF"
+     - actionType: "smart_cash_sweep"
+     - amount: 3000000 (the buffer threshold kept in wallet)
+     - destinationFund: "VESAF" (or target fund to sweep into)
+     - cronExpression: "0 0 1 * *" (runs at end/beginning of month)
 - RETRY / CONTEXT AWARENESS (CRITICAL): If the user says anything like "thử lại", "chuyển lại đi", "retry", "làm lại", "thử lại coi", "gửi lại", "send again", you MUST scan the conversation history to find the most recent transfer attempt (look for messages containing amount + recipient info), then immediately re-attempt that EXACT same action (same recipient name/nickname, same amount in VND) WITHOUT asking the user to repeat any details. Call get_recipients first if needed to resolve the recipient, then call execute_transfer directly. This is a top-priority rule.
 `;
 
@@ -212,7 +250,7 @@ RULES:
                         contents: currentContents,
                         config: {
                             systemInstruction,
-                            tools: [{ functionDeclarations }]
+                            tools: [{ functionDeclarations: functionDeclarations as any }]
                         }
                     });
                     
@@ -228,8 +266,13 @@ RULES:
                     }
                     
                     const call = functionCalls[0].functionCall;
+                    if (!call) {
+                        return {
+                            message: textPart?.text || "Tôi có thể giúp gì thêm cho bạn?"
+                        };
+                    }
                     const toolName = call.name;
-                    const toolArgs = call.args || {};
+                    const toolArgs = (call.args || {}) as Record<string, any>;
                     
                     console.log(`🛠️ [ReAct Tool Call] ${toolName} with args:`, JSON.stringify(toolArgs));
                     
