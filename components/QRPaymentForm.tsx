@@ -680,7 +680,6 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 <span className="text-24">💰</span>
                                 <div className="text-left">
                                     <p className="text-16 font-semibold text-white">Số dư Ví Fincore</p>
-                                    <p className="text-12 text-emerald-400">MIỄN PHÍ</p>
                                 </div>
                             </div>
                         </button>
@@ -694,7 +693,6 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 <span className="text-24">🏦</span>
                                 <div className="text-left">
                                     <p className="text-16 font-semibold text-white">Tài khoản ngân hàng</p>
-                                    <p className="text-12 text-blue-400">Phí 5.000 đ</p>
                                 </div>
                             </div>
                         </button>
