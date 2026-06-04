@@ -470,7 +470,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         await saveRecipientIfNeeded();
 
                         toast.success(
-                            `⏳ Đang xử lý chuyển khoản! ${formatAmount(transferAmount)} sẽ đến trong 1-3 ngày làm việc.`,
+                            `✅ Chuyển tiền thành công số tiền ${formatAmount(transferAmount)}!`,
                             { duration: 4000 }
                         );
                         setSuccessData({
@@ -680,7 +680,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 <span className="text-24">💰</span>
                                 <div className="text-left">
                                     <p className="text-16 font-semibold text-white">Số dư Ví Fincore</p>
-                                    <p className="text-12 text-emerald-400">Tức thời • MIỄN PHÍ</p>
+                                    <p className="text-12 text-emerald-400">MIỄN PHÍ</p>
                                 </div>
                             </div>
                         </button>
@@ -694,7 +694,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 <span className="text-24">🏦</span>
                                 <div className="text-left">
                                     <p className="text-16 font-semibold text-white">Tài khoản ngân hàng</p>
-                                    <p className="text-12 text-blue-400">1-3 ngày làm việc • Phí 5.000 đ</p>
+                                    <p className="text-12 text-blue-400">Phí 5.000 đ</p>
                                 </div>
                             </div>
                         </button>
