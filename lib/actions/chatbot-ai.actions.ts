@@ -38,15 +38,27 @@ function isQuotaError(error: any): boolean {
 const functionDeclarations = [
   {
     name: "get_balance",
-    description: "Lấy thông tin số dư ví điện tử Fincore và các tài khoản ngân hàng liên kết của người dùng hiện tại."
+    description: "Lấy thông tin số dư ví điện tử Fincore và các tài khoản ngân hàng liên kết của người dùng hiện tại.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "get_recipients",
-    description: "Lấy danh sách người nhận (danh bạ) đã lưu của người dùng."
+    description: "Lấy danh sách người nhận (danh bạ) đã lưu của người dùng.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "get_transaction_history",
-    description: "Lấy lịch sử giao dịch gần đây của ví điện tử."
+    description: "Lấy lịch sử giao dịch gần đây của ví điện tử.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "execute_transfer",
@@ -63,15 +75,27 @@ const functionDeclarations = [
   },
   {
     name: "get_risk_profile",
-    description: "Đọc thông tin hồ sơ rủi ro, điểm khẩu vị rủi ro (0-100) và 15 đặc trưng hành vi tài chính thay thế của người dùng."
+    description: "Đọc thông tin hồ sơ rủi ro, điểm khẩu vị rủi ro (0-100) và 15 đặc trưng hành vi tài chính thay thế của người dùng.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "get_investment_advice",
-    description: "Lấy khuyến nghị chi tiết danh mục đầu tư các quỹ mở (DCDS, VESAF, TCBF...) tối ưu theo hồ sơ rủi ro của người dùng."
+    description: "Lấy khuyến nghị chi tiết danh mục đầu tư các quỹ mở (DCDS, VESAF, TCBF...) tối ưu theo hồ sơ rủi ro của người dùng.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "get_utility_bills",
-    description: "Lấy danh sách hóa đơn tiện ích (điện EVN, nước SAWACO, Internet) hiện tại và trạng thái thanh toán (đã đóng, chưa đóng)."
+    description: "Lấy danh sách hóa đơn tiện ích (điện EVN, nước SAWACO, Internet) hiện tại và trạng thái thanh toán (đã đóng, chưa đóng).",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "pay_utility_bill",
@@ -87,7 +111,11 @@ const functionDeclarations = [
   },
   {
     name: "get_autopilot_rules",
-    description: "Lấy danh sách các lệnh tích lũy tự động (Autopilot) định kỳ hiện tại của người dùng."
+    description: "Lấy danh sách các lệnh tích lũy tự động (Autopilot) định kỳ hiện tại của người dùng.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   },
   {
     name: "create_autopilot_rule",
