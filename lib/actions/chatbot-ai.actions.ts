@@ -262,8 +262,9 @@ RULES:
                     if (functionCalls.length === 0) {
                         const finishReason = candidate?.finishReason || "UNKNOWN";
                         if (!textPart?.text) {
+                            const rawCandidateStr = JSON.stringify(candidate || {}, null, 2);
                             return {
-                                message: `⚠️ [Gemini API Diagnostic] Trợ lý nhận phản hồi rỗng từ mô hình (Finish Reason: ${finishReason}). Vui lòng kiểm tra xem biến môi trường GEMINI_API_KEY trên Vercel đã được cấu hình đúng và còn hạn mức (quota) hay chưa.`
+                                message: `⚠️ [Gemini API Diagnostic] Trợ lý nhận phản hồi rỗng từ mô hình (Finish Reason: ${finishReason}).\n\n**Raw Candidate Response:**\n\`\`\`json\n${rawCandidateStr}\n\`\`\`\n\nVui lòng kiểm tra xem biến môi trường GEMINI_API_KEY trên Vercel đã được cấu hình đúng và còn hạn mức (quota) hay chưa.`
                             };
                         }
                         return {
