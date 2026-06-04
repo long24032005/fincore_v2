@@ -4,7 +4,7 @@ import { transferBalance, updateUserBalance } from "./wallet.actions";
 import { createTransfer } from "./dwolla.actions";
 import { createTransaction } from "./transaction.actions";
 import { getBank, getBankByAppwriteItemId } from "./user.actions";
-import { updateRecipientLastUsed } from "./savedRecipient.actions";
+import { updateRecipientLastUsed, getSavedRecipients } from "./savedRecipient.actions";
 import { checkDailyLimits } from "./chatbot-context.actions";
 import { parseStringify, formatAmount } from "../utils";
 
@@ -44,7 +44,6 @@ export const executeChatbotTransfer = async ({
         }
 
         // 3. Get recipient details from saved recipients
-        const { getSavedRecipients } = await import('./savedRecipient.actions');
         const recipientsData = await getSavedRecipients(userId);
 
         console.log('🔍 [Chatbot Transfer] Looking for recipient:', recipientId);
