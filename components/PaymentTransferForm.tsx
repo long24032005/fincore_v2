@@ -174,7 +174,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
   const handleShare = async () => {
     if (!successData) return;
 
-    const shareText = `Biên lai chuyển tiền fincore\nSố tiền: $${successData.amount}\nĐến: ${successData.to}\nMã giao dịch: ${successData.id}\nThời gian: ${successData.time}`;
+    const shareText = `Biên lai chuyển tiền fincore\nSố tiền: ${formatAmount(parseFloat(successData.amount))}\nĐến: ${successData.to}\nMã giao dịch: ${successData.id}\nThời gian: ${successData.time}`;
 
     if (navigator.share) {
       try {
@@ -515,10 +515,10 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
         if (transferAmount > balanceInfo.available) {
           alert(
             `❌ Số dư khả dụng không đủ!\n\n` +
-            `Số dư thực: $${balanceInfo.actual.toFixed(2)}\n` +
-            `Giao dịch đang chờ: -$${balanceInfo.pending.toFixed(2)}\n` +
-            `Khả dụng: $${balanceInfo.available.toFixed(2)}\n\n` +
-            `Bạn đang muốn chuyển: $${transferAmount.toFixed(2)}\n\n` +
+            `Số dư thực: ${formatAmount(balanceInfo.actual)}\n` +
+            `Giao dịch đang chờ: -${formatAmount(balanceInfo.pending)}\n` +
+            `Khả dụng: ${formatAmount(balanceInfo.available)}\n\n` +
+            `Bạn đang muốn chuyển: ${formatAmount(transferAmount)}\n\n` +
             `Vui lòng chờ các giao dịch đang chờ hoàn tất hoặc nhập số tiền nhỏ hơn.`
           );
           setIsLoading(false);
@@ -652,7 +652,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
               <div className="mt-6 text-center">
                 <p className="text-14 text-gray-400 mb-1">Tổng số tiền</p>
                 <p className="text-36 font-bold text-white tracking-tight">
-                  ${successData.amount}
+                  {formatAmount(parseFloat(successData.amount))}
                 </p>
               </div>
             </div>
@@ -922,7 +922,7 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
           <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-purple-400" />
+                <Wallet className="w-5 h-5 text-purple-400" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Chi tiết thanh toán</h3>
@@ -938,17 +938,17 @@ const PaymentTransferForm = ({ accounts }: PaymentTransferFormProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-gray-300 font-medium flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-purple-400" />
+                      <Wallet className="w-4 h-4 text-purple-400" />
                       Số tiền
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">đ</span>
                         <Input
                           type="number"
-                          step="0.01"
-                          min="0.01"
-                          placeholder="0.00"
+                          step="1"
+                          min="1"
+                          placeholder="Nhập số tiền"
                           className="bg-gray-800/80 border-gray-700 text-white placeholder:text-gray-500 h-12 pl-8 pr-4 rounded-xl focus:border-purple-500 focus:ring-purple-500/20 text-lg font-semibold"
                           {...field}
                         />
