@@ -2,6 +2,12 @@
 
 import fs from "fs";
 import path from "path";
+import { createAdminClient } from "../appwrite";
+import { Query, ID } from "node-appwrite";
+
+const {
+  APPWRITE_DATABASE_ID: DATABASE_ID,
+} = process.env;
 
 // Đường dẫn file cơ sở dữ liệu gốc và đích (hỗ trợ môi trường Read-Only của Vercel)
 const SRC_DB_PATH = path.join(process.cwd(), "fincore_local_ai_db.json");
@@ -112,8 +118,31 @@ export const updateUserAIData = async (
 
 // 3. Lấy danh sách automations của user
 export const getUserAutomations = async (userId: string) => {
-  const db = readDb();
-  return db.automations[userId] || [];
+  try {
+    const { database } = await createAdminClient();
+    const result = await database.listDocuments(
+      DATABASE_ID!,
+      "automations",
+      [
+        Query.equal('userId', userId),
+        Query.orderDesc('$createdAt')
+      ]
+    );
+    return result.documents.map((doc: any) => ({
+      id: doc.$id,
+      userId: doc.userId,
+      actionType: doc.actionType,
+      amount: doc.amount,
+      destinationFund: doc.destinationFund,
+      cronExpression: doc.cronExpression,
+      isActive: doc.isActive,
+      lastRun: doc.lastRun,
+      executionHistory: doc.executionHistory ? JSON.parse(doc.executionHistory) : []
+    }));
+  } catch (error) {
+    console.error('Error fetching automations from Appwrite:', error);
+    return [];
+  }
 };
 
 // 4. Thêm mới một automation cho user
@@ -121,22 +150,38 @@ export const addUserAutomation = async (
   userId: string,
   automation: { actionType: string; amount: number; destinationFund: string; cronExpression: string }
 ) => {
-  const db = readDb();
-  if (!db.automations[userId]) {
-    db.automations[userId] = [];
+  try {
+    const { database } = await createAdminClient();
+    const doc = await database.createDocument(
+      DATABASE_ID!,
+      "automations",
+      ID.unique(),
+      {
+        userId,
+        actionType: automation.actionType,
+        amount: automation.amount,
+        destinationFund: automation.destinationFund,
+        cronExpression: automation.cronExpression,
+        isActive: true,
+        lastRun: null,
+        executionHistory: "[]"
+      }
+    );
+    return {
+      id: doc.$id,
+      userId: doc.userId,
+      actionType: doc.actionType,
+      amount: doc.amount,
+      destinationFund: doc.destinationFund,
+      cronExpression: doc.cronExpression,
+      isActive: doc.isActive,
+      lastRun: doc.lastRun,
+      executionHistory: []
+    };
+  } catch (error) {
+    console.error('Error creating automation in Appwrite:', error);
+    throw error;
   }
-  
-  const newAutomation = {
-    id: `auto_${Date.now()}`,
-    userId,
-    ...automation,
-    isActive: true,
-    lastRun: null
-  };
-  
-  db.automations[userId].push(newAutomation);
-  writeDb(db);
-  return newAutomation;
 };
 
 // 5. Cập nhật trạng thái bật/tắt (isActive) hoặc các trường khác của automation
@@ -145,31 +190,50 @@ export const updateUserAutomation = async (
   automationId: string,
   updates: { isActive?: boolean; lastRun?: string }
 ) => {
-  const db = readDb();
-  const userAutomations = db.automations[userId] || [];
-  const index = userAutomations.findIndex((item: any) => item.id === automationId);
-  
-  if (index !== -1) {
-    db.automations[userId][index] = {
-      ...db.automations[userId][index],
-      ...updates
+  try {
+    const { database } = await createAdminClient();
+    const updatePayload: any = {};
+    if (updates.isActive !== undefined) updatePayload.isActive = updates.isActive;
+    if (updates.lastRun !== undefined) updatePayload.lastRun = updates.lastRun;
+
+    const doc = await database.updateDocument(
+      DATABASE_ID!,
+      "automations",
+      automationId,
+      updatePayload
+    );
+
+    return {
+      id: doc.$id,
+      userId: doc.userId,
+      actionType: doc.actionType,
+      amount: doc.amount,
+      destinationFund: doc.destinationFund,
+      cronExpression: doc.cronExpression,
+      isActive: doc.isActive,
+      lastRun: doc.lastRun,
+      executionHistory: doc.executionHistory ? JSON.parse(doc.executionHistory) : []
     };
-    writeDb(db);
-    return db.automations[userId][index];
+  } catch (error) {
+    console.error('Error updating automation in Appwrite:', error);
+    return null;
   }
-  
-  return null;
 };
 
 // 6. Xóa một automation
 export const deleteUserAutomation = async (userId: string, automationId: string) => {
-  const db = readDb();
-  const userAutomations = db.automations[userId] || [];
-  const filtered = userAutomations.filter((item: any) => item.id !== automationId);
-  
-  db.automations[userId] = filtered;
-  writeDb(db);
-  return { success: true };
+  try {
+    const { database } = await createAdminClient();
+    await database.deleteDocument(
+      DATABASE_ID!,
+      "automations",
+      automationId
+    );
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting automation in Appwrite:', error);
+    return { success: false };
+  }
 };
 
 // 7. Lấy nhật ký thiết bị và hoạt động của người dùng
@@ -190,72 +254,100 @@ export const updateUserDeviceActivityLogs = async (userId: string, data: any) =>
 
 // 9. Giả lập dữ liệu chạy Autopilot phục vụ demo (Chỉ gọi trong pha Seeding)
 export const seedUserAutomations = async (userId: string, scenario: 'conservative' | 'aggressive' | 'balanced') => {
-  const db = readDb();
-  if (!db.automations) db.automations = {};
-  db.automations[userId] = [];
-  const now = new Date();
-  
-  if (scenario === 'conservative') {
-    // 12 runs, 12 success -> auto_save_completion_rate = 1.0 (mean: 0.95)
-    const history = Array.from({ length: 12 }, (_, i) => ({
-      timestamp: new Date(now.getTime() - (12 - i) * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'success',
-      amount: 1000000
-    }));
-    db.automations[userId].push({
-      id: `auto_tcbf_${userId}`,
-      actionType: 'Transfer',
-      amount: 1000000,
-      destinationFund: 'TCBF',
-      cronExpression: '0 0 * * 1',
-      isActive: true,
-      lastRun: now.toISOString(),
-      executionHistory: history
-    });
-  } else if (scenario === 'aggressive') {
-    // 10 runs: 6 failed, 4 success -> auto_save_completion_rate = 0.40
-    const history = Array.from({ length: 10 }, (_, i) => {
-      const isFailed = [0, 2, 3, 5, 7, 9].includes(i);
-      return {
-        timestamp: new Date(now.getTime() - (10 - i) * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status: isFailed ? 'failed' : 'success',
-        failureReason: isFailed ? 'Insufficient balance' : undefined,
-        amount: 2000000
-      };
-    });
-    db.automations[userId].push({
-      id: `auto_vesaf_${userId}`,
-      actionType: 'Transfer',
-      amount: 2000000,
-      destinationFund: 'VESAF',
-      cronExpression: '0 0 * * 1',
-      isActive: true,
-      lastRun: now.toISOString(),
-      executionHistory: history
-    });
-  } else {
-    // 12 runs: 3 failed, 9 success -> auto_save_completion_rate = 0.75
-    const history = Array.from({ length: 12 }, (_, i) => {
-      const isFailed = [2, 5, 8].includes(i);
-      return {
+  try {
+    const { database } = await createAdminClient();
+    
+    // Clean up existing seeded automations for this user first
+    try {
+      const existing = await database.listDocuments(
+        DATABASE_ID!,
+        "automations",
+        [Query.equal('userId', userId)]
+      );
+      for (const doc of existing.documents) {
+        await database.deleteDocument(databaseId!, "automations", doc.$id);
+      }
+    } catch (cleanErr) {
+      console.error("Clean up seeded automations error:", cleanErr);
+    }
+
+    const now = new Date();
+    
+    if (scenario === 'conservative') {
+      const history = Array.from({ length: 12 }, (_, i) => ({
         timestamp: new Date(now.getTime() - (12 - i) * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status: isFailed ? 'failed' : 'success',
-        failureReason: isFailed ? 'Insufficient balance' : undefined,
-        amount: 1500000
-      };
-    });
-    db.automations[userId].push({
-      id: `auto_dcds_${userId}`,
-      actionType: 'Transfer',
-      amount: 1500000,
-      destinationFund: 'DCDS',
-      cronExpression: '0 0 * * 1',
-      isActive: true,
-      lastRun: now.toISOString(),
-      executionHistory: history
-    });
+        status: 'success',
+        amount: 1000000
+      }));
+      await database.createDocument(
+        DATABASE_ID!,
+        "automations",
+        `auto_tcbf_${userId}`,
+        {
+          userId,
+          actionType: 'Transfer',
+          amount: 1000000,
+          destinationFund: 'TCBF',
+          cronExpression: '0 0 * * 1',
+          isActive: true,
+          lastRun: now.toISOString(),
+          executionHistory: JSON.stringify(history)
+        }
+      );
+    } else if (scenario === 'aggressive') {
+      const history = Array.from({ length: 10 }, (_, i) => {
+        const isFailed = [0, 2, 3, 5, 7, 9].includes(i);
+        return {
+          timestamp: new Date(now.getTime() - (10 - i) * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          status: isFailed ? 'failed' : 'success',
+          failureReason: isFailed ? 'Insufficient balance' : undefined,
+          amount: 2000000
+        };
+      });
+      await database.createDocument(
+        DATABASE_ID!,
+        "automations",
+        `auto_vesaf_${userId}`,
+        {
+          userId,
+          actionType: 'Transfer',
+          amount: 2000000,
+          destinationFund: 'VESAF',
+          cronExpression: '0 0 * * 1',
+          isActive: true,
+          lastRun: now.toISOString(),
+          executionHistory: JSON.stringify(history)
+        }
+      );
+    } else {
+      const history = Array.from({ length: 12 }, (_, i) => {
+        const isFailed = [2, 5, 8].includes(i);
+        return {
+          timestamp: new Date(now.getTime() - (12 - i) * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          status: isFailed ? 'failed' : 'success',
+          failureReason: isFailed ? 'Insufficient balance' : undefined,
+          amount: 1500000
+        };
+      });
+      await database.createDocument(
+        DATABASE_ID!,
+        "automations",
+        `auto_dcds_${userId}`,
+        {
+          userId,
+          actionType: 'Transfer',
+          amount: 1500000,
+          destinationFund: 'DCDS',
+          cronExpression: '0 0 * * 1',
+          isActive: true,
+          lastRun: now.toISOString(),
+          executionHistory: JSON.stringify(history)
+        }
+      );
+    }
+  } catch (error) {
+    console.error('Error seeding automations in Appwrite:', error);
   }
-  writeDb(db);
 };
 
 // 10. Giả lập dữ liệu nhật ký thiết bị phục vụ demo (Chỉ gọi trong pha Seeding)
