@@ -260,17 +260,17 @@ RULES:
                     const functionCalls = parts.filter(p => p.functionCall);
                     
                     if (functionCalls.length === 0) {
+                        const finishReason = candidate?.finishReason || "UNKNOWN";
+                        if (!textPart?.text) {
+                            return {
+                                message: `⚠️ [Gemini API Diagnostic] Trợ lý nhận phản hồi rỗng từ mô hình (Finish Reason: ${finishReason}). Vui lòng kiểm tra xem biến môi trường GEMINI_API_KEY trên Vercel đã được cấu hình đúng và còn hạn mức (quota) hay chưa.`
+                            };
+                        }
                         return {
-                            message: textPart?.text || "Tôi có thể giúp gì thêm cho bạn?"
+                            message: textPart.text
                         };
                     }
-                    
                     const call = functionCalls[0].functionCall;
-                    if (!call) {
-                        return {
-                            message: textPart?.text || "Tôi có thể giúp gì thêm cho bạn?"
-                        };
-                    }
                     const toolName = call.name;
                     const toolArgs = (call.args || {}) as Record<string, any>;
                     
