@@ -882,7 +882,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         disabled={isLoading || !amount}
                         className="flex-1 px-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isLoading ? 'Processing...' : 'Confirm Payment'}
+                        {isLoading ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
                     </button>
                 </div>
             </form >
