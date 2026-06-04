@@ -290,10 +290,7 @@ RULES:
                     if (functionCalls.length === 0) {
                         const finishReason = candidate?.finishReason || "UNKNOWN";
                         if (!textPart?.text) {
-                            const rawCandidateStr = JSON.stringify(candidate || {}, null, 2);
-                            return {
-                                message: `⚠️ [Gemini API Diagnostic] Trợ lý nhận phản hồi rỗng từ mô hình (Finish Reason: ${finishReason}).\n\n**Raw Candidate Response:**\n\`\`\`json\n${rawCandidateStr}\n\`\`\`\n\nVui lòng kiểm tra xem biến môi trường GEMINI_API_KEY trên Vercel đã được cấu hình đúng và còn hạn mức (quota) hay chưa.`
-                            };
+                            throw new Error(`Gemini returned empty response (Finish Reason: ${finishReason})`);
                         }
                         return {
                             message: textPart.text
@@ -500,8 +497,9 @@ RULES:
 
             } catch (error: any) {
                 console.error(`❌ [Gemini Key #${keyIdx + 1}] failed:`, error.message);
-                if (isQuotaError(error) && keyIdx < maxKeys - 1) {
-                    console.warn(`⚠️ [Gemini] key exhausted, switching to key #${keyIdx + 2}`);
+                const isRetryable = isQuotaError(error) || error.message?.toLowerCase().includes("empty response");
+                if (isRetryable && keyIdx < maxKeys - 1) {
+                    console.warn(`⚠️ [Gemini] key exhausted/invalid, switching to key #${keyIdx + 2}`);
                     continue;
                 }
                 throw error;
