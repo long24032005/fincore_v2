@@ -233,17 +233,17 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         await saveRecipientIfNeeded();
 
                         toast.success(
-                            `✅ Payment Sent! $${transferAmount.toFixed(2)} deducted from wallet.`,
+                            `✅ Đã chuyển thành công ${formatAmount(transferAmount)} từ ví!`,
                             { duration: 4000 }
                         );
                         router.refresh(); // Force server data refresh
                         setSuccessData({
-                            amount: transferAmount.toFixed(2),
+                            amount: transferAmount.toString(),
                             to: recipientData.name,
                             toBank: receiverBankDetails.name,
                             toId: receiverBankDetails.shareableId,
-                            from: 'Wallet Balance',
-                            fromDetail: 'Finecore Wallet',
+                            from: 'Số dư Ví',
+                            fromDetail: 'Ví Fincore',
                             fromId: sender.walletId,
                             senderName: `${sender.firstName} ${sender.lastName}`,
                             id: result.transactionId || 'N/A',
@@ -273,17 +273,17 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         await saveRecipientIfNeeded();
 
                         toast.success(
-                            `✅ Payment Successful! Sent $${transferAmount.toFixed(2)} to ${recipientData.name}.`,
+                            `✅ Chuyển tiền thành công! Đã gửi ${formatAmount(transferAmount)} cho ${recipientData.name}.`,
                             { duration: 4000 }
                         );
                         router.refresh(); // Force server data refresh
                         setSuccessData({
-                            amount: transferAmount.toFixed(2),
+                            amount: transferAmount.toString(),
                             to: recipientData.name,
-                            toBank: 'Finecore Wallet',
+                            toBank: 'Ví Fincore',
                             toId: (recipientData as any).walletId,
-                            from: 'Wallet Balance',
-                            fromDetail: 'Finecore Wallet',
+                            from: 'Số dư Ví',
+                            fromDetail: 'Ví Fincore',
                             fromId: sender.walletId,
                             senderName: `${sender.firstName} ${sender.lastName}`,
                             id: result.transactionId || 'N/A',
@@ -311,7 +311,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                 if (transferAmount > availableBalance.available) {
                     console.error('❌ Insufficient balance');
                     toast.error(
-                        `Insufficient balance! Available: $${availableBalance.available.toFixed(2)}, Needed: $${transferAmount.toFixed(2)}`,
+                        `Số dư không đủ! Khả dụng: ${formatAmount(availableBalance.available)}, Cần: ${formatAmount(transferAmount)}`,
                         { duration: 5000 }
                     );
                     setIsLoading(false);
@@ -352,16 +352,16 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         });
 
                         toast.success(
-                            `✅ Payment Sent! $${transferAmount.toFixed(2)} will be credited to wallet.`,
+                            `✅ Đã gửi yêu cầu! ${formatAmount(transferAmount)} sẽ được nạp vào ví người nhận.`,
                             { duration: 4000 }
                         );
                         setSuccessData({
-                            amount: transferAmount.toFixed(2),
+                            amount: transferAmount.toString(),
                             to: recipientData.name,
-                            toBank: 'Finecore Wallet',
+                            toBank: 'Ví Fincore',
                             toId: (recipientData as any).walletId,
-                            from: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.name || 'Bank Account',
-                            fromDetail: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.subtype || 'Checking',
+                            from: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.name || 'Tài khoản ngân hàng',
+                            fromDetail: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.subtype || 'Tài khoản thanh toán',
                             fromId: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.shareableId || 'N/A',
                             senderName: `${sender.firstName} ${sender.lastName}`,
                             id: transaction?.$id || 'N/A',
@@ -470,16 +470,16 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         await saveRecipientIfNeeded();
 
                         toast.success(
-                            `⏳ Bank Transfer Initiated! $${transferAmount.toFixed(2)} will arrive in 1-3 days.`,
+                            `⏳ Đang xử lý chuyển khoản! ${formatAmount(transferAmount)} sẽ đến trong 1-3 ngày làm việc.`,
                             { duration: 4000 }
                         );
                         setSuccessData({
-                            amount: transferAmount.toFixed(2),
+                            amount: transferAmount.toString(),
                             to: recipientData.name,
                             toBank: receiverBankDetails.name,
                             toId: receiverBankDetails.shareableId,
-                            from: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.name || 'Bank Account',
-                            fromDetail: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.subtype || 'Checking',
+                            from: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.name || 'Tài khoản ngân hàng',
+                            fromDetail: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.subtype || 'Tài khoản thanh toán',
                             fromId: senderBanks.find(b => b.appwriteItemId === selectedBankId)?.shareableId || 'N/A',
                             senderName: `${sender.firstName} ${sender.lastName}`,
                             id: transaction?.$id || 'N/A',
@@ -503,12 +503,12 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
     const handleShare = async () => {
         if (!successData) return;
 
-        const shareText = `Finecore Transfer Receipt\nAmount: $${successData.amount}\nTo: ${successData.to}\nRef ID: ${successData.id}\nTime: ${successData.time}`;
+        const shareText = `Biên lai chuyển tiền Fincore\nSố tiền: ${formatAmount(parseFloat(successData.amount))}\nĐến: ${successData.to}\nMã giao dịch: ${successData.id}\nThời gian: ${successData.time}`;
 
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Finecore Receipt',
+                    title: 'Biên lai Fincore',
                     text: shareText,
                 });
             } catch (err) {
@@ -517,9 +517,9 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
         } else {
             try {
                 await navigator.clipboard.writeText(shareText);
-                toast.success('Receipt details copied to clipboard!');
+                toast.success('Đã sao chép chi tiết biên lai!');
             } catch (err) {
-                toast.error('Failed to copy to clipboard');
+                toast.error('Không thể sao chép');
             }
         }
     };
@@ -537,13 +537,13 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
             const image = canvas.toDataURL("image/png");
             const link = document.createElement('a');
             link.href = image;
-            link.download = `finecore-receipt-${successData.id.slice(-8)}.png`;
+            link.download = `fincore-bienlai-${successData.id.slice(-8)}.png`;
             link.click();
 
-            toast.success('Receipt saved successfully!');
+            toast.success('Đã lưu biên lai thành công!');
         } catch (err) {
             console.error('Save failed:', err);
-            toast.error('Failed to save receipt image');
+            toast.error('Không thể lưu ảnh biên lai');
         }
     };
 
@@ -558,13 +558,13 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                             <div className="size-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4 ring-2 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <CheckCircle2 className="w-8 h-8 text-emerald-400" />
                             </div>
-                            <h2 className="text-20 font-bold text-white mb-1">Transfer Successful!</h2>
-                            <p className="text-14 text-gray-400">Transaction completed</p>
+                            <h2 className="text-20 font-bold text-white mb-1">Chuyển tiền thành công!</h2>
+                            <p className="text-14 text-gray-400">Giao dịch đã hoàn tất</p>
 
                             <div className="mt-6 text-center">
-                                <p className="text-14 text-gray-400 mb-1">Total Amount</p>
+                                <p className="text-14 text-gray-400 mb-1">Tổng số tiền</p>
                                 <p className="text-36 font-bold text-white tracking-tight">
-                                    ${successData.amount}
+                                    {formatAmount(parseFloat(successData.amount))}
                                 </p>
                             </div>
                         </div>
@@ -572,19 +572,19 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         {/* Receipt Details */}
                         <div className="p-6 space-y-4">
                             <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
-                                <span className="text-14 text-gray-400">To</span>
+                                <span className="text-14 text-gray-400">Đến</span>
                                 <div className="text-right flex flex-col items-end">
                                     <p className="text-14 font-semibold text-white">{successData.to}</p>
                                     <p className="text-12 text-emerald-400 font-medium">{successData.toBank}</p>
                                     {successData.toId && (
                                         <p className="text-12 text-gray-500 font-mono mt-0.5">
-                                            {successData.toBank === 'Finecore Wallet' ? successData.toId : `Account • ${successData.toId}`}
+                                            {successData.toBank === 'Ví Fincore' ? successData.toId : `Tài khoản • ${successData.toId}`}
                                         </p>
                                     )}
                                 </div>
                             </div>
                             <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
-                                <span className="text-14 text-gray-400">From</span>
+                                <span className="text-14 text-gray-400">Từ</span>
                                 <div className="text-right flex flex-col items-end">
                                     <p className="text-14 font-semibold text-white">{successData.senderName}</p>
                                     <p className="text-12 text-emerald-400 font-medium">{successData.from}</p>
@@ -596,11 +596,11 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 </div>
                             </div>
                             <div className="flex justify-between items-center py-3 border-b border-gray-800/50">
-                                <span className="text-14 text-gray-400">Time</span>
+                                <span className="text-14 text-gray-400">Thời gian</span>
                                 <span className="text-14 text-gray-300">{successData.time}</span>
                             </div>
                             <div className="flex justify-between items-center py-3">
-                                <span className="text-14 text-gray-400">Ref ID</span>
+                                <span className="text-14 text-gray-400">Mã giao dịch</span>
                                 <span className="text-12 font-mono text-gray-500 uppercase tracking-wider">{successData.id.slice(-8)}</span>
                             </div>
                         </div>
@@ -611,19 +611,19 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 onClick={onCancel}
                                 className="col-span-2 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
                             >
-                                Done
+                                Hoàn tất
                             </button>
                             <button
                                 onClick={handleShare}
                                 className="flex items-center justify-center gap-2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl transition-colors border border-gray-700"
                             >
-                                <Share2 className="w-4 h-4" /> Share
+                                <Share2 className="w-4 h-4" /> Chia sẻ
                             </button>
                             <button
                                 onClick={handleSave}
                                 className="flex items-center justify-center gap-2 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl transition-colors border border-gray-700"
                             >
-                                <Download className="w-4 h-4" /> Save
+                                <Download className="w-4 h-4" /> Lưu
                             </button>
                         </div>
                     </div>
@@ -640,8 +640,8 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         <ArrowLeft className="w-5 h-5 text-white" />
                     </button>
                     <div>
-                        <h1 className="text-24 font-bold text-white">Confirm Payment</h1>
-                        <p className="text-14 text-gray-400">Review and confirm transfer</p>
+                        <h1 className="text-24 font-bold text-white">Xác nhận thanh toán</h1>
+                        <p className="text-14 text-gray-400">Xem lại và xác nhận chuyển tiền</p>
                     </div>
                 </div>
 
@@ -650,13 +650,13 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         <Check className="w-6 h-6 text-emerald-400" />
                     </div>
                     <div>
-                        <p className="text-16 font-semibold text-emerald-400">QR Scanned Successfully</p>
-                        <p className="text-12 text-gray-400">Recipient verified</p>
+                        <p className="text-16 font-semibold text-emerald-400">Quét mã QR thành công</p>
+                        <p className="text-12 text-gray-400">Đã xác minh người nhận</p>
                     </div>
                 </div>
 
                 <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <p className="text-14 text-gray-400 mb-3">Recipient</p>
+                    <p className="text-14 text-gray-400 mb-3">Người nhận</p>
                     <div className="flex items-center gap-4">
                         <div className="flex-center size-14 rounded-full bg-emerald-500 text-white text-20 font-bold">
                             {recipientData.name.split(' ').map(n => n[0]).join('')}
@@ -669,7 +669,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                 </div>
 
                 <div>
-                    <label className="text-14 font-medium text-gray-300 mb-3 block">Transfer Method</label>
+                    <label className="text-14 font-medium text-gray-300 mb-3 block">Phương thức chuyển tiền</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             type="button"
@@ -679,8 +679,8 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                             <div className="flex items-center gap-3">
                                 <span className="text-24">💰</span>
                                 <div className="text-left">
-                                    <p className="text-16 font-semibold text-white">Wallet Balance</p>
-                                    <p className="text-12 text-emerald-400">Instant • FREE</p>
+                                    <p className="text-16 font-semibold text-white">Số dư Ví Fincore</p>
+                                    <p className="text-12 text-emerald-400">Tức thời • MIỄN PHÍ</p>
                                 </div>
                             </div>
                         </button>
@@ -693,8 +693,8 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                             <div className="flex items-center gap-3">
                                 <span className="text-24">🏦</span>
                                 <div className="text-left">
-                                    <p className="text-16 font-semibold text-white">Bank Account</p>
-                                    <p className="text-12 text-blue-400">1-3 days • $0.25 fee</p>
+                                    <p className="text-16 font-semibold text-white">Tài khoản ngân hàng</p>
+                                    <p className="text-12 text-blue-400">1-3 ngày làm việc • Phí 5.000 đ</p>
                                 </div>
                             </div>
                         </button>
@@ -703,7 +703,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
 
                 {method === 'bank' && (
                     <div>
-                        <label className="text-14 font-medium text-gray-300 mb-3 block">Select Source Bank</label>
+                        <label className="text-14 font-medium text-gray-300 mb-3 block">Chọn ngân hàng nguồn</label>
                         {senderBanks.length > 0 ? (
                             <>
                                 <Select
@@ -714,7 +714,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                     }}
                                 >
                                     <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white h-[50px] rounded-lg">
-                                        <SelectValue placeholder="Select a bank" />
+                                        <SelectValue placeholder="Chọn tài khoản ngân hàng" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-gray-800 border-gray-700">
                                         {senderBanks.map((bank: any) => (
@@ -752,29 +752,29 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                 ) : availableBalance.actual > 0 && (
                                     <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 space-y-3">
                                         <div className="flex justify-between text-14">
-                                            <span className="text-gray-400">Actual Balance</span>
-                                            <span className="text-white font-semibold">${availableBalance.actual.toFixed(2)}</span>
+                                            <span className="text-gray-400">Số dư thực tế</span>
+                                            <span className="text-white font-semibold">{formatAmount(availableBalance.actual)}</span>
                                         </div>
 
                                         <div className="flex justify-between text-14">
-                                            <span className={availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"}>Pending Transfers</span>
+                                            <span className={availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"}>Giao dịch đang chờ xử lý</span>
                                             <span className={`${availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"} font-semibold`}>
-                                                {availableBalance.pending > 0 ? `-$${availableBalance.pending.toFixed(2)}` : '$0.00'}
+                                                {availableBalance.pending > 0 ? `-${formatAmount(availableBalance.pending)}` : '0 ₫'}
                                             </span>
                                         </div>
 
                                         <div className="h-px bg-gray-700"></div>
 
                                         <div className="flex justify-between text-16">
-                                            <span className="text-emerald-400 font-medium">Available Balance</span>
-                                            <span className="text-emerald-400 font-bold">${availableBalance.available.toFixed(2)}</span>
+                                            <span className="text-emerald-400 font-medium">Số dư khả dụng</span>
+                                            <span className="text-emerald-400 font-bold">{formatAmount(availableBalance.available)}</span>
                                         </div>
                                     </div>
                                 )}
                             </>
                         ) : (
                             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                                <p className="text-14 text-yellow-300">⚠️ No linked bank accounts. Please use Wallet Balance.</p>
+                                <p className="text-14 text-yellow-300">⚠️ Chưa liên kết tài khoản ngân hàng. Vui lòng sử dụng số dư ví.</p>
                             </div>
                         )}
                     </div>
@@ -782,29 +782,30 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
 
                 <div>
                     <label className="text-14 font-medium text-gray-300 mb-3 block">
-                        Amount {recipientData.amount && <span className="text-gray-500">(Pre-filled)</span>}
+                        Số tiền {recipientData.amount && <span className="text-gray-500">(Đã điền sẵn)</span>}
                     </label>
                     <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-18">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-18">đ</span>
                         <input
                             type="number"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            step="0.01"
+                            step="1"
+                            min="1"
                             required
                             readOnly={!!recipientData.amount}
                             className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-4 text-white text-20 font-bold placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none disabled:opacity-50"
-                            placeholder="0.00"
+                            placeholder="Nhập số tiền"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-14 font-medium text-gray-300 mb-3 block">Note (Optional)</label>
+                    <label className="text-14 font-medium text-gray-300 mb-3 block">Lời nhắn (Tùy chọn)</label>
                     <textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        placeholder="What's this payment for?"
+                        placeholder="Nội dung giao dịch này là gì?"
                         rows={3}
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none resize-none"
                     />
@@ -821,10 +822,10 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         />
                         <div className="flex-1">
                             <span className="text-14 font-medium text-white group-hover:text-emerald-400 transition-colors">
-                                💾 Save this recipient for future transfers
+                                💾 Lưu người nhận này vào danh bạ của tôi
                             </span>
                             <p className="text-12 text-gray-400 mt-1">
-                                Quick access for next time - no need to scan QR again
+                                Truy cập nhanh lần sau - không cần quét lại mã QR
                             </p>
                         </div>
                     </label>
@@ -832,18 +833,18 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                     {shouldSaveRecipient && (
                         <div className="pl-8 mt-3">
                             <label className="text-14 font-medium text-gray-300 mb-2 block">
-                                Recipient Nickname
-                                <span className="text-gray-500 font-normal ml-1">(for your reference)</span>
+                                Biệt danh người nhận
+                                <span className="text-gray-500 font-normal ml-1">(dành cho bạn)</span>
                             </label>
                             <input
                                 type="text"
                                 value={recipientNickname}
                                 onChange={(e) => setRecipientNickname(e.target.value)}
-                                placeholder="e.g. Mom, Coffee Shop, Roommate..."
+                                placeholder="ví dụ: Bố mẹ, Cửa hàng cà phê, Bạn thân..."
                                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none"
                             />
                             <p className="text-12 text-gray-500 mt-2">
-                                💡 This name is just for you - it doesn't have to match their real name
+                                💡 Tên này chỉ dành cho bạn lưu trữ - không cần trùng khớp tên thật
                             </p>
                         </div>
                     )}
@@ -852,17 +853,17 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                 {amount && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                         <div className="flex justify-between items-center text-14 mb-2">
-                            <span className="text-gray-400">Amount</span>
-                            <span className="text-white font-semibold">${parseFloat(amount).toFixed(2)}</span>
+                            <span className="text-gray-400">Số tiền</span>
+                            <span className="text-white font-semibold">{formatAmount(parseFloat(amount))}</span>
                         </div>
                         <div className="flex justify-between items-center text-14 mb-2">
-                            <span className="text-gray-400">Fee</span>
-                            <span className="text-emerald-400 font-semibold">{method === 'wallet' ? 'FREE' : '$0.25'}</span>
+                            <span className="text-gray-400">Phí</span>
+                            <span className="text-emerald-400 font-semibold">{method === 'wallet' ? 'MIỄN PHÍ' : '5.000 đ'}</span>
                         </div>
                         <div className="h-px bg-gray-700 my-3"></div>
                         <div className="flex justify-between items-center">
-                            <span className="text-16 text-gray-300">Total</span>
-                            <span className="text-24 text-white font-bold">${(parseFloat(amount) + (method === 'bank' ? 0.25 : 0)).toFixed(2)}</span>
+                            <span className="text-16 text-gray-300">Tổng cộng</span>
+                            <span className="text-24 text-white font-bold">{formatAmount(parseFloat(amount) + (method === 'bank' ? 5000 : 0))}</span>
                         </div>
                     </div>
                 )}
@@ -874,7 +875,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                         disabled={isLoading}
                         className="flex-1 px-6 py-4 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
                     >
-                        Cancel
+                        Hủy giao dịch
                     </button>
                     <button
                         type="submit"
