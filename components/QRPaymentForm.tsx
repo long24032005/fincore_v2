@@ -749,21 +749,7 @@ const QRPaymentForm = ({ sender, senderBanks = [], recipientData, onBack, onCanc
                                         </div>
                                     </div>
                                 ) : availableBalance.actual > 0 && (
-                                    <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 space-y-3">
-                                        <div className="flex justify-between text-14">
-                                            <span className="text-gray-400">Số dư thực tế</span>
-                                            <span className="text-white font-semibold">{formatAmount(availableBalance.actual)}</span>
-                                        </div>
-
-                                        <div className="flex justify-between text-14">
-                                            <span className={availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"}>Giao dịch đang chờ xử lý</span>
-                                            <span className={`${availableBalance.pending > 0 ? "text-yellow-400" : "text-gray-400"} font-semibold`}>
-                                                {availableBalance.pending > 0 ? `-${formatAmount(availableBalance.pending)}` : '0 ₫'}
-                                            </span>
-                                        </div>
-
-                                        <div className="h-px bg-gray-700"></div>
-
+                                    <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4">
                                         <div className="flex justify-between text-16">
                                             <span className="text-emerald-400 font-medium">Số dư khả dụng</span>
                                             <span className="text-emerald-400 font-bold">{formatAmount(availableBalance.available)}</span>
