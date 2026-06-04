@@ -12,6 +12,7 @@ import { getBank, getBankByAccountId, getBankByAppwriteItemId, getUserInfo } fro
 import { createTransfer } from '@/lib/actions/dwolla.actions';
 import { createTransaction } from '@/lib/actions/transaction.actions';
 import { saveRecipient } from '@/lib/actions/savedRecipient.actions';
+import { formatAmount } from '@/lib/utils';
 import {
     Select,
     SelectContent,
