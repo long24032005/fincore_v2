@@ -3,17 +3,31 @@
 import fs from "fs";
 import path from "path";
 
-// Đường dẫn file cơ sở dữ liệu cục bộ
-const DB_PATH = path.join(process.cwd(), "fincore_local_ai_db.json");
+// Đường dẫn file cơ sở dữ liệu gốc và đích (hỗ trợ môi trường Read-Only của Vercel)
+const SRC_DB_PATH = path.join(process.cwd(), "fincore_local_ai_db.json");
+const DEST_DB_PATH = process.env.VERCEL ? "/tmp/fincore_local_ai_db.json" : SRC_DB_PATH;
 
 // Khởi tạo file nếu chưa tồn tại
 const initDb = () => {
-  if (!fs.existsSync(DB_PATH)) {
-    const defaultData = {
-      users: {},
-      automations: {}
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(defaultData, null, 2), "utf-8");
+  if (process.env.VERCEL) {
+    if (!fs.existsSync(DEST_DB_PATH)) {
+      try {
+        if (fs.existsSync(SRC_DB_PATH)) {
+          fs.copyFileSync(SRC_DB_PATH, DEST_DB_PATH);
+          console.log("✅ Copied local AI DB to /tmp for write access");
+        } else {
+          const defaultData = { users: {}, automations: {} };
+          fs.writeFileSync(DEST_DB_PATH, JSON.stringify(defaultData, null, 2), "utf-8");
+        }
+      } catch (err) {
+        console.error("Failed to initialize local AI DB in /tmp:", err);
+      }
+    }
+  } else {
+    if (!fs.existsSync(SRC_DB_PATH)) {
+      const defaultData = { users: {}, automations: {} };
+      fs.writeFileSync(SRC_DB_PATH, JSON.stringify(defaultData, null, 2), "utf-8");
+    }
   }
 };
 
@@ -21,7 +35,7 @@ const initDb = () => {
 const readDb = () => {
   initDb();
   try {
-    const rawData = fs.readFileSync(DB_PATH, "utf-8");
+    const rawData = fs.readFileSync(DEST_DB_PATH, "utf-8");
     return JSON.parse(rawData);
   } catch (error) {
     console.error("Error reading local AI DB:", error);
@@ -32,7 +46,7 @@ const readDb = () => {
 // Ghi dữ liệu vào file
 const writeDb = (data: any) => {
   try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf-8");
+    fs.writeFileSync(DEST_DB_PATH, JSON.stringify(data, null, 2), "utf-8");
   } catch (error) {
     console.error("Error writing local AI DB:", error);
   }
